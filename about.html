@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life in a Box</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <link rel="stylesheet" href="about.css">
+    <link rel="stylesheet" href="./popups/cart.css">
+    <link rel="stylesheet" href="./popups/login.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo"><img src="./logo.png" alt="logo"></div>
+        <div class="navlinks">
+        <ul>
+           <li><a class="active" href="./landingpage.html">Home</a></li>
+           <li><a class="active" href="./product.html">Products</a></li>
+           <li><a class="active" href="./service.html">Services</a></li>
+           <li><a class="active" href="./about.html">About US</a></li>
+           <li><a class="active" href="./rus.html">Reach US</a></li>
+        </ul>
+        </div>
+        <div class="nav-icons">
+            <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+            <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+        </div>
+    </nav>
+
+     <!-- Login Form (Hidden Initially) -->
+<div class="login-container" id="loginContainer">
+    <div class="login-box">
+        <h2>Sign In</h2>
+        <input type="text" placeholder="Username" id="loginEmail"> <!-- Changed id to match JS -->
+        <input type="password" placeholder="Password" id="password">
+        
+        <div class="remember-me">
+            <input type="checkbox" id="remember">
+            <label for="remember">Remember Me</label>
+        </div>
+
+        <button class="btn" id="signInBtn">Sign In</button>
+        <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+        <span class="close-x" id="closeLogin">&times;</span>
+    </div>
+</div>
+
+<!-- Registration Form (Hidden Initially) -->
+<div class="register-container" id="registerContainer">
+    <div class="register-box">
+        <h2>Register</h2>
+        <input type="text" placeholder="Full Name" id="regFullName">
+        <input type="email" placeholder="Email" id="regEmail">
+        <input type="password" placeholder="Create Password" id="regPassword">
+        <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+        
+        <button class="btn" id="registerBtn">Register</button>
+        <p class="back-to-login" id="backToLogin">Back to Login</p>
+        <span class="close-x" id="closeRegister">&times;</span>
+    </div>
+</div>
+
+
+    <!-- Cart Popup -->
+    <div class="cart-popup">
+    <h2>Cart</h2>
+    <div class="cart-items">
+        <!-- Cart items will be dynamically inserted here -->
+    </div>
+    <button class="review-btn">Review My Cart</button>
+    </div>
+
+
+    <section class="hero">
+        <img src="./abthr.png" alt="sentence">
+        <p>Ringing the beauty of underwater worlds to your space with expertise, passion, and innovation</p>
+    </section>
+
+    <section class="spart">
+        <div class="conti">
+            <div class="fdiv">
+                <h1>Who are we</h1>
+                <p class="dd">At<strong> Chase Aquatics</strong>, our mission is to bring a slice of nature into your home through beautifully crafted aquascapes. We design serene, natural aquatic environments that enhance your living space, promote relaxation, and foster a deeper connection to nature. Our goal is to make nature more accessible by blending aquatic plants, fish, and hardscape elements to create a harmonious, calming atmosphere indoors.</p>
+                <p><strong>Joseph Flores</strong>, founder and lead aquascape artist of Chase Aquatics, is a passionate nature enthusiast and former Regional Franchise Manager. His journey into aquascaping began as a personal hobby and quickly evolved into a full-time pursuit. With experience facilitating national aquascaping competitions, Joseph is dedicated to inspiring others and helping artists grow in this unique and therapeutic art form.</p>
+            </div>
+            <div class="sdiv">
+                <img src="./abtptt.png" alt="about picture">
+            </div>
+        </div>
+    </section>
+
+    <section class="tpart">
+        <h1>Meet Our Team</h1>
+        <div class="wrapper">
+            <div class="box">
+                <div class="pic"></div>
+                <h4>Owner and Main Artist</h4>
+                <p>Joseph Flores</p>
+            </div>
+            <div class="box">
+                <div class="pic"></div>
+                <h4>Owner</h4>
+                <p>Louise Flores</p>
+            </div>
+            <div class="box">
+                <div class="pic"></div>
+                <h4>Staff Member</h4>
+                <p>Hannah Lorraine Mendoza</p>
+            </div>
+            <div class="box">
+                <div class="pic"></div>
+                <h4>Staff Member</h4>
+                <p>Zephyr Chase Flores</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="fpart">
+        <h1>Milestones</h1>
+        <div class="cunt">
+            <div class="fd">
+                <h2 class="milestone-box">2023 Most Promising Award from City of Biñan</h2>
+                <h2 class="milestone-box">Vista Mall Sta. Rosa Exhibit and Competition</h2>
+                <h2 class="milestone-box">SM Sta. Rosa Exhibit</h2>
+              </div>
+              
+            <div class="sd">
+                <img src="./milestones/award.jpg" class="slidex" alt="Milestone 1">
+                <img src="./milestones/stmall1.jpg" class="slidex" alt="Milestone 2">
+                <img src="./milestones/stmall2.jpg" class="slidex" alt="Milestone 3">
+                <img src="./milestones/vmall1.jpg" class="slidex" alt="Milestone 4">
+                <img src="./milestones/vmall2.jpg" class="slidex" alt="Milestone 5">
+            </div>
+        </div>
+    </section>
+
+    <section class="lpart">
+        <h1>Sample Works</h1>
+        <div id="carouselExampleSlidesOnly" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              <div class="carousel-item active">
+                <img src="./sworks/palusworks.jpg" class="d-block w-100" alt="...">
+              </div>
+              <div class="carousel-item">
+                <img src="./sworks/pondsworks.jpg" class="d-block w-100" alt="...">
+              </div>
+              <div class="carousel-item">
+                <img src="./sworks/terraruimsworks.jpg" class="d-block w-100" alt="...">
+              </div>
+            </div>
+          </div>
+    </section>
+
+    <footer class="py-5">
+  <div class="container text-center text-md-start">
+    <div class="row justify-content-between align-items-start">
+      
+      <div class="col-md-4 mb-4 mb-md-0">
+        <img src="./logo.png" alt="Life In A Box Logo" style="max-width: 140px;">
+        <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
+      </div>
+
+      <div class="col-md-4 mb-4 mb-md-0">
+        <h5 class="fw-bold mb-3">Contact Us</h5>
+        <ul class="list-unstyled small">
+          <li class="mb-2">
+            <i class="fas fa-map-marker-alt"></i> Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-phone"></i> +63 932 241 2734
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-envelope"></i> chaseaquascape09@gmail.com
+          </li>
+        </ul>
+      </div>
+
+      <div class="col-md-3">
+        <h5 class="fw-bold mb-3">Follow Us</h5>
+        <div class="d-flex justify-content-center justify-content-md-start gap-3">
+          <a href="https://www.facebook.com/Chaseaquatics" class="text-white" target="_blank"><i class="fab fa-facebook fa-lg"></i></a>
+          <a href="https://www.instagram.com/chaseaquascaping" class="text-white" target="_blank"><i class="fab fa-instagram fa-lg"></i></a>
+          <a href="https://www.youtube.com/@chaseaquascape962" target="_blank" class="text-white"><i class="fa-brands fa-youtube"></i></a>
+          <a href="https://www.tiktok.com/@chase_aquascape" target="_blank" class="text-white"><i class="fa-brands fa-tiktok"></i></a>
+        </div>
+      </div>
+      
+    </div>
+
+    <div class="border-top my-4"></div>
+
+    <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
+  </div>
+</footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+    <script src="abt.js"></script>
+    <script src="./popups/cart.js"></script>
+    <script src="./popups/login.js"></script>
+    </body>

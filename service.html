@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life In A Box </title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./service.css">
+    <link rel="stylesheet" href="./popups/cart.css">
+    <link rel="stylesheet" href="./popups/login.css">
+    <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+</head>
+<body>
+ 
+      <nav class="navbar">
+        <div class="logo"><img src="./logo.png" alt="logo"></div>
+        <div class="navlinks">
+        <ul>
+            <li><a class="active" href="./landingpage.html">Home</a></li>
+            <li><a class="active" href="./product.html">Products</a></li>
+            <li><a class="active" href="./service.html">Services</a></li>
+            <li><a class="active" href="./about.html">About US</a></li>
+            <li><a class="active" href="./rus.html">Reach US</a></li>
+        </ul>
+        </div>
+       <div class="nav-icons">
+            <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+            <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+        </div>
+    </nav>
+
+     <!-- Login Form (Hidden Initially) -->
+<div class="login-container" id="loginContainer">
+    <div class="login-box">
+        <h2>Sign In</h2>
+        <input type="text" placeholder="Username" id="loginEmail"> <!-- Changed id to match JS -->
+        <input type="password" placeholder="Password" id="password">
+        
+        <div class="remember-me">
+            <input type="checkbox" id="remember">
+            <label for="remember">Remember Me</label>
+        </div>
+
+        <button class="btn" id="signInBtn">Sign In</button>
+        <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+        <span class="close-x" id="closeLogin">&times;</span>
+    </div>
+</div>
+
+<!-- Registration Form (Hidden Initially) -->
+<div class="register-container" id="registerContainer">
+    <div class="register-box">
+        <h2>Register</h2>
+        <input type="text" placeholder="Full Name" id="regFullName">
+        <input type="email" placeholder="Email" id="regEmail">
+        <input type="password" placeholder="Create Password" id="regPassword">
+        <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+        
+        <button class="btn" id="registerBtn">Register</button>
+        <p class="back-to-login" id="backToLogin">Back to Login</p>
+        <span class="close-x" id="closeRegister">&times;</span>
+    </div>
+</div>
+
+
+    <!-- Cart Popup -->
+    <div class="cart-popup">
+    <h2>Cart</h2>
+    <div class="cart-items">
+        <!-- Cart items will be dynamically inserted here -->
+    </div>
+    <button class="review-btn">Review My Cart</button>
+    </div>
+
+    
+    
+    <section class="hero">
+        <div class="title">
+            <img src="./book.png" alt="booking">
+            <p>Transform your space into a living masterpiece with our expert aquascaping and terrarium design services</p>
+            <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success" target="_blank" rel="noopener noreferrer">Book an Appointment</a>
+        </div>
+    </section>
+
+    <section class="fpart">
+        <h1>Our Specialized Services</h1>
+        <p class="pp">Discover our range of services designed to bring nature's beauty to your home or office</p>
+
+        <div class="fcont">
+            <div class="first py-5">
+                    <div class="container">
+                      <div class="row justify-content-center g-5">
+                        <div class="col-md-6 col-lg-4">
+                          <div class="card custom-card border-0 mx-auto">
+                            <div class="image-area"></div>
+                            <div class="card-body">
+                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
+                              <p class="card-text small-text">
+                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
+                              </p>
+                              <div class="d-flex justify-content-between align-items-center mt-4">
+                                <span class="fw-bold">Starting at P100</span>
+                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                          <div class="card custom-card border-0 mx-auto">
+                            <div class="image-area"></div>
+                            <div class="card-body">
+                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
+                              <p class="card-text small-text">
+                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
+                              </p>
+                              <div class="d-flex justify-content-between align-items-center mt-4">
+                                <span class="fw-bold">Starting at P100</span>
+                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                          <div class="card custom-card border-0 mx-auto">
+                            <div class="image-area"></div>
+                            <div class="card-body">
+                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
+                              <p class="card-text small-text">
+                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
+                              </p>
+                              <div class="d-flex justify-content-between align-items-center mt-4">
+                                <span class="fw-bold">Starting at P100</span>
+                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1"target="_blank" rel="noopener noreferrer">Book Now</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                      </div>
+                    </div>
+                  </div>
+                    <div class="container">
+                      <div class="row justify-content-center g-5">
+                        <div class="col-md-6 col-lg-4">
+                          <div class="card custom-card border-0 mx-auto">
+                            <div class="image-area"></div>
+                            <div class="card-body">
+                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
+                              <p class="card-text small-text">
+                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
+                              </p>
+                              <div class="d-flex justify-content-between align-items-center mt-4">
+                                <span class="fw-bold">Starting at P100</span>
+                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                          <div class="card custom-card border-0 mx-auto">
+                            <div class="image-area"></div>
+                            <div class="card-body">
+                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
+                              <p class="card-text small-text">
+                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
+                              </p>
+                              <div class="d-flex justify-content-between align-items-center mt-4">
+                                <span class="fw-bold">Starting at P100</span>
+                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                          <div class="card custom-card border-0 mx-auto">
+                            <div class="image-area"></div>
+                            <div class="card-body">
+                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
+                              <p class="card-text small-text">
+                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
+                              </p>
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                              <span class="fw-bold">Starting at P100</span>
+                              <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+      
+                  </div>
+               </div>
+            </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="spart">
+      <div class="tit">    <h1>Our Portfolio</h1>
+      <p class="pp">Browse our collection of completed projects and get inspired for your own natural sanctuary</p></div>
+  
+
+      <div class="buttons">
+        <button class="fil-btn active" data-filter="all">All Projects</button>
+        <button class="fil-btn" data-filter="aquascaping">Aquascaping</button>
+        <button class="fil-btn" data-filter="terrariums">Terrariums</button>
+        <button class="fil-btn" data-filter="ponds">Ponds</button>
+        <button class="fil-btn" data-filter="paludariums">Paludariums</button>
+        <button class="fil-btn" data-filter="pet">Pet Enclosures</button>
+        <button class="fil-btn" data-filter="cabinet">Cabinets</button>
+      </div>
+
+      <div class="gallery">
+        <div class="photo" data-category="aquascaping"><img src="./servp/aqua.jpg" /></div>
+        <div class="photo" data-category="ponds"><img src="./servp/pond.jpg" /></div>
+        <div class="photo" data-category="aquascaping"><img src="./servp/aquax.jpg" /></div>
+        <div class="photo" data-category="cabinet"><img src="./servp/cab.jpg" /></div>
+        <div class="photo" data-category="paludariums"><img src="./servp/palu.jpg" /></div>
+        <div class="photo" data-category="terrariums"><img src="./servp/terra.jpg" /></div>
+        <div class="photo" data-category="aquascaping"><img src="./servp/aquaxx.jpg" /></div>
+        <div class="photo" data-category="cabinet"><img src="./servp/cabs.jpg" /></div>
+        <div class="photo" data-category="ponds"><img src="./servp/ponds.jpg" /></div>
+        <div class="photo" data-category="pet"><img src="./servp/pet.jpg" /></div>
+        <div class="photo" data-category="terrariums"><img src="./servp/terras.jpg" /></div>
+        <div class="photo" data-category="paludariums"><img src="./servp/palus.jpg" /></div>
+      </div>
+    </section>
+
+    <section class="lpart">
+      <div class="tit">      <h2>Ready to bring your vision to life?</h2>
+      <p>Scheduling an appointment with Life in a Box is quick and effortless. Follow these simple steps to start your journey toward a beautifully designed aquascape or terrarium.</p></div>
+
+      <div class="containerrr">
+        <div class="step-row">
+        <div class="step-card dark">Step 1: Click the "Book an Appointment" Button</div>
+        <div class="step-card light">Tap the button to be redirected to our Calendly scheduling page.</div>
+      </div>
+      <div class="step-row">
+        <div class="step-card light">Select a time slot that works best for you from our real-time availability calendar.</div>
+        <div class="step-card dark">Step 2: Choose a Date and Time</div>
+      </div>
+      <div class="step-row">
+        <div class="step-card dark">Step 3: Fill in Your Details</div>
+        <div class="step-card light">Provide your name, contact information, and a brief description of your project or interests.</div>
+      </div>
+      <div class="step-row">
+        <div class="step-card light">Hit the confirm button and check your email for a confirmation and details about your consultation.</div>
+        <div class="step-card dark">Step 4: Confirm Your Appointment</div>
+      </div>
+    </div>
+
+    <div class="but">
+      <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success" target="_blank" rel="noopener noreferrer">Book an Appointment</a>
+    </div>
+    </section>
+
+<footer class="py-5">
+  <div class="container text-center text-md-start">
+    <div class="row justify-content-between align-items-start">
+      
+      <div class="col-md-4 mb-4 mb-md-0">
+        <img src="./logo.png" alt="Life In A Box Logo" style="max-width: 140px;">
+        <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
+      </div>
+
+      <div class="col-md-4 mb-4 mb-md-0">
+        <h5 class="fw-bold mb-3">Contact Us</h5>
+        <ul class="list-unstyled small">
+          <li class="mb-2">
+            <i class="fas fa-map-marker-alt"></i> Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-phone"></i> +63 932 241 2734
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-envelope"></i> chaseaquascape09@gmail.com
+          </li>
+        </ul>
+      </div>
+
+      <div class="col-md-3">
+        <h5 class="fw-bold mb-3">Follow Us</h5>
+        <div class="d-flex justify-content-center justify-content-md-start gap-3">
+          <a href="https://www.facebook.com/Chaseaquatics" class="text-white" target="_blank"><i class="fab fa-facebook fa-lg"></i></a>
+          <a href="https://www.instagram.com/chaseaquascaping" class="text-white" target="_blank"><i class="fab fa-instagram fa-lg"></i></a>
+          <a href="https://www.youtube.com/@chaseaquascape962" target="_blank" class="text-white"><i class="fa-brands fa-youtube"></i></a>
+          <a href="https://www.tiktok.com/@chase_aquascape" target="_blank" class="text-white"><i class="fa-brands fa-tiktok"></i></a>
+        </div>
+      </div>
+      
+    </div>
+
+    <div class="border-top my-4"></div>
+
+    <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
+  </div>
+</footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+    <script src="serv.js"></script>
+    <script src="./popups/cart.js"></script>
+    <script src="./popups/login.js"></script>
+</body>

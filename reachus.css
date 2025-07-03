@@ -1,0 +1,217 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+.navbar {
+    height:auto;
+    width: 100%;
+    background-color: #EEE9DA;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    padding:10px;
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2); 
+}
+.navlinks ul {
+    display: flex;
+    list-style: none;
+    gap: 50px;
+    position: relative;
+    top: 5px;
+}
+.navlinks ul li a {
+    text-decoration: none;
+    color: #335A02; 
+    font-size: 20px;
+  }
+a.active:hover {
+    text-decoration: underline;   
+    transition: 1s; 
+}
+.navbar .logo img {
+    height: 40px;
+    margin-left: 10px;
+}
+.nav-icons{
+  display:flex;
+  flex-direction: row;
+  gap:15px;
+  margin-right:20px;
+}
+.nav-icons button{
+    color:#335A02;
+    font-size: 30px;
+    background: none; 
+    border: none;     
+    outline: none;    
+    cursor: pointer;
+}
+.hero{
+    min-height: 120vh;
+}
+.hero h1{
+    font-size: 10vh;
+    font-weight: 900;
+    color: #6096B4;
+    margin-top: 70px;
+}
+.hero p{
+    font-size: 2.5vh;
+    text-align: center;
+    margin-bottom: 50px;
+    width: 50%;
+}
+.title{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+.continir{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    margin-bottom: 80px;
+}
+.fconti{
+    width: 40%;
+    height: auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+}
+.deets {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  .icon {
+    margin-top: 4px; 
+    line-height: 1;
+    font-size: 20px;
+    flex-shrink: 0;
+    position: relative;
+    top: 10px;
+  }
+  .phone {
+    font-size: 20px;
+  }
+  .location {
+    font-size: 20px;
+    padding-right: 8px;
+    position: relative;
+    left:4px;
+  }
+  .text {
+    line-height: 1.6; 
+  }
+  .fconti h2 {
+    font-size: 3vh;
+    font-weight: 900;
+    margin-top: 30px;
+  }
+  .fconti img{
+    display: block;
+    width: calc(100% + 60px);   
+    margin: -25px 0 0 -30px;  
+    max-height: 300px;
+    height: 100%;
+    object-fit: cover;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .sconti {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Montserrat', sans-serif;
+    width: 100%;
+    max-width: 600px;
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+  }
+  .sconti h2 {
+    font-size: 3vh;
+    font-weight: 900;
+  }
+  .second {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-top: 10px;
+  }
+  .second label {
+    font-weight: 500;
+  }
+  .second input {
+    border: 2px solid black;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .second button {
+    background-color: black;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    align-self: center; 
+    width: auto;
+    padding: 15px 200px;
+    box-sizing: border-box;
+  }
+  #message {
+    border: 2px solid black;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 4px;
+    width: 100%;
+    height: 200px;  
+    box-sizing: border-box;
+    resize: none; 
+    font-family: inherit; 
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  .second button:hover {
+    background-color: #333;
+  }
+  footer {
+    background-color: #6096B4;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    margin-top: 50px;
+  }
+  .social-icons {
+    margin-top: 5vh;
+  }
+  
+  .social-link {
+    color: black;
+    font-size: 5vh;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .social-link:hover {
+    color: #333;
+  }
+
+footer p {
+    position: relative;
+    top: 10px;
+}
+

@@ -1,0 +1,261 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+.navbar {
+    position: relative; 
+    width: 100%;
+    background-color: #EEE9DA;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+    transition: top 0.3s ease-in-out, position 0.3s ease-in-out;
+    z-index: 1000;
+}
+.navbar.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+.navlinks ul {
+    display: flex;
+    list-style: none;
+    gap: 50px;
+    position: relative;
+    top: 5px;
+}
+.navlinks ul li a {
+    text-decoration: none;
+    color: #335A02; 
+    font-size: 20px;
+  }
+a.active:hover {
+    text-decoration: underline;   
+    transition: 1s; 
+}
+.navbar .logo img {
+    height: 40px;
+    margin-left: 10px;
+}
+.nav-icons{
+  display:flex;
+  flex-direction: row;
+  gap:15px;
+  margin-right:20px;
+}
+.nav-icons button{
+    color:#335A02;
+    font-size: 30px;
+    background: none; 
+    border: none;     
+    outline: none;    
+    cursor: pointer;
+}
+.hero{
+    background-image: url('./herobg.png'); 
+    background-size: cover;
+    background-position: center;
+    min-height: 98vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.hero p{
+    font-size: 3vh;
+    width: 50%;
+    color: white;
+    font-family: 'Montserrat', sans-serif;
+}
+.hero img{
+    margin-bottom: 40px;
+}
+/*spart section*/
+.spart{
+    min-height: 80vh;
+    margin: 120px 50px 0px 50px;
+}
+.conti{
+    display: flex;
+    gap: 100px;
+}
+.fdiv h1{
+    font-size: 8vh;
+    font-weight: 900;
+    color: #335A02;
+    margin-bottom: 60px;
+}
+.fdiv p{
+    font-size: 2.6vh;
+    width: 90%;
+}
+.sdiv {
+    margin-right: 10px;
+}
+/*tpart section*/
+.tpart{
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 100px;
+}
+.wrapper{
+    display: flex;
+    gap: 60px;
+}
+.tpart h1{
+    font-size: 8vh;
+    font-weight: 900;
+    color: #6096B4;
+    margin-bottom: 70px;
+}
+.box{
+    width: 300px;
+    height: 40vh; 
+    background-color: #BDD0D6;
+    border-radius: 25px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.5s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.pic{
+    height: 48%;
+    width: 55%;
+    background-color: black;
+    border-radius: 50%;
+    margin:30px 0px;
+}
+.box p{
+    font-size: 2.3vh;
+}
+/*fpart section*/
+.fpart{
+    min-height: 80vh;
+    margin:80px 100px;
+}
+.cunt{
+    display: flex;
+    gap: 120px;
+}
+.fpart h1{
+    font-size: 8vh;
+    font-weight: 900;
+    color: #335A02;
+    margin-bottom: 50px;
+}
+.fd{
+    margin-top: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+.fd h2{
+    font-size: 2.5vh;
+    font-weight: bolder;
+    color: #335A02;
+}
+.milestone-box {
+    background-color: white;
+    color: #4c8c2b;
+    border: 2px solid #4c8c2b;
+    border-radius: 12px;
+    padding:25px 25px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+.slideshow {
+    position: relative;
+    width: 100%;
+    max-width: 400px; 
+    height: 400px; 
+    overflow: hidden;
+  }
+.sd{
+    margin-right: 900px;
+}
+  .sd img{
+    height: 100%;
+    max-height: 500px;
+    width: 100%;
+    max-width: 950px;
+    border-radius: 30px;
+  }
+  .slidex {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+  }
+  .slidex.active {
+    opacity: 1;
+    z-index: 1;
+  }
+  /*lpart section*/
+.lpart{
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 100px;
+}
+.lpart h1{
+    font-size: 8vh;
+    font-weight: 900;
+    color: #6096B4;
+    margin-bottom: 70px;
+}
+.carousel {
+    width: 95%;
+    max-width: 1600px;
+  }
+  .carousel-inner {
+    width: 100%;
+    border-radius: 30px;
+    margin-bottom: 100px;
+  }
+  .carousel-item img {
+    max-height: 650px;
+    object-fit: cover;
+  }
+footer {
+  background-color: #6096B4;
+  color: white;
+  width: 100%;
+}
+
+footer h5 {
+  color: white;
+}
+
+footer p, footer li, footer a {
+  color: white;
+  text-decoration: none;
+}
+
+footer .border-top {
+  border-top: 1px solid white !important;
+}
+
+footer ul {
+  padding-left: 0;
+}
+
+footer ul li {
+  list-style: none;
+}
+
+footer i {
+  margin-right: 8px;
+}
+

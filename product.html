@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life In A Box</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="popups/cart.css">
+<link rel="stylesheet" href="popups/login.css">
+<link rel="stylesheet" href="product.css">
+</head>
+<body>
+
+
+    <nav class="navbar">
+        <div class="logo"><img src="./logo.png" alt="logo"></div>
+        <div class="navlinks">
+        <ul>
+            <li><a class="active" href="./landingpage.html">Home</a></li>
+            <li><a class="active" href="product.html">Products</a></li>
+            <li><a class="active" href="./service.html">Services</a></li>
+            <li><a class="active" href="./about.html">About US</a></li>
+            <li><a class="active" href="./rus.html">Reach US</a></li>
+        </ul>
+        </div>
+        <div class="nav-icons">
+            <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+            <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+        </div>
+    </nav>
+    
+ 
+<!-- Cart Popup -->
+    <div class="cart-popup">
+    <h2>Cart</h2>
+    <div class="cart-items">
+        <!-- Cart items will be dynamically inserted here -->
+    </div>
+    <button class="review-btn">Review My Cart</button>
+    </div>
+
+
+<header class="text-center p-3">
+    <h1>Product Catalogue</h1>
+</header>
+
+ <!-- Login Form (Hidden Initially) -->
+<div class="login-container" id="loginContainer">
+    <div class="login-box">
+        <h2>Sign In</h2>
+        <input type="text" placeholder="Username" id="loginEmail"> <!-- Changed id to match JS -->
+        <input type="password" placeholder="Password" id="password">
+        
+        <div class="remember-me">
+            <input type="checkbox" id="remember">
+            <label for="remember">Remember Me</label>
+        </div>
+
+        <button class="btn" id="signInBtn">Sign In</button>
+        <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+        <span class="close-x" id="closeLogin">&times;</span>
+    </div>
+</div>
+
+<!-- Registration Form (Hidden Initially) -->
+<div class="register-container" id="registerContainer">
+    <div class="register-box">
+        <h2>Register</h2>
+        <input type="text" placeholder="Full Name" id="regFullName">
+        <input type="email" placeholder="Email" id="regEmail">
+        <input type="password" placeholder="Create Password" id="regPassword">
+        <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+        
+        <button class="btn" id="registerBtn">Register</button>
+        <p class="back-to-login" id="backToLogin">Back to Login</p>
+        <span class="close-x" id="closeRegister">&times;</span>
+    </div>
+</div>
+
+
+<!-- CATEGORY LIST -->
+<ul class="list-inline text-center mb-4" id="category-list">
+    <li class="list-inline-item"><a href="#" data-category="all">All Products</a></li>
+    <li class="list-inline-item"><a href="#" data-category="aquarium-tanks">Aquarium Tanks</a></li>
+    <li class="list-inline-item"><a href="#" data-category="aquarium-lights">Aquarium Lights</a></li>
+    <li class="list-inline-item"><a href="#" data-category="driftwoods-stones">Driftwoods & Stones</a></li>
+    <li class="list-inline-item"><a href="#" data-category="filters">Filters</a></li>
+    <li class="list-inline-item"><a href="#" data-category="fishes">Fishes</a></li>
+    <li class="list-inline-item"><a href="#" data-category="soil-sand-media">Soil & Sand</a></li>
+</ul>
+
+<!-- PRODUCTS SECTION -->
+<section class="product-section">
+    <div class="product-grid">
+
+    <div class="product-card" data-category="aquarium-tanks">
+        <img src="images/aquarium tank.webp" alt="Ultra Clear Aquarium" />
+        <div class="product-info">
+            <h3>Ultra Clear Aquarium 60x40x40cm</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=1" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart" ></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱3,720</p>
+    </div>
+
+    <div class="product-card" data-category="aquarium-lights">
+        <img src="images/ledstar.png" alt="Ledstar C 40" />
+        <div class="product-info">
+            <h3>Ledstar C 40 Light</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=2" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱3,450</p>
+    </div>
+
+    <div class="product-card" data-category="filters">
+        <img src="images/hepofilter.jpg" alt="Hepo 018 Filter" />
+        <div class="product-info">
+            <h3>Hepo 018 Filter</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=3" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱370</p>
+    </div>
+
+    <div class="product-card" data-category="driftwoods-stones">
+        <img src="images/dragonstone.jpg" alt="Dragon Stone" />
+        <div class="product-info">
+            <h3>Dragon Stone</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=4" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱150/kg</p>
+    </div>
+
+    <div class="product-card" data-category="soil-sand-media">
+        <img src="images/ecosoil.jpg" alt="TCFM Ecosoil" />
+        <div class="product-info">
+            <h3>TCFM Ecosoil 8L</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=5" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱1,200</p>
+    </div>
+
+    <div class="product-card" data-category="accessories">
+        <img src="images/tools.jpg" alt="Aquascaping Tools" />
+        <div class="product-info">
+            <h3>Aquascaping Tools</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=6" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱Price</p>
+    </div>
+
+
+    <div class="product-card" data-category="aquarium-tanks">
+        <img src="images/aquarium tank.webp" alt="Ultra Clear Aquarium" />
+        <div class="product-info">
+            <h3>Ultra Clear Aquarium 60x40x40cm</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=1" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱3,720</p>
+    </div>
+
+    <div class="product-card" data-category="aquarium-lights">
+        <img src="images/ledstar-d-60.webp" alt="Ledstar D 60" />
+        <div class="product-info">
+            <h3>Ledstar D 60 Light</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=11" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱6,750</p>
+    </div>
+
+    <div class="product-card" data-category="filters">
+        <img src="images/sunsun-hw-602b.jpg" alt="Sunsun HW 602B" />
+        <div class="product-info">
+            <h3>Sunsun HW 602B (5 gallons) </h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=13" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱1,300</p>
+    </div>
+
+    <div class="product-card" data-category="driftwoods-stones">
+        <img src="images/seiryuuu stone.jpg" alt="Seiryu Stone" />
+        <div class="product-info">
+            <h3>Seiryu Stone</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=7" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱150/kg</p>
+    </div>
+
+    <div class="product-card" data-category="soil-sand-media">
+        <img src="images/Istapremiumsoil.jpg" alt="Ista Premium Soil" />
+        <div class="product-info">
+            <h3>Ista Premium Soil 8L</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=5" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱1,200</p>
+    </div>
+
+    <div class="product-card" data-category="accessories">
+        <img src="images/tools.jpg" alt="Aquascaping Tools" />
+        <div class="product-info">
+            <h3>Aquascaping Tools</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=6" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱Price</p>
+    </div>
+
+
+     <div class="product-card" data-category="driftwoods-stones">
+        <img src="images/black seiryu stone.jpg" alt="Black Seiryu Stone" />
+        <div class="product-info">
+            <h3>Seiryu Stone</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=8" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱150/kg</p>
+    </div>
+
+     <div class="product-card" data-category="driftwoods-stones">
+        <img src="images/slatestone.jpg" alt="Slate Stone" />
+        <div class="product-info">
+            <h3>Seiryu Stone</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=9" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱150/kg</p>
+    </div>
+
+    <div class="product-card" data-category="aquarium-lights">
+        <img src="images/ledstar-j-60.png" alt="Ledstar J 60" />
+        <div class="product-info">
+            <h3>LedStar Model J 60 Stone</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=10" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱9,350</p>
+    </div>
+
+
+    <div class="product-card" data-category="filters">
+        <img src="images/stainlesscanisterfilter.jpg" alt="Stainles Canister Filter" />
+        <div class="product-info">
+            <h3>Stainless Canister Filter (TCFM pump) SCF 208 (10L | 10-25g) </h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=12" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱4,000</p>
+    </div>
+
+     <div class="product-card" data-category="filters">
+        <img src="images/shriuba-pf-60.png" alt="Shiruba PF 60 (3 gallons) " />
+        <div class="product-info">
+            <h3>Stainless Canister Filter (TCFM pump) SCF 208 (10L | 10-25g) </h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=14" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱473.00</p>
+    </div>
+
+
+    <div class="product-card" data-category="aquarium-lights">
+        <img src="images/ledstar-nano.jpg" alt="Ledstar Nano series ( app controlled, 30cm) " />
+        <div class="product-info">
+            <h3>Ledstar Nano series ( app controlled, 30cm) </h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=15" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱3,650</p>
+    </div>
+
+    <div class="product-card" data-category="soil-sand-media">
+        <img src="images/whitesand.jpg" alt="White Sand" />
+        <div class="product-info">
+            <h3>White Sand</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=16" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱60/kg</p>
+    </div>
+
+    <div class="product-card" data-category="soil-sand-media">
+        <img src="images/blacksand.jpg" alt="Black Sand" />
+        <div class="product-info">
+            <h3>White Sand</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=17" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱60/kg</p>
+    </div>
+
+<!-- Fishes no price-->
+    
+    <div class="product-card" data-category="fishes">
+        <img src="images/greendanio.jpg" alt="Green Danio" />
+        <div class="product-info">
+            <h3>Green Danio</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=18" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱price</p>
+    </div>
+    
+     <div class="product-card" data-category="fishes">
+        <img src="images/bronzecorydora.jpg" alt="Bronze Corydora" />
+        <div class="product-info">
+            <h3>Bronze Corydora</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=19" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱price</p>
+    </div>
+
+    <div class="product-card" data-category="fishes">
+        <img src="images/glofishtetra.jpg" alt="Glofish Tetra" />
+        <div class="product-info">
+            <h3>Glofish Tetra</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=20" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱price</p>
+    </div>
+
+      <div class="product-card" data-category="fishes">
+        <img src="images/blueshrimpneocaridina.png" alt="Blue Shrimp Neocaridina" />
+        <div class="product-info">
+            <h3>Blue Shrimp Neocaridina</h3>
+            <div class="card-buttons">
+                <a href="product_shop.html?id=21" class="view-details">
+                    <i class="fas fa-eye"></i> 
+                </a>
+                <button class="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i> 
+                </button>
+            </div>
+        </div>
+        <p>₱price</p>
+    </div>
+
+
+    
+
+<!-- Additional product cards repeated below as necessary -->
+
+    </div>
+</section>
+
+<footer class="py-5">
+  <div class="container text-center text-md-start">
+    <div class="row justify-content-between align-items-start">
+      
+      <div class="col-md-4 mb-4 mb-md-0">
+        <img src="./logo.png" alt="Life In A Box Logo" style="max-width: 140px;">
+        <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
+      </div>
+
+      <div class="col-md-4 mb-4 mb-md-0">
+        <h5 class="fw-bold mb-3">Contact Us</h5>
+        <ul class="list-unstyled small">
+          <li class="mb-2">
+            <i class="fas fa-map-marker-alt"></i> Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-phone"></i> +63 932 241 2734
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-envelope"></i> chaseaquascape09@gmail.com
+          </li>
+        </ul>
+      </div>
+
+      <div class="col-md-3">
+        <h5 class="fw-bold mb-3">Follow Us</h5>
+        <div class="d-flex justify-content-center justify-content-md-start gap-3">
+          <a href="https://www.facebook.com/Chaseaquatics" class="text-white" target="_blank"><i class="fab fa-facebook fa-lg"></i></a>
+          <a href="https://www.instagram.com/chaseaquascaping" class="text-white" target="_blank"><i class="fab fa-instagram fa-lg"></i></a>
+          <a href="https://www.youtube.com/@chaseaquascape962" target="_blank" class="text-white"><i class="fa-brands fa-youtube"></i></a>
+          <a href="https://www.tiktok.com/@chase_aquascape" target="_blank" class="text-white"><i class="fa-brands fa-tiktok"></i></a>
+        </div>
+      </div>
+      
+    </div>
+
+    <div class="border-top my-4"></div>
+
+    <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
+  </div>
+</footer>
+
+
+<script src="product.js"></script>
+<script type="module" src="/popups/cart.js"></script>
+<script type="module" src="/popups/login.js"></script>
+
+
+</body>
+</html>
+
+

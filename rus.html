@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life In A Box </title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="reachus.css">
+    <link rel="stylesheet" href="./popups/cart.css">
+    <link rel="stylesheet" href="./popups/login.css">
+</head>
+<body>
+ 
+      <nav class="navbar">
+        <div class="logo"><img src="./logo.png" alt="logo"></div>
+        <div class="navlinks">
+        <ul>
+            <li><a class="active" href="./landingpage.html">Home</a></li>
+            <li><a class="active" href="./product.html">Products</a></li>
+            <li><a class="active" href="./service.html">Services</a></li>
+            <li><a class="active" href="./about.html">About US</a></li>
+            <li><a class="active" href="./rus.html">Reach US</a></li>
+        </ul>
+        </div>
+        <div class="nav-icons">
+            <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+            <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+        </div>
+    </nav>
+    
+
+     <!-- Login Form (Hidden Initially) -->
+<div class="login-container" id="loginContainer">
+    <div class="login-box">
+        <h2>Sign In</h2>
+        <input type="text" placeholder="Username" id="loginEmail"> <!-- Changed id to match JS -->
+        <input type="password" placeholder="Password" id="password">
+        
+        <div class="remember-me">
+            <input type="checkbox" id="remember">
+            <label for="remember">Remember Me</label>
+        </div>
+
+        <button class="btn" id="signInBtn">Sign In</button>
+        <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+        <span class="close-x" id="closeLogin">&times;</span>
+    </div>
+</div>
+
+<!-- Registration Form (Hidden Initially) -->
+<div class="register-container" id="registerContainer">
+    <div class="register-box">
+        <h2>Register</h2>
+        <input type="text" placeholder="Full Name" id="regFullName">
+        <input type="email" placeholder="Email" id="regEmail">
+        <input type="password" placeholder="Create Password" id="regPassword">
+        <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+        
+        <button class="btn" id="registerBtn">Register</button>
+        <p class="back-to-login" id="backToLogin">Back to Login</p>
+        <span class="close-x" id="closeRegister">&times;</span>
+    </div>
+</div>
+
+
+    <!-- Cart Popup -->
+    <div class="cart-popup">
+    <h2>Cart</h2>
+    <div class="cart-items">
+        <!-- Cart items will be dynamically inserted here -->
+    </div>
+    <button class="review-btn">Review My Cart</button>
+    </div>
+
+
+    
+    <section class="hero">
+        <div class="title">
+            <h1>Reach Us</h1>
+            <p>We're here to help and answer any questions you might have. We look forward to hearing from you.</p>
+        </div>
+      
+
+        <div class="continir">
+            <div class="fconti">
+                <img src="./office.jpeg" alt="map picture">
+                <h2>Visit Our Office</h2>
+                <div class="deets">
+                    <div class="icon"><i class="fa-solid fa-location-dot"></i></div>
+                    <div class="text">Paseo de Carmona, Unit 8 Lot E/F paseo square, Governor's Dr,<br>Carmona, 4116 Cavite</div>
+                  </div>
+                  
+                  <div class="deets">
+                    <div class="icon"><i class="fa-solid fa-clock"></i></div>
+                    <div class="text">
+                      Weekdays: 10:00 AM to 7:00 PM<br>
+                      Weekends: 10:00 AM to 5:00 PM
+                    </div>
+                  </div>
+                  
+                  <div class="deets">
+                    <div class="phone"><i class="fa-solid fa-phone"></i></div>
+                    <div class="text">+63 932 241 2734</div>
+                  </div>
+                  
+                  <div class="deets">
+                    <div class="location"><i class="fa-solid fa-map-pin"></i></div>
+                    <div class="text">Waze address</div>
+                  </div>                  
+            </div>
+            <div class="sconti">
+                <h2>Send Us A Message</h2>
+              <form id="contact-form" action="https://formsubmit.co/aaroncortez2417@gmail.com" method="POST">
+              <input type="hidden" name="_captcha" value="false">
+              <div class="second">
+                <label for="name">Name</label>
+                <input type="text" placeholder="Name" id="name" name="name" required>
+                <label for="email">Email</label>
+                <input type="email" placeholder="Email" id="email" name="email" required>
+                <label for="message">Message</label>
+                <textarea id="message" name="message" placeholder="Message" required></textarea>
+                <button type="submit">Send</button>
+              </div>
+            </form>
+
+            <div id="popup" style="display:none; position:fixed; top:20px; right:20px; background-color:black; color:white; padding:15px; border-radius:5px;">
+              Message sent!
+            </div>
+            </div>
+        </div>
+        <div class="socmed">
+            <ul class="social-icons list-unstyled d-flex justify-content-center gap-4 mt-4">
+                <li><a href="https://www.facebook.com/Chaseaquatics" class="social-link" target="_blank"><i class="fab fa-facebook"></i></a></li>
+                <li><a href="https://www.instagram.com/chaseaquascaping" class="social-link" target="_blank"><i class="fab fa-instagram"></i></a></li>
+                <li><a href="https://www.youtube.com/@chaseaquascape962" class="social-link" target="_blank"><i class="fa-brands fa-youtube"></i></a></li>
+                <li><a href="https://www.tiktok.com/@chase_aquascape" class="social-link" target="_blank"><i class="fa-brands fa-tiktok"></i></a></li>
+              </ul>                    
+        </div>
+        </section>
+
+    <footer >
+        <p>© 2025 Life in a Box. All rights reserved.</p>
+    </footer>
+      <script src="https://cdn.jsdelivr.net/npm/tsparticles@3.3.0/tsparticles.bundle.min.js"></script>
+    <script src="./abt.js"></script>
+    <script src="./popups/cart.js"></script>
+    <script src="./popups/login.js"></script>
+</body>
+</html>

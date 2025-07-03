@@ -1,0 +1,367 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+.navbar {
+    position: relative; 
+    width: 100%;
+    background-color: #EEE9DA;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+    transition: top 0.3s ease-in-out, position 0.3s ease-in-out;
+    z-index: 1000;
+}
+.navbar.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+.navlinks ul {
+    display: flex;
+    list-style: none;
+    gap: 50px;
+    position: relative;
+    top: 5px;
+}
+.navlinks ul li a {
+    text-decoration: none;
+    color: #335A02; 
+    font-size: 20px;
+  }
+a.active:hover {
+    text-decoration: underline;   
+    transition: 1s; 
+}
+.navbar .logo img {
+    height: 40px;
+    margin-left: 10px;
+}
+.nav-icons{
+  display:flex;
+  flex-direction: row;
+  gap:15px;
+  margin-right:20px;
+}
+.nav-icons button{
+    color:#335A02;
+    font-size: 30px;
+    background: none; 
+    border: none;     
+    outline: none;    
+    cursor: pointer;
+}
+.hero{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 280px;
+}
+.hero img{
+    margin-bottom: 50px;
+}
+.hero p{
+    font-size: 3.5vh;
+    margin-bottom: 10px;
+}
+.hero button {
+    font-weight: bold;
+    font-size: 25px;
+    padding:4px 50px;
+}
+/*spart section*/
+.spart{
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.spart h1{
+    font-size: 8vh;
+    font-weight: 900;
+    color: #6096B4;
+    margin-bottom: 100px;
+}
+.prodcont {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    position: relative; 
+    gap:10px;
+}
+.bton {
+    background-color: transparent;
+    border: none;
+    font-size: 30px;
+    cursor: pointer;
+}
+.previous {
+    left: 100px;
+}
+.next {
+    right: 100px;
+}
+.cont {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 28px;
+}
+.box {
+    width: 320px;
+    height: 40vh; 
+    background-color: white;
+    border-radius: 25px;
+    transition: transform 0.5s ease;
+}
+.box:hover {
+    transform: translateY(-8px);
+}
+.text{
+    font-size: 18px; 
+    font-weight: 900; 
+    font-family: 'Montserrat', sans-serif;
+    color: black; 
+    text-align: left;
+    position: relative;
+    top: 10px;
+    left: 15px;
+    width: auto;
+    margin-bottom: 15px;
+}
+.box img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 0px 0px 8px 8px;
+}
+.hidden {
+    display: none;
+}
+/*tpart section*/
+.tpart{
+    min-height:80vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin:0px 80px;
+    gap:150px;
+    margin-bottom: 80px;
+}
+.fdiv{
+    width: 100%;
+    max-width: 700px;
+}
+.fdiv h1{
+    font-size: 8vh;
+    font-weight: 900;
+    position: relative;
+    top: -15px;
+    color: #335A02;
+    margin-top: 20px;
+}
+.fdiv p{
+    font-size: 2.8vh;
+    margin-bottom: 40px;
+}
+.fdiv button{
+    padding: 5px 50px;
+    font-weight: bold;
+    font-size: 25px;
+    position: relative;
+    left:160px;
+}
+.sdiv{
+    margin-top: 50px;
+}
+.sdiv img{
+    border-radius: 30px;
+    box-shadow: 0 0 150px rgba(0, 0, 0, 0.855);
+}
+/*fpart section*/
+.fpart {
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    margin: 0px 100px;
+    align-items: center;
+}
+.fpart h1{
+    font-size: 8vh;
+    font-weight: 900;
+    color: #6096B4;
+    margin: 100px 0px;
+}
+.fwrap{
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    max-height: 500px;
+    gap:30px;
+}
+.fwrap .boxx{
+    background-color: #BDD0D6;
+    color: black;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    align-items: center;
+    height: 100%;
+    border-radius: 20px;
+}
+.boxx i{
+    font-size: 40px;
+}
+.boxx h2{
+    font-size: 4vh;
+    font-weight: bold;
+    margin-bottom:25px;
+}
+.boxx p{
+    font-size: 2.5vh;
+    margin-bottom: 40px;
+    text-align: center;
+}
+.boxx button{
+    font-size: 20px;
+    padding: 5px 70px;
+}
+.boxx a{
+    font-size: 20px;
+    padding: 5px 70px;
+}
+/*fifpart section*/
+.fifpart{
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.fifpart h1{
+    font-size: 8vh;
+    font-weight: 900;
+    position: relative;
+    top: -15px;
+    color: #335A02;
+    margin-top: 30px;
+    margin-bottom: 50px;
+}
+.conti {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px 100px; 
+    padding: 40px;
+    max-width: 1500px; 
+    margin: 0 auto;
+}
+.bx {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 10px 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 600px; 
+    max-width: 100%;
+    gap: 20px;
+}
+.bx i {
+    font-size: 50px;
+    color: #4c8c2b;
+}
+.bx .text h2 {
+    font-size: 22px;
+    color: #2b572b;
+    margin: 0;
+    font-weight: 700;
+}
+.bx .text p {
+    font-size: 15px;
+    margin-top: 5px;
+    color: #555;
+}
+.testi-box{
+    height: auto;
+    width: 78%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    border-radius: 30px;
+    margin-bottom: 100px;
+    margin-top: 50px;
+}
+.testi-cont{
+    display: flex;
+    flex-direction: row;
+    gap:30px;
+}
+.testimonial{
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+}
+.testimonial p{
+    text-align: center;
+    font-size: 2vh;
+    font-family: 'Montserrat', sans-serif;
+    color:#555;
+}
+.testimonial-name{
+    margin-bottom: 0px;
+}
+.testimonial-avatar{
+    width: 80px;
+    height: 80px;
+    background-color: black;
+    border-radius: 50%;
+    margin-top: 40px;
+    margin-bottom: 30px;
+}
+.tt{
+    font-size: 5vh;
+    color: #4c8c2b ;
+    font-weight: bold;
+}
+footer {
+  background-color: #6096B4;
+  color: white;
+  width: 100%;
+}
+
+footer h5 {
+  color: white;
+}
+
+footer p, footer li, footer a {
+  color: white;
+  text-decoration: none;
+}
+
+footer .border-top {
+  border-top: 1px solid white !important;
+}
+
+footer ul {
+  padding-left: 0;
+}
+
+footer ul li {
+  list-style: none;
+}
+
+footer i {
+  margin-right: 8px;
+}
