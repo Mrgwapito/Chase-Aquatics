@@ -1,0 +1,188 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+.navbar {
+    position: relative; 
+    width: 100%;
+    background-color: #EEE9DA;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+    transition: top 0.3s ease-in-out, position 0.3s ease-in-out;
+    z-index: 1000;
+}
+.navbar.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+.navlinks ul {
+    display: flex;
+    list-style: none;
+    gap: 50px;
+    position: relative;
+    top: 5px;
+}
+.navlinks ul li a {
+    text-decoration: none;
+    color: #335A02; 
+    font-size: 20px;
+  }
+a.active:hover {
+    text-decoration: underline;   
+    transition: 1s; 
+}
+.navbar .logo img {
+    height: 40px;
+    margin-left: 10px;
+}
+.nav-icons{
+  display:flex;
+  flex-direction: row;
+  gap:15px;
+  margin-right:20px;
+}
+.nav-icons button{
+    color:#335A02;
+    font-size: 30px;
+    background: none; 
+    border: none;     
+    outline: none;    
+    cursor: pointer;
+}
+/* wrapper */
+.policy-wrap{
+  max-width:1200px;
+  margin:24px auto 64px;
+  padding:0 16px;
+  display:grid;
+  grid-template-columns: 260px 1fr;
+  gap:20px;
+}
+
+/* sidebar */
+.policy-nav{
+  background:var(--card, #fff);
+  border:1px solid var(--line, #e5e7eb);
+  border-radius:14px;
+  box-shadow:var(--shadow, 0 10px 24px rgba(0,0,0,.08));
+  padding:16px;
+  position:sticky;
+  top:100px;
+  height:max-content;
+}
+.policy-nav h4{ margin:4px 0 10px; }
+.policy-nav nav{ display:flex; flex-direction:column; gap:8px; margin:8px 0 10px; }
+.policy-nav a{
+  text-decoration:none;
+  color:var(--text,#222);
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid transparent;
+  font-weight:600;
+}
+.policy-nav a:hover{ background:#f6f7fb; }
+.policy-nav a.active{
+  color:var(--primary,#276EF1);
+  background:var(--primary-weak,#e8f0ff);
+  border-color:#dbeafe;
+}
+.policy-nav .muted{ color:var(--muted,#6b7280); font-size:12px; }
+
+/* content cards */
+.policy-card{
+  background:var(--card,#fff);
+  border:1px solid var(--line,#e5e7eb);
+  border-radius:14px;
+  box-shadow:var(--shadow, 0 10px 24px rgba(0,0,0,.08));
+  padding:20px 22px;
+  margin-bottom:18px;
+}
+.policy-card h2{ margin:0 0 8px; font-size:24px; }
+.policy-card h3{ margin:16px 0 8px; font-size:16px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted,#6b7280); }
+.policy-card p{ margin:6px 0 10px; line-height:1.6; color:#374151; }
+.policy-card ul{ margin:0 0 8px 18px; }
+.policy-card li{ margin:6px 0; line-height:1.6; }
+
+/* mobile */
+@media (max-width:900px){
+  .policy-wrap{ grid-template-columns: 1fr; }
+  .policy-nav{ position:static; }
+}
+footer {
+  background-color: #6096B4;
+  color: white;
+  width: 100%;
+}
+
+footer h5 {
+  color: white;
+}
+
+footer p, footer li, footer a {
+  color: white;
+  text-decoration: none;
+}
+
+footer .border-top {
+  border-top: 1px solid white !important;
+}
+
+footer ul {
+  padding-left: 0;
+}
+
+footer ul li {
+  list-style: none;
+}
+
+footer i {
+  margin-right: 8px;
+}
+
+/* sidebar card padding a bit tighter */
+.policy-nav{
+  padding:12px 14px 14px;
+}
+
+/* remove big gap above/below list, control spacing */
+.policy-nav nav{
+  margin:6px 0 10px;
+  gap:10px;                 /* adjust to taste: 8–12px works well */
+}
+
+/* links look like neat pills and span full width */
+.policy-nav a{
+  display:block;
+  padding:9px 12px;         /* slightly smaller so the blue doesn’t look too tall */
+  border-radius:12px;
+}
+
+/* small note text spacing */
+.policy-nav .muted{
+  margin-top:6px;
+  display:block;
+}
+/* put near your terms styles */
+:root{
+  --sticky-offset: 88px; /* adjust to taste (72–112px usually good) */
+}
+
+.policy-sidebar{
+  position: sticky;
+  top: var(--sticky-offset); /* keeps space above when scrolled */
+}
+
+/* optional: a little extra breathing room inside the card */
+.policy-nav{ padding-top: 16px; }
+/* apply to each section target */
+#payments, #privacy, #shipping{
+  scroll-margin-top: calc(var(--sticky-offset) + 16px);
+}

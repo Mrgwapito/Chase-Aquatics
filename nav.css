@@ -1,0 +1,73 @@
+/* ==== Navbar: base (desktop) ==== */
+.nav-toggle{ display:none; background:transparent; border:0; font-size:26px; color:#335A02; padding:6px 10px; cursor:pointer; }
+.navlinks{ transition: max-height .25s ease; }
+.navlinks ul{ align-items:center; } /* keep your base display:flex elsewhere */
+
+/* ===== Mobile S: up to 374px ===== */
+@media (max-width:374px){
+  .navbar{ gap:10px; padding:8px 12px; }
+  .navbar .logo img{ height:32px; }
+  .nav-toggle{ display:block; }
+  .nav-icons button{ font-size:22px; }
+
+  .navlinks{
+    position:absolute; top:100%; left:0; right:0;
+    background:#EEE9DA; max-height:0; overflow:hidden;
+    box-shadow:0 8px 12px rgba(0,0,0,.08); z-index:999;
+  }
+  .navlinks.open{ max-height:320px; }
+  .navlinks ul{ flex-direction:column; gap:10px; padding:12px 16px; }
+}
+
+/* ===== Mobile M: 375–424px ===== */
+@media (min-width:375px) and (max-width:424px){
+  .navbar{ padding:10px 14px; }
+  .navbar .logo img{ height:34px; }
+  .nav-toggle{ display:block; }
+  .nav-icons button{ font-size:24px; }
+
+  .navlinks{
+    position:absolute; top:100%; left:0; right:0;
+    background:#EEE9DA; max-height:0; overflow:hidden;
+    box-shadow:0 8px 12px rgba(0,0,0,.08);
+  }
+  .navlinks.open{ max-height:340px; }
+  .navlinks ul{ flex-direction:column; gap:12px; padding:14px 18px; }
+}
+
+/* ===== Mobile L: 425–767px ===== */
+@media (min-width:425px) and (max-width:767px){
+  .navbar{ padding:10px 18px; }
+  .navbar .logo img{ height:36px; }
+  .nav-toggle{ display:block; }
+  .nav-icons button{ font-size:26px; }
+
+  .navlinks{
+    position:absolute; top:100%; left:0; right:0;
+    background:#EEE9DA; max-height:0; overflow:hidden;
+    box-shadow:0 8px 12px rgba(0,0,0,.08);
+  }
+  .navlinks.open{ max-height:360px; }
+  .navlinks ul{ flex-direction:column; gap:14px; padding:16px 20px; }
+}
+
+/* ===== Tablet: 768–1023px (no hamburger) ===== */
+@media (min-width:768px) and (max-width:1023px){
+  .navbar{ padding:10px 24px; }
+  .nav-toggle{ display:none; }
+  .navlinks{ position:static; max-height:none; box-shadow:none; }
+  .navlinks ul{ flex-direction:row; gap:28px; padding:0; }
+}
+
+/* Turn hamburger into “X” when active (Font Awesome) */
+.nav-toggle.active i::before{
+  content:"\f00d"; font-family:"Font Awesome 6 Free"; font-weight:900;
+}
+/* --- Sticky navbar at all widths --- */
+.navbar{
+  position: -webkit-sticky; /* iOS/Safari */
+  position: sticky;
+  top: 0;
+  z-index: 2000;            /* above page content */
+  background: #EEE9DA;      /* stays solid while overlapping content */
+}

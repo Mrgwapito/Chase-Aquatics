@@ -1,0 +1,283 @@
+/* ==============================
+   GLOBAL THEME STYLES
+============================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+/* ==============================
+   NAVBAR (reuse theme)
+============================== */
+.navbar {
+  background-color: #EEE9DA;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  box-shadow: 0 8px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar .logo img {
+  height: 40px;
+}
+
+.navlinks ul {
+  list-style: none;
+  display: flex;
+  gap: 30px;
+}
+
+.navlinks ul li a {
+  color: #335A02;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.navlinks ul li a:hover {
+  text-decoration: underline;
+}
+
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.nav-icons button {
+  color: #335A02;
+  font-size: 26px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* ==============================
+   CHECKOUT SECTION
+============================== */
+.order-section {
+  background-color: #fff;
+  padding: 60px 0;
+}
+
+.order-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.08);
+  padding: 40px 30px;
+}
+
+.order-wrapper h2 {
+  font-weight: 900;
+  font-size: 2.2rem;
+  color: #335A02;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.order-subtitle {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+/* ==============================
+   CUSTOMER FORM
+============================== */
+form label {
+  font-weight: 600;
+  color: #335A02;
+}
+
+form .form-control {
+  border-radius: 10px;
+  border: 1.5px solid #ccc;
+  padding: 10px;
+  transition: border-color 0.3s ease;
+}
+
+form .form-control:focus {
+  border-color: #335A02;
+  box-shadow: 0 0 4px rgba(51, 90, 2, 0.3);
+}
+
+.btn-primary {
+  background-color: #335A02;
+  border-color: #335A02;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 10px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #2a4801;
+  border-color: #2a4801;
+  transform: translateY(-1px);
+}
+
+/* ==============================
+   ORDER REVIEW BOX
+============================== */
+.order-items {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 15px;
+  background-color: #fafafa;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.order-item img {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  object-fit: cover;
+  margin-right: 12px;
+  border: 1px solid #ddd;
+}
+
+.order-item-info h6 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 3px;
+}
+
+.order-item-info p {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.order-item strong {
+  color: #335A02;
+  font-weight: 700;
+  min-width: 80px;
+  text-align: right;
+}
+
+/* ==============================
+   ORDER COST + TOTAL
+============================== */
+.order-costs {
+  margin-top: 20px;
+  font-weight: 500;
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  color: #444;
+}
+
+.order-total {
+  border-top: 1px solid #ddd;
+  padding-top: 15px;
+  margin-top: 10px;
+}
+
+.order-total-value {
+  color: #335A02;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+/* ==============================
+   FOOTER
+============================== */
+footer {
+  background-color: #6096B4;
+  color: #fff;
+  width: 100%;
+  margin-top: 80px;
+}
+
+footer h5 {
+  color: white;
+}
+
+footer p, footer li, footer a {
+  color: white;
+  text-decoration: none;
+}
+
+footer ul {
+  padding: 0;
+  list-style: none;
+}
+
+footer .border-top {
+  border-top: 1px solid white !important;
+}
+
+/* ==============================
+   RESPONSIVE
+============================== */
+@media (max-width: 992px) {
+  .order-wrapper {
+    padding: 25px;
+  }
+
+  .order-wrapper h2 {
+    font-size: 1.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navlinks ul {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .order-wrapper {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .order-item img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .order-wrapper h2 {
+    font-size: 1.5rem;
+  }
+
+  .btn-primary {
+    font-size: 0.95rem;
+  }
+}

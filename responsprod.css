@@ -1,0 +1,41 @@
+/* Tablet: 3 columns */
+@media (min-width: 768px) and (max-width: 1023px){
+  .product-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Desktop: 4 columns */
+@media (min-width: 1024px){
+  .product-grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+/* --- Mobile layout: 2 columns --- */
+@media (max-width: 767px){
+  /* tighter category list */
+  #category-list{
+    gap: 10px;
+    padding: 0 12px;
+    flex-wrap: wrap;            /* or use overflow-x if you prefer a scroller */
+  }
+
+  .product-section{ padding: 24px 0; }
+
+  .product-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important; /* 1 1 per row */
+    gap: 12px;
+    padding: 0 12px;
+  }
+
+  .product-card{
+    height: auto;         /* let cards size naturally on narrow screens */
+    padding: 10px;
+  }
+
+  .product-card img{
+    height: 120px;        /* keeps images tidy in the 2-col grid */
+    object-fit: cover;
+    border-radius: 6px;
+  }
+
+  .product-info h3{ font-size: .9rem; }
+  .product-card p{ font-size: .95rem; margin-top: 6px; }
+  .add-to-cart, .view-details{ padding: 6px 8px; font-size: 13px; }
+}

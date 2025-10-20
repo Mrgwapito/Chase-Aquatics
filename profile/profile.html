@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life in a Box</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous"> 
+  <link rel="stylesheet" href="../popups/login.css">
+  <link rel="stylesheet" href="../popups/cart.css">
+  <link rel="stylesheet" href="./profile.css">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+</head>
+
+<body>
+  <nav class="navbar">
+    <div class="logo"><img src="/logo.png" alt="logo"></div>
+
+    <!-- NEW: mobile hamburger -->
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="navlinks" id="navlinks">
+      <ul>
+        <li><a class="active" href="/index.html">Home</a></li>
+        <li><a class="active" href="/product.html">Products</a></li>
+        <li><a class="active" href="/service.html">Services</a></li>
+        <li><a class="active" href="/about.html">About Us</a></li>
+        <li><a class="active" href="/rus.html">Reach Us</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-icons">
+      <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+      <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+    </div>
+  </nav>
+
+  <!-- Login Form -->
+  <div class="login-container" id="loginContainer">
+    <div class="login-box">
+      <h2>Sign In</h2>
+      <input type="text" placeholder="Username" id="loginEmail">
+      <input type="password" placeholder="Password" id="password">
+
+      <div class="remember-me">
+        <input type="checkbox" id="remember">
+        <label for="remember">Remember Me</label>
+      </div>
+
+      <button class="btn" id="signInBtn">Sign In</button>
+      <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+      <span class="close-x" id="closeLogin">&times;</span>
+    </div>
+  </div>
+
+  <!-- Registration Form -->
+  <div class="register-container" id="registerContainer">
+    <div class="register-box">
+      <h2>Register</h2>
+
+      <!-- ✅ Added separate fields for first and last name -->
+      <input type="text" placeholder="First Name" id="regFirstName">
+      <input type="text" placeholder="Last Name" id="regLastName">
+
+      <!-- keep full name hidden (for backward compatibility) -->
+      <input type="hidden" id="regFullName">
+
+      <input type="email" placeholder="Email" id="regEmail">
+
+      <!-- 🔹 Email Verification Section -->
+      <div class="otp-container">
+        <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
+        <button id="sendOtpBtn" class="otp-btn">Send Code</button>
+        <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+      </div>
+
+      <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8">
+      <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+
+      <button class="btn" id="registerBtn" disabled>Register</button>
+      <p class="back-to-login" id="backToLogin">Back to Login</p>
+      <span class="close-x" id="closeRegister">&times;</span>
+    </div>
+  </div>
+
+  <!-- Cart Popup -->
+  <div class="cart-popup">
+    <h2>Cart</h2>
+    <div class="cart-items"></div>
+    <button class="review-btn">Review My Cart</button>
+  </div>
+
+  <section class="profile-section">
+    <div class="profile-card">
+      <div class="profile-header">
+        <img src="images/default-user.png" alt="Profile Picture" class="profile-img">
+        <h2 class="user-name">Loading...</h2>
+      </div>
+
+      <div class="profile-info">
+        <div class="info-item">
+          <span class="label">User ID:</span>
+          <span class="value" id="userIdValue"></span>
+        </div>
+
+        <!-- ✅ Added separate display/edit fields for first and last name -->
+        <div class="info-item editable">
+          <span class="label">First Name:</span>
+          <input type="text" class="edit-input" id="firstNameInput" placeholder="Enter first name" disabled>
+        </div>
+
+        <div class="info-item editable">
+          <span class="label">Last Name:</span>
+          <input type="text" class="edit-input" id="lastNameInput" placeholder="Enter last name" disabled>
+        </div>
+
+        <div class="info-item editable">
+          <span class="label">Email:</span>
+          <input type="email" class="edit-input" id="emailInput" value="" disabled>
+        </div>
+
+        <div class="otp-section" id="emailOtpSection">
+          <label for="emailOtp">Enter OTP sent to your email</label>
+          <input type="text" id="emailOtp" placeholder="Enter OTP">
+          <button class="otp-btn" id="sendEmailOtp">Send Code</button>
+          <button class="otp-btn" id="verifyEmailOtp">Verify</button>
+        </div>
+
+        <div class="info-item editable">
+          <span class="label">Mobile Number:</span>
+          <input type="text" class="edit-input" id="phoneInput" placeholder="Enter mobile number" disabled>
+        </div>
+
+        <div class="info-item editable">
+          <span class="label">Address:</span>
+          <input type="text" class="edit-input" id="addressInput" placeholder="Enter address" disabled>
+        </div>
+
+        <div class="info-item editable">
+          <span class="label">Gender:</span>
+          <select class="edit-input" id="genderInput" disabled>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        <div class="info-item editable">
+          <span class="label">Birthday:</span>
+          <input type="date" class="edit-input" id="birthdayInput" disabled>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn-edit" id="editProfileBtn"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+        <button class="btn-save" id="saveProfileBtn" style="display:none;"><i class="fa-solid fa-save"></i> Save Changes</button>
+        <button class="btn-change-password" id="changePasswordBtn"><i class="fa-solid fa-lock"></i> Change Password</button>
+        <!-- ✅ Added logout button -->
+        <button class="btn-logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </div>
+
+      <div class="change-password-section" id="changePasswordSection">
+        <h3>Change Password</h3>
+        <div class="password-inputs">
+          <label>New Password</label>
+          <input type="password" id="newPassword" placeholder="Enter new password">
+        </div>
+        <div class="password-inputs">
+          <label>Confirm Password</label>
+          <input type="password" id="confirmPassword" placeholder="Confirm new password">
+        </div>
+        <div class="password-actions">
+          <button class="btn-save" id="savePasswordBtn"><i class="fa-solid fa-check"></i> Save Password</button>
+          <button class="btn-edit" id="cancelPasswordBtn"><i class="fa-solid fa-times"></i> Cancel</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <form id="emailForm" style="display:none;">
+    <input type="hidden" name="to_email" id="hiddenEmail">
+    <input type="hidden" name="name" id="hiddenName">
+    <input type="hidden" name="otp_code" id="hiddenOtp">
+    <input type="hidden" name="time" id="hiddenTime">
+    <input type="hidden" name="message" id="hiddenMessage">
+  </form>
+
+  <script src="./profile.js"></script>
+  <script src="../profile/userauth.js"></script>
+
+</body>
+</html>

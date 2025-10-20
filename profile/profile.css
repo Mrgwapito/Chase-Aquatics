@@ -1,0 +1,441 @@
+/* Reset and Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #f9f9f9;
+}
+
+/* Navbar */
+.navbar {
+  position: relative;
+  width: 100%;
+  background-color: #EEE9DA;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 40px;
+  box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+  transition: top 0.3s ease-in-out, position 0.3s ease-in-out;
+  z-index: 1000;
+}
+
+.navbar.fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.navlinks ul {
+  display: flex;
+  list-style: none;
+  gap: 50px;
+  position: relative;
+  top: 5px;
+}
+
+.navlinks ul li a {
+  text-decoration: none;
+  color: #335A02;
+  font-size: 20px;
+}
+
+a.active:hover {
+  text-decoration: underline;
+  transition: 1s;
+}
+
+.navbar .logo img {
+  height: 40px;
+}
+
+.nav-icons {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+}
+
+.nav-icons button {
+  color: #335A02;
+  font-size: 30px;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Profile Section */
+.profile-section {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 40px;
+  background-color: #f9f9f9;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.profile-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 1000px;
+  text-align: center;
+  padding: 40px;
+}
+
+.profile-img {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 4px solid #335A02;
+  object-fit: cover;
+  margin-bottom: 15px;
+}
+
+.user-name {
+  color: #335A02;
+  font-size: 24px;
+  margin: 5px 0;
+}
+
+.user-role {
+  color: #777;
+  font-size: 15px;
+  margin-bottom: 25px;
+}
+
+/* Info Section */
+.profile-info {
+  text-align: left;
+  margin: 25px 0;
+  width: 100%;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.label {
+  font-weight: 600;
+  color: #335A02;
+}
+
+.value {
+  color: #444;
+  text-align: right;
+  max-width: 60%;
+  word-wrap: break-word;
+}
+
+/* Editable Inputs */
+.edit-input {
+  border: none;
+  background: transparent;
+  text-align: right;
+  color: #444;
+  font-size: 14px;
+  width: 60%;
+  transition: 0.3s;
+}
+
+.edit-input:disabled {
+  color: #444;
+}
+
+.edit-input:enabled {
+  background: #f4f4f4;
+  border-radius: 5px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+}
+
+/* OTP Section */
+.otp-section {
+  display: none;
+  background: #f4f4f4;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px 0 20px 0;
+  text-align: left;
+  animation: fadeIn 0.3s ease-in-out;
+}
+.nav-toggle{
+  display: block;
+}
+.otp-section label {
+  display: block;
+  color: #335A02;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.otp-section input {
+  width: 70%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+.otp-btn {
+  background-color: #335A02;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.otp-btn:hover {
+  background-color: #2b4d02;
+}
+
+/* Buttons */
+.profile-actions {
+  margin-top: 25px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-edit,
+.btn-save,
+.btn-change-password {
+  background-color: #335A02;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 160px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.btn-edit i,
+.btn-save i,
+.btn-change-password i {
+  font-size: 14px;
+}
+
+.btn-edit:hover,
+.btn-save:hover,
+.btn-change-password:hover {
+  background-color: #2b4d02;
+}
+
+/* Change Password Section */
+.change-password-section {
+  display: none;
+  margin-top: 25px;
+  background: #f4f4f4;
+  border-radius: 15px;
+  padding: 20px 25px;
+  text-align: left;
+  animation: fadeIn 0.3s ease-in-out;
+  width: 100%;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.change-password-section h3 {
+  text-align: center;
+  color: #335A02;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.password-inputs {
+  margin-bottom: 15px;
+}
+
+.password-inputs label {
+  font-weight: 600;
+  color: #335A02;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.password-inputs input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.password-inputs input:focus {
+  border-color: #557a1f;
+  box-shadow: 0 0 5px rgba(85, 122, 31, 0.5);
+}
+
+.password-actions {
+  text-align: center;
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.password-actions button {
+  background-color: #335A02;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 140px;
+}
+
+.password-actions button:hover {
+  background-color: #2b4d02;
+}
+
+/* Logout Button */
+.btn-logout {
+  background-color: #a52a2a;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 160px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-logout i {
+  font-size: 14px;
+}
+
+.btn-logout:hover {
+  background-color: #7d1e1e;
+}
+
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navlinks ul {
+    gap: 20px;
+  }
+
+  .profile-card {
+    padding: 25px;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .edit-input {
+    width: 100%;
+    text-align: left;
+  }
+
+  .otp-section input {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+/* ==== Navbar: base (desktop) ==== */
+.nav-toggle{ display:none; background:transparent; border:0; font-size:26px; color:#335A02; padding:6px 10px; cursor:pointer; }
+.navlinks{ transition: max-height .25s ease; }
+.navlinks ul{ align-items:center; } /* keep your base display:flex elsewhere */
+
+/* ===== Mobile S: up to 374px ===== */
+@media (max-width:374px){
+  .navbar{ gap:10px; padding:8px 12px; }
+  .navbar .logo img{ height:32px; }
+  .nav-toggle{ display:block; }
+  .nav-icons button{ font-size:22px; }
+
+  .navlinks{
+    position:absolute; top:100%; left:0; right:0;
+    background:#EEE9DA; max-height:0; overflow:hidden;
+    box-shadow:0 8px 12px rgba(0,0,0,.08); z-index:999;
+  }
+  .navlinks.open{ max-height:320px; }
+  .navlinks ul{ flex-direction:column; gap:10px; padding:12px 16px; }
+}
+
+/* ===== Mobile M: 375–424px ===== */
+@media (min-width:375px) and (max-width:424px){
+  .navbar{ padding:10px 14px; }
+  .navbar .logo img{ height:34px; }
+  .nav-toggle{ display:block; }
+  .nav-icons button{ font-size:24px; }
+
+  .navlinks{
+    position:absolute; top:100%; left:0; right:0;
+    background:#EEE9DA; max-height:0; overflow:hidden;
+    box-shadow:0 8px 12px rgba(0,0,0,.08);
+  }
+  .navlinks.open{ max-height:340px; }
+  .navlinks ul{ flex-direction:column; gap:12px; padding:14px 18px; }
+}
+
+/* ===== Mobile L: 425–767px ===== */
+@media (min-width:425px) and (max-width:767px){
+  .navbar{ padding:10px 18px; }
+  .navbar .logo img{ height:36px; position: relative;left:10px;}
+  .nav-toggle{ display:block; padding-right: 20px;}
+  .nav-icons button{ font-size:26px; position: relative;right:20px;}
+
+  .navlinks{
+    position:absolute; top:100%; left:0; right:0;
+    background:#EEE9DA; max-height:0; overflow:hidden;
+    box-shadow:0 8px 12px rgba(0,0,0,.08);
+  }
+  .navlinks.open{ max-height:360px; }
+  .navlinks ul{ flex-direction:column; gap:14px; padding:16px 20px; }
+}
+
+/* ===== Tablet: 768–1023px (no hamburger) ===== */
+@media (min-width:768px) and (max-width:1023px){
+  .navbar{ padding:10px 24px; }
+  .nav-toggle{ display:none; }
+  .navlinks{ position:static; max-height:none; box-shadow:none; }
+  .navlinks ul{ flex-direction:row; gap:28px; padding:0; }
+}
+
+/* Turn hamburger into “X” when active (Font Awesome) */
+.nav-toggle.active i::before{
+  content:"\f00d"; font-family:"Font Awesome 6 Free"; font-weight:900;
+}

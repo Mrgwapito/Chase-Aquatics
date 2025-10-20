@@ -1,214 +1,100 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const categoryLinks = document.querySelectorAll('#category-list a');
-    const products = document.querySelectorAll('.product-card');
+document.addEventListener('DOMContentLoaded', async () => {
+  const productGrid = document.getElementById('product-grid');
+  console.log("🧩 Product Links Generated:", 
+  [...document.querySelectorAll('.view-details')].map(a => a.href)
+);
 
-    // 🔹 Filter products by category (if exists)
-    if (categoryLinks.length > 0) {
-        categoryLinks.forEach(link => {
-            link.addEventListener('click', function (e) {
-                e.preventDefault();
-                const category = link.getAttribute('data-category');
-                products.forEach(product => {
-                    product.style.display =
-                        category === 'all' || product.getAttribute('data-category') === category
-                            ? 'block'
-                            : 'none';
-                });
-            });
-        });
-    }
-});
+  const categoryLinks = document.querySelectorAll('#category-list a[data-category]');
+  const toggleBtn = document.querySelector('.nav-toggle');
+  const navlinks = document.getElementById('navlinks');
 
-// Assuming you have a form with the id "myForm"
-const form = document.getElementById('myForm');
-form.addEventListener('submit', (event) => {
-    event.preventDefault();  // Prevent the default form submission
-
-    const formData = new FormData(form);
-    const data = {};
-    formData.forEach((value, key) => {
-        data[key] = value;
+  // ✅ Navbar toggle (mobile)
+  if (toggleBtn && navlinks) {
+    toggleBtn.addEventListener('click', () => {
+      const open = navlinks.classList.toggle('open');
+      toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
-
-    fetch('http://localhost:3000/submit-form', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Success:', data);
-        alert(data.message);  // Show success message to user
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-});
-
-
-
-
-/* monggodb na nadelete 
-[
-  {
-    "_id": 1,
-    "category": "aquarium-tanks",
-    "image": "images/aquarium tank.webp",
-    "alt": "Ultra Clear Aquarium",
-    "title": "Ultra Clear Aquarium 60x40x40cm",
-    "price": 3720
-  },
-  {
-    "_id": 2,
-    "category": "aquarium-lights",
-    "image": "images/ledstar.png",
-    "alt": "Ledstar C 40",
-    "title": "Ledstar C 40 Light",
-    "price": 3450
-  },
-  {
-    "_id": 3,
-    "category": "filters",
-    "image": "images/hepofilter.jpg",
-    "alt": "Hepo 018 Filter",
-    "title": "Hepo 018 Filter",
-    "price": 370
-  },
-  {
-    "_id": 4,
-    "category": "driftwoods-stones",
-    "image": "images/dragonstone.jpg",
-    "alt": "Dragon Stone",
-    "title": "Dragon Stone",
-    "price": 150,
-    "price_unit": "kg"
-  },
-  {
-    "_id": 5,
-    "category": "soil-sand-media",
-    "image": "images/ecosoil.jpg",
-    "alt": "TCFM Ecosoil",
-    "title": "TCFM Ecosoil 8L",
-    "price": 1200
-  },
-  {
-    "_id": 6,
-    "category": "accessories",
-    "image": "images/tools.jpg",
-    "alt": "Aquascaping Tools",
-    "title": "Aquascaping Tools",
-    "price": null
-  },
-  {
-    "_id": 11,
-    "category": "aquarium-lights",
-    "image": "images/ledstar-d-60.webp",
-    "alt": "Ledstar D 60",
-    "title": "Ledstar D 60 Light",
-    "price": 6750
-  },
-  {
-    "_id": 13,
-    "category": "filters",
-    "image": "images/sunsun-hw-602b.jpg",
-    "alt": "Sunsun HW 602B",
-    "title": "Sunsun HW 602B (5 gallons)",
-    "price": 1300
-  },
-  {
-    "_id": 7,
-    "category": "driftwoods-stones",
-    "image": "images/seiryuuu stone.jpg",
-    "alt": "Seiryu Stone",
-    "title": "Seiryu Stone",
-    "price": 150,
-    "price_unit": "kg"
-  },
-  {
-    "_id": 8,
-    "category": "driftwoods-stones",
-    "image": "images/black seiryu stone.jpg",
-    "alt": "Black Seiryu Stone",
-    "title": "Seiryu Stone",
-    "price": 150,
-    "price_unit": "kg"
-  },
-  {
-    "_id": 9,
-    "category": "driftwoods-stones",
-    "image": "images/slatestone.jpg",
-    "alt": "Slate Stone",
-    "title": "Seiryu Stone",
-    "price": 150,
-    "price_unit": "kg"
-  },
-  {
-    "_id": 10,
-    "category": "aquarium-lights",
-    "image": "images/ledstar-j-60.png",
-    "alt": "Ledstar J 60",
-    "title": "LedStar Model J 60 Stone",
-    "price": 9350
-  },
-  {
-    "_id": 12,
-    "category": "filters",
-    "image": "images/stainlesscanisterfilter.jpg",
-    "alt": "Stainless Canister Filter",
-    "title": "Stainless Canister Filter (TCFM pump) SCF 208 (10L | 10-25g)",
-    "price": 4000
-  },
-  {
-    "_id": 14,
-    "category": "filters",
-    "image": "images/shriuba-pf-60.png",
-    "alt": "Shiruba PF 60",
-    "title": "Stainless Canister Filter (TCFM pump) SCF 208 (10L | 10-25g)",
-    "price": 473
-  },
-  {
-    "_id": 15,
-    "category": "aquarium-lights",
-    "image": "images/ledstar-nano.jpg",
-    "alt": "Ledstar Nano series (app controlled, 30cm)",
-    "title": "Ledstar Nano series ( app controlled, 30cm)",
-    "price": 3650
-  },
-  {
-    "_id": 16,
-    "category": "soil-sand-media",
-    "image": "images/whitesand.jpg",
-    "alt": "White Sand",
-    "title": "White Sand",
-    "price": 60,
-    "price_unit": "kg"
-  },
-  {
-    "_id": 17,
-    "category": "soil-sand-media",
-    "image": "images/blacksand.jpg",
-    "alt": "Black Sand",
-    "title": "White Sand",
-    "price": 60,
-    "price_unit": "kg"
-  },
-  {
-    "_id": 18,
-    "category": "fishes",
-    "image": "images/greendanio.jpg",
-    "alt": "Green Danio",
-    "title": "Green Danio",
-    "price": null
-  },
-  {
-    "_id": 19,
-    "category": "fishes",
-    "image": "images/bronzecorydora.jpg",
-    "alt": "Bronze Corydora",
-    "title": "Bronze Corydora",
-    "price": null
   }
-]
-*/
+
+  // ✅ Load products dynamically
+  try {
+    const res = await fetch('http://localhost:3000/api/products');
+    const products = await res.json();
+
+    console.log("🧩 Loaded products:", products);
+
+    if (!Array.isArray(products) || products.length === 0) {
+      productGrid.innerHTML = `<p class="text-center text-muted py-5">No products found.</p>`;
+      return;
+    }
+
+    // Render all products
+    productGrid.innerHTML = products.map(p => `
+      <div class="product-card" data-id="${p._id}" data-category="${p.category}">
+        <img src="${p.image}" alt="${p.alt || p.title}">
+        <div class="product-info">
+          <h3>${p.title}</h3>
+          <div class="card-buttons">
+            <a href="product_shop.html?id=${encodeURIComponent(p._id)}" class="view-details">
+              <i class="fas fa-eye"></i>
+            </a>
+            <button class="add-to-cart">
+              <i class="fas fa-shopping-cart"></i>
+            </button>
+          </div>
+        </div>
+        <p>₱${p.price}${p.price_unit ? '/' + p.price_unit : ''}</p>
+      </div>
+    `).join('');
+
+    initializeCartButtons();
+    initializeCategoryFilter();
+  } catch (err) {
+    console.error('❌ Failed to load products:', err);
+    productGrid.innerHTML = `<p class="text-center text-danger py-5">Error loading products.</p>`;
+  }
+
+  // 🛒 CART HANDLER
+  function initializeCartButtons() {
+    const addToCartButtons = document.querySelectorAll('.add-to-cart');
+    addToCartButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const card = button.closest('.product-card');
+        const id = Number(card.dataset.id);
+        const title = card.querySelector('h3').textContent.trim();
+        const priceText = card.querySelector('p').textContent.trim();
+        const price = parseFloat(priceText.replace(/[₱,/a-z\s]/gi, "")) || 0;
+        const image = card.querySelector('img').src;
+
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const existing = cart.find(item => item._id === id);
+
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          cart.push({ _id: id, title, price, image, quantity: 1 });
+        }
+
+        localStorage.setItem('cart', JSON.stringify(cart));
+        alert(`${title} added to cart!`);
+      });
+    });
+  }
+
+  // 🧩 CATEGORY FILTER
+  function initializeCategoryFilter() {
+    const productCards = document.querySelectorAll('.product-card');
+    categoryLinks.forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        const cat = link.dataset.category;
+        categoryLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+
+        productCards.forEach(card => {
+          card.style.display = (cat === 'all' || card.dataset.category === cat) ? '' : 'none';
+        });
+      });
+    });
+  }
+});

@@ -1,310 +1,354 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life In A Box </title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Life In A Box — Services</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./service.css">
-    <link rel="stylesheet" href="./popups/cart.css">
-    <link rel="stylesheet" href="./popups/login.css">
-    <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+  <!-- Vendor CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+
+  <!-- Project CSS -->
+  <link rel="stylesheet" href="./nav.css" />
+  <link rel="stylesheet" href="./service.css" />
+  <link rel="stylesheet" href="./responsserv.css" media="(max-width: 767px)" />
+  <link rel="stylesheet" href="./popups/cart.css" />
+  <link rel="stylesheet" href="./popups/login.css" />
+
+  <!-- Calendly (if you still use the external booking link) -->
+  <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 </head>
+
 <body>
- 
-      <nav class="navbar">
-        <div class="logo"><img src="./logo.png" alt="logo"></div>
-        <div class="navlinks">
-        <ul>
-            <li><a class="active" href="./index.html">Home</a></li>
-            <li><a class="active" href="./product.html">Products</a></li>
-            <li><a class="active" href="./service.html">Services</a></li>
-            <li><a class="active" href="./about.html">About US</a></li>
-            <li><a class="active" href="./rus.html">Reach US</a></li>
-        </ul>
-        </div>
-       <div class="nav-icons">
-            <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
-            <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
-        </div>
-    </nav>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="logo"><img src="./logo.png" alt="logo" /></div>
 
-     <!-- Login Form (Hidden Initially) -->
-<div class="login-container" id="loginContainer">
-    <div class="login-box">
-        <h2>Sign In</h2>
-        <input type="text" placeholder="Username" id="loginEmail"> <!-- Changed id to match JS -->
-        <input type="password" placeholder="Password" id="password">
-        
-        <div class="remember-me">
-            <input type="checkbox" id="remember">
-            <label for="remember">Remember Me</label>
-        </div>
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
+      <i class="fa-solid fa-bars"></i>
+    </button>
 
-        <button class="btn" id="signInBtn">Sign In</button>
-        <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
-        <span class="close-x" id="closeLogin">&times;</span>
+    <div class="navlinks" id="navlinks">
+      <ul>
+        <li><a href="./index.html">Home</a></li>
+        <li><a href="./product.html">Products</a></li>
+        <li><a class="active" href="./service.html">Services</a></li>
+        <li><a href="./about.html">About Us</a></li>
+        <li><a href="./rus.html">Reach Us</a></li>
+      </ul>
     </div>
-</div>
 
-<!-- Registration Form (Hidden Initially) -->
-<div class="register-container" id="registerContainer">
-    <div class="register-box">
-        <h2>Register</h2>
-        <input type="text" placeholder="Full Name" id="regFullName">
-        <input type="email" placeholder="Email" id="regEmail">
-        <input type="password" placeholder="Create Password" id="regPassword">
-        <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
-        
-        <button class="btn" id="registerBtn">Register</button>
-        <p class="back-to-login" id="backToLogin">Back to Login</p>
-        <span class="close-x" id="closeRegister">&times;</span>
+    <div class="nav-icons">
+      <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+      <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
     </div>
-</div>
+  </nav>
 
-
-    <!-- Cart Popup -->
-    <div class="cart-popup">
+  <!-- Cart Popup -->
+  <div class="cart-popup">
     <h2>Cart</h2>
-    <div class="cart-items">
-        <!-- Cart items will be dynamically inserted here -->
-    </div>
+    <div class="cart-items"></div>
     <button class="review-btn">Review My Cart</button>
-    </div>
+  </div>
 
-    
-    
-    <section class="hero">
-        <div class="title">
-            <img src="./book.png" alt="booking">
-            <p>Transform your space into a living masterpiece with our expert aquascaping and terrarium design services</p>
-            <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success" target="_blank" rel="noopener noreferrer">Book an Appointment</a>
-        </div>
-    </section>
-
-    <section class="fpart">
-        <h1>Our Specialized Services</h1>
-        <p class="pp">Discover our range of services designed to bring nature's beauty to your home or office</p>
-
-        <div class="fcont">
-            <div class="first py-5">
-                    <div class="container">
-                      <div class="row justify-content-center g-5">
-                        <div class="col-md-6 col-lg-4">
-                          <div class="card custom-card border-0 mx-auto">
-                            <div class="image-area"></div>
-                            <div class="card-body">
-                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
-                              <p class="card-text small-text">
-                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
-                              </p>
-                              <div class="d-flex justify-content-between align-items-center mt-4">
-                                <span class="fw-bold">Starting at P100</span>
-                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="col-md-6 col-lg-4">
-                          <div class="card custom-card border-0 mx-auto">
-                            <div class="image-area"></div>
-                            <div class="card-body">
-                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
-                              <p class="card-text small-text">
-                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
-                              </p>
-                              <div class="d-flex justify-content-between align-items-center mt-4">
-                                <span class="fw-bold">Starting at P100</span>
-                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="col-md-6 col-lg-4">
-                          <div class="card custom-card border-0 mx-auto">
-                            <div class="image-area"></div>
-                            <div class="card-body">
-                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
-                              <p class="card-text small-text">
-                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
-                              </p>
-                              <div class="d-flex justify-content-between align-items-center mt-4">
-                                <span class="fw-bold">Starting at P100</span>
-                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1"target="_blank" rel="noopener noreferrer">Book Now</a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                      </div>
-                    </div>
-                  </div>
-                    <div class="container">
-                      <div class="row justify-content-center g-5">
-                        <div class="col-md-6 col-lg-4">
-                          <div class="card custom-card border-0 mx-auto">
-                            <div class="image-area"></div>
-                            <div class="card-body">
-                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
-                              <p class="card-text small-text">
-                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
-                              </p>
-                              <div class="d-flex justify-content-between align-items-center mt-4">
-                                <span class="fw-bold">Starting at P100</span>
-                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="col-md-6 col-lg-4">
-                          <div class="card custom-card border-0 mx-auto">
-                            <div class="image-area"></div>
-                            <div class="card-body">
-                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
-                              <p class="card-text small-text">
-                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
-                              </p>
-                              <div class="d-flex justify-content-between align-items-center mt-4">
-                                <span class="fw-bold">Starting at P100</span>
-                                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="col-md-6 col-lg-4">
-                          <div class="card custom-card border-0 mx-auto">
-                            <div class="image-area"></div>
-                            <div class="card-body">
-                              <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
-                              <p class="card-text small-text">
-                                Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.
-                              </p>
-                            <div class="d-flex justify-content-between align-items-center mt-4">
-                              <span class="fw-bold">Starting at P100</span>
-                              <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success rounded-pill px-4 py-1" target="_blank" rel="noopener noreferrer">Book Now</a>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-      
-                  </div>
-               </div>
-            </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="spart">
-      <div class="tit">    <h1>Our Portfolio</h1>
-      <p class="pp">Browse our collection of completed projects and get inspired for your own natural sanctuary</p></div>
-  
-
-      <div class="buttons">
-        <button class="fil-btn active" data-filter="all">All Projects</button>
-        <button class="fil-btn" data-filter="aquascaping">Aquascaping</button>
-        <button class="fil-btn" data-filter="terrariums">Terrariums</button>
-        <button class="fil-btn" data-filter="ponds">Ponds</button>
-        <button class="fil-btn" data-filter="paludariums">Paludariums</button>
-        <button class="fil-btn" data-filter="pet">Pet Enclosures</button>
-        <button class="fil-btn" data-filter="cabinet">Cabinets</button>
-      </div>
-
-      <div class="gallery">
-        <div class="photo" data-category="aquascaping"><img src="./servp/aqua.jpg" /></div>
-        <div class="photo" data-category="ponds"><img src="./servp/pond.jpg" /></div>
-        <div class="photo" data-category="aquascaping"><img src="./servp/aquax.jpg" /></div>
-        <div class="photo" data-category="cabinet"><img src="./servp/cab.jpg" /></div>
-        <div class="photo" data-category="paludariums"><img src="./servp/palu.jpg" /></div>
-        <div class="photo" data-category="terrariums"><img src="./servp/terra.jpg" /></div>
-        <div class="photo" data-category="aquascaping"><img src="./servp/aquaxx.jpg" /></div>
-        <div class="photo" data-category="cabinet"><img src="./servp/cabs.jpg" /></div>
-        <div class="photo" data-category="ponds"><img src="./servp/ponds.jpg" /></div>
-        <div class="photo" data-category="pet"><img src="./servp/pet.jpg" /></div>
-        <div class="photo" data-category="terrariums"><img src="./servp/terras.jpg" /></div>
-        <div class="photo" data-category="paludariums"><img src="./servp/palus.jpg" /></div>
-      </div>
-    </section>
-
-    <section class="lpart">
-      <div class="tit">      <h2>Ready to bring your vision to life?</h2>
-      <p>Scheduling an appointment with Life in a Box is quick and effortless. Follow these simple steps to start your journey toward a beautifully designed aquascape or terrarium.</p></div>
-
-      <div class="containerrr">
-        <div class="step-row">
-        <div class="step-card dark">Step 1: Click the "Book an Appointment" Button</div>
-        <div class="step-card light">Tap the button to be redirected to our Calendly scheduling page.</div>
-      </div>
-      <div class="step-row">
-        <div class="step-card light">Select a time slot that works best for you from our real-time availability calendar.</div>
-        <div class="step-card dark">Step 2: Choose a Date and Time</div>
-      </div>
-      <div class="step-row">
-        <div class="step-card dark">Step 3: Fill in Your Details</div>
-        <div class="step-card light">Provide your name, contact information, and a brief description of your project or interests.</div>
-      </div>
-      <div class="step-row">
-        <div class="step-card light">Hit the confirm button and check your email for a confirmation and details about your consultation.</div>
-        <div class="step-card dark">Step 4: Confirm Your Appointment</div>
-      </div>
-    </div>
-
-    <div class="but">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="title">
+      <img src="./book.png" alt="booking" />
+      <p>Transform your space into a living masterpiece with our expert aquascaping and terrarium design services</p>
+      <!-- You can switch this to open the in-page booking modal by adding: data-open="bookingModal" -->
       <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success" target="_blank" rel="noopener noreferrer">Book an Appointment</a>
     </div>
-    </section>
+  </section>
 
-<footer class="py-5">
-  <div class="container text-center text-md-start">
-    <div class="row justify-content-between align-items-start">
-      
-      <div class="col-md-4 mb-4 mb-md-0">
-        <img src="./logo.png" alt="Life In A Box Logo" style="max-width: 140px;">
-        <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
-      </div>
+  <!-- SERVICES GRID -->
+  <section class="fpart">
+    <h1>Our Specialized Services</h1>
+    <p class="pp">Discover our range of services designed to bring nature's beauty to your home or office</p>
 
-      <div class="col-md-4 mb-4 mb-md-0">
-        <h5 class="fw-bold mb-3">Contact Us</h5>
-        <ul class="list-unstyled small">
-          <li class="mb-2">
-            <i class="fas fa-map-marker-alt"></i> Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite
-          </li>
-          <li class="mb-2">
-            <i class="fas fa-phone"></i> +63 932 241 2734
-          </li>
-          <li class="mb-2">
-            <i class="fas fa-envelope"></i> chaseaquascape09@gmail.com
-          </li>
-        </ul>
-      </div>
-
-      <div class="col-md-3">
-        <h5 class="fw-bold mb-3">Follow Us</h5>
-        <div class="d-flex justify-content-center justify-content-md-start gap-3">
-          <a href="https://www.facebook.com/Chaseaquatics" class="text-white" target="_blank"><i class="fab fa-facebook fa-lg"></i></a>
-          <a href="https://www.instagram.com/chaseaquascaping" class="text-white" target="_blank"><i class="fab fa-instagram fa-lg"></i></a>
-          <a href="https://www.youtube.com/@chaseaquascape962" target="_blank" class="text-white"><i class="fa-brands fa-youtube"></i></a>
-          <a href="https://www.tiktok.com/@chase_aquascape" target="_blank" class="text-white"><i class="fa-brands fa-tiktok"></i></a>
+    <div class="fcont">
+      <div class="first py-5">
+        <div class="container">
+          <div class="row justify-content-center g-5">
+            <!-- 1 -->
+            <div class="col-md-6 col-lg-4">
+              <div class="card custom-card border-0 mx-auto">
+                <div class="image-area"></div>
+                <div class="card-body">
+                  <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
+                  <p class="card-text small-text">Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.</p>
+                  <div class="d-flex justify-content-between align-items-center mt-4">
+                    <span class="fw-bold">Starting at ₱100</span>
+                    <button class="btn btn-success rounded-pill px-4 py-1" data-open="bookingModal">Book Now</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 2 -->
+            <div class="col-md-6 col-lg-4">
+              <div class="card custom-card border-0 mx-auto">
+                <div class="image-area"></div>
+                <div class="card-body">
+                  <h5 class="card-title fw-bold mb-2">Terrarium Creation</h5>
+                  <p class="card-text small-text">Bring nature indoors with personalized terrarium designs perfect for homes and offices.</p>
+                  <div class="d-flex justify-content-between align-items-center mt-4">
+                    <span class="fw-bold">Starting at ₱120</span>
+                    <button class="btn btn-success rounded-pill px-4 py-1" data-open="bookingModal">Book Now</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 3 -->
+            <div class="col-md-6 col-lg-4">
+              <div class="card custom-card border-0 mx-auto">
+                <div class="image-area"></div>
+                <div class="card-body">
+                  <h5 class="card-title fw-bold mb-2">Pond Maintenance</h5>
+                  <p class="card-text small-text">Crystal-clear ponds with regular professional maintenance and cleaning.</p>
+                  <div class="d-flex justify-content-between align-items-center mt-4">
+                    <span class="fw-bold">Starting at ₱150</span>
+                    <button class="btn btn-success rounded-pill px-4 py-1" data-open="bookingModal">Book Now</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- more ... -->
+          </div>
         </div>
       </div>
-      
+    </div>
+  </section>
+
+  <!-- PORTFOLIO -->
+  <section class="spart">
+    <div class="tit">
+      <h1>Our Portfolio</h1>
+      <p class="pp">Browse our completed projects and get inspired</p>
     </div>
 
-    <div class="border-top my-4"></div>
+    <div class="buttons">
+      <button class="fil-btn active" data-filter="all">All Projects</button>
+      <button class="fil-btn" data-filter="aquascaping">Aquascaping</button>
+      <button class="fil-btn" data-filter="terrariums">Terrariums</button>
+      <button class="fil-btn" data-filter="ponds">Ponds</button>
+      <button class="fil-btn" data-filter="paludariums">Paludariums</button>
+      <button class="fil-btn" data-filter="pet">Pet Enclosures</button>
+      <button class="fil-btn" data-filter="cabinet">Cabinets</button>
+    </div>
 
-    <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
+    <div class="gallery">
+      <div class="photo" data-category="aquascaping"><img src="./servp/aqua.jpg" alt=""></div>
+      <div class="photo" data-category="ponds"><img src="./servp/pond.jpg" alt=""></div>
+      <div class="photo" data-category="aquascaping"><img src="./servp/aquax.jpg" alt=""></div>
+      <div class="photo" data-category="cabinet"><img src="./servp/cab.jpg" alt=""></div>
+      <div class="photo" data-category="paludariums"><img src="./servp/palu.jpg" alt=""></div>
+      <div class="photo" data-category="terrariums"><img src="./servp/terra.jpg" alt=""></div>
+      <div class="photo" data-category="aquascaping"><img src="./servp/aquaxx.jpg" alt=""></div>
+      <div class="photo" data-category="cabinet"><img src="./servp/cabs.jpg" alt=""></div>
+      <div class="photo" data-category="ponds"><img src="./servp/ponds.jpg" alt=""></div>
+      <div class="photo" data-category="pet"><img src="./servp/pet.jpg" alt=""></div>
+      <div class="photo" data-category="terrariums"><img src="./servp/terras.jpg" alt=""></div>
+      <div class="photo" data-category="paludariums"><img src="./servp/palus.jpg" alt=""></div>
+    </div>
+  </section>
+
+  <!-- OPTIONAL: In-page BOOKING MODAL (same behavior as index) -->
+  <div id="bookingModal" class="booking-modal" role="dialog" aria-modal="true" aria-labelledby="bookingTitle" hidden>
+    <div class="modal__backdrop" data-close></div>
+
+    <div class="modal__panel">
+      <button class="modal__close" type="button" aria-label="Close" data-close>&times;</button>
+
+      <header class="booking__header">
+        <h1 id="bookingTitle" class="booking__title">In Person Appointment</h1>
+        <div class="booking__meta">
+          <span class="booking__meta-item">🕒 1 hr</span>
+          <span class="booking__meta-item">📍 Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, Cavite</span>
+        </div>
+        <p class="booking__intro">Let’s create something beautiful together!</p>
+      </header>
+
+      <div class="booking">
+        <aside class="booking__aside">
+          <p>Book an in-person consultation with our team at <strong>Chase Aquatics</strong>.</p>
+          <div class="booking__timezone">
+            <small>Time zone</small>
+            <div class="booking__tz-row">🌐 Philippine Time</div>
+          </div>
+        </aside>
+
+        <section class="booking__main">
+          <!-- STEP 1 -->
+          <div class="step step--calendar" data-step="calendar" aria-labelledby="stepCalendarTitle">
+            <h2 id="stepCalendarTitle">Select a Date &amp; Time</h2>
+            <div class="times__date-heading" data-times-date>—</div>
+
+            <div class="cal-times">
+              <div class="cal__picker">
+                <input id="datePicker" type="text" aria-label="Choose a date" />
+              </div>
+
+              <aside class="times" aria-live="polite">
+                <div class="times__list">
+                  <button class="times__btn" type="button" data-time="09:00">9:00am</button>
+                  <button class="times__btn" type="button" data-time="10:00">10:00am</button>
+                  <button class="times__btn" type="button" data-time="11:00">11:00am</button>
+                  <button class="times__btn" type="button" data-time="12:00">12:00pm</button>
+                  <button class="times__btn" type="button" data-time="13:00">1:00pm</button>
+                  <button class="times__btn" type="button" data-time="14:00">2:00pm</button>
+                  <button class="times__btn" type="button" data-time="15:00">3:00pm</button>
+                  <button class="times__btn" type="button" data-time="16:00">4:00pm</button>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <!-- STEP 2 -->
+          <form class="step step--details" data-step="details" aria-labelledby="stepDetailsTitle" hidden>
+            <h2 id="stepDetailsTitle">Enter Details</h2>
+
+            <div class="form__row">
+              <label for="guestName">Name *</label>
+              <input id="guestName" name="name" type="text" required />
+            </div>
+
+            <div class="form__row">
+              <label for="guestEmail">Email *</label>
+              <input id="guestEmail" name="email" type="email" required />
+            </div>
+
+            <details class="form__row">
+              <summary>Add Guests</summary>
+              <input name="guests" type="email" placeholder="guest1@example.com, guest2@example.com" />
+            </details>
+
+            <div class="form__row">
+              <label for="notes">Anything we should know?</label>
+              <textarea id="notes" name="notes" rows="4" placeholder="Share your space, style, or ideas."></textarea>
+            </div>
+
+            <fieldset class="form__row form__row--topics">
+              <legend>Topics *</legend>
+              <label class="topic"><span>Building of aquarium</span><input type="checkbox" name="topic" value="build"></label>
+              <label class="topic"><span>Tank maintenance</span><input type="checkbox" name="topic" value="maintenance"></label>
+              <label class="topic"><span>Inquiry</span><input type="checkbox" name="topic" value="inquiry"></label>
+              <label class="topic topic--other"><span>Other</span><input type="checkbox" name="topic" value="other" data-other-toggle></label>
+              <input type="text" name="other_text" placeholder="Please specify" class="other__input" hidden>
+            </fieldset>
+
+            <button class="btn btn--primary" type="submit">Schedule Event</button>
+          </form>
+        </section>
+      </div>
+    </div>
   </div>
-</footer>
 
+  <!-- FOOTER -->
+  <footer class="py-5">
+    <div class="container text-center text-md-start">
+      <div class="row justify-content-between align-items-start">
+        <div class="col-md-4 mb-4 mb-md-0">
+          <img src="./logo.png" alt="Life In A Box Logo" style="max-width: 140px;" />
+          <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
+        </div>
+        <div class="col-md-4 mb-4 mb-md-0">
+          <h5 class="fw-bold mb-3">Contact Us</h5>
+          <ul class="list-unstyled small">
+            <li><i class="fas fa-map-marker-alt"></i> Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, Cavite</li>
+            <li><i class="fas fa-phone"></i> +63 932 241 2734</li>
+            <li><i class="fas fa-envelope"></i> chaseaquascape09@gmail.com</li>
+          </ul>
+        </div>
+        <div class="col-md-3">
+          <h5 class="fw-bold mb-3">Follow Us</h5>
+          <div class="d-flex justify-content-center justify-content-md-start gap-3">
+            <a href="https://www.facebook.com/Chaseaquatics" class="text-white" target="_blank"><i class="fab fa-facebook fa-lg"></i></a>
+            <a href="https://www.instagram.com/chaseaquascaping" class="text-white" target="_blank"><i class="fab fa-instagram fa-lg"></i></a>
+            <a href="https://www.youtube.com/@chaseaquascape962" class="text-white" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+            <a href="https://www.tiktok.com/@chase_aquascape" class="text-white" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="border-top my-4"></div>
+      <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
+    </div>
+  </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
-    <script src="serv.js"></script>
-    <script src="./popups/cart.js"></script>
-    <script src="./popups/login.js"></script>
+  <!-- AUTH POPUPS (same as index) -->
+  <div id="loginContainer" class="login-container" style="display: none;">
+    <div class="login-box">
+      <h2>Sign In</h2>
+      <input type="text" id="loginEmail" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <div class="remember-me">
+        <input type="checkbox" id="remember" />
+        <label for="remember">Remember Me</label>
+      </div>
+      <button class="btn" id="signInBtn">Sign In</button>
+      <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
+      <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+      <span class="close-x" id="closeLogin">&times;</span>
+    </div>
+  </div>
+
+  <div id="registerContainer" class="register-container" style="display: none;">
+    <div class="register-box">
+      <h2>Register</h2>
+      <div class="name-group">
+        <input type="text" id="regFirstName" placeholder="First Name" />
+        <input type="text" id="regLastName" placeholder="Last Name" />
+      </div>
+      <input type="email" id="regEmail" placeholder="Email" />
+      <div class="otp-container">
+        <input type="text" id="emailOtp" placeholder="Enter OTP" disabled />
+        <button id="sendOtpBtn" class="otp-btn">Send Code</button>
+        <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+      </div>
+      <input type="password" id="regPassword" placeholder="Create Password" minlength="8" />
+      <input type="password" id="regConfirmPassword" placeholder="Confirm Password" />
+      <button class="btn" id="registerBtn" disabled>Register</button>
+      <p class="back-to-login" id="backToLogin">Back to Login</p>
+      <span class="close-x" id="closeRegister">&times;</span>
+    </div>
+  </div>
+
+  <div id="forgotContainer" class="forgot-container" style="display: none;">
+    <div class="forgot-box">
+      <h2>Reset Password</h2>
+      <p>Enter your registered email to receive a reset code.</p>
+      <input type="email" id="forgotEmail" placeholder="Enter your email" />
+      <button class="btn" id="forgotSendBtn">Send OTP</button>
+      <div id="forgotStep2" style="display: none;">
+        <input type="text" id="forgotOtp" placeholder="Enter OTP" />
+        <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)" />
+        <input type="password" id="forgotConfirmPass" placeholder="Confirm Password" />
+        <button class="btn" id="forgotResetBtn">Reset Password</button>
+      </div>
+      <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
+      <span class="close-x" id="closeForgot">&times;</span>
+    </div>
+  </div>
+
+  <!-- Vendor JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script> emailjs.init("hhTpOoi07kd04LwsH"); </script>
+
+  <!-- Project JS (same behavior as index; fixed paths) -->
+  <script src="./serv.js"></script>
+  <script type="module" src="./popups/cart.js"></script>
+  <script type="module" src="./popups/login.js"></script>
+  <script src="./popups/forgatpass.js"></script>
+  <script src="./profile/userauth.js"></script>
+  <!-- If you need the client-side models for any page logic: -->
+  <script src="./models/cartModel.js"></script>
+  <script src="./models/userModel.js"></script>
+
+  <!-- In-page booking logic (same as index if you use the modal) -->
+  <script src="./booking.js"></script>
 </body>
+</html>

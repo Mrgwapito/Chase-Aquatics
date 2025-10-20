@@ -40,7 +40,7 @@ body {
     text-decoration: none;
     color: #335A02; 
     font-size: 20px;
-}
+  }
 a.active:hover {
     text-decoration: underline;   
     transition: 1s; 
@@ -49,14 +49,14 @@ a.active:hover {
     height: 40px;
     margin-left: 10px;
 }
-.nav-icons {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-    margin-right: 20px;
+.nav-icons{
+  display:flex;
+  flex-direction: row;
+  gap:15px;
+  margin-right:20px;
 }
-.nav-icons button {
-    color: #335A02;
+.nav-icons button{
+    color:#335A02;
     font-size: 30px;
     background: none; 
     border: none;     
@@ -101,6 +101,7 @@ h1 {
 /* Product Section */
 .product-section {
     padding: 40px 0;
+    margin: 0 20px;
 }
 
 .product-grid {
@@ -236,3 +237,5 @@ footer ul li {
 footer i {
     margin-right: 8px;
 }
+
+

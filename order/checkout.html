@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout - Life in a Box</title>
+
+  <!-- 🔗 Fonts & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- 🔗 Your Theme CSS -->
+  <link rel="stylesheet" href="../popups/login.css">
+  <link rel="stylesheet" href="../popups/cart.css">
+  <link rel="stylesheet" href="lpage.css">
+  <link rel="stylesheet" href="order_summary.css">
+</head>
+
+<body>
+  <!-- ✅ NAVBAR -->
+  <nav class="navbar">
+    <div class="logo"><img src="../logo.png" alt="logo"></div>
+    <button class="nav-toggle"><i class="fa-solid fa-bars"></i></button>
+
+    <div class="navlinks" id="navlinks">
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../product.html">Products</a></li>
+        <li><a href="../service.html">Services</a></li>
+        <li><a href="../about.html">About Us</a></li>
+        <li><a href="../rus.html">Reach Us</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-icons">
+      <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+      <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+    </div>
+  </nav>
+
+  <!-- ✅ CHECKOUT SECTION -->
+  <section class="order-section container mt-4 mb-5">
+    <div class="order-wrapper">
+      <h2 class="text-center mb-1">Checkout</h2>
+      <p class="order-subtitle">
+        Please provide your details and review your items before placing your order.
+      </p>
+
+      <div class="row">
+        <!-- 🧍 CUSTOMER FORM -->
+        <div class="col-lg-6">
+          <h5 class="mb-3" style="color:#335A02;">Customer Information</h5>
+          <form id="checkout-form">
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="custName" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" id="custEmail" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Contact Number</label>
+              <input type="text" id="custPhone" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Complete Address</label>
+              <textarea id="custAddress" class="form-control" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mt-3">
+              <i class="fa-solid fa-paper-plane"></i> Place Order
+            </button>
+          </form>
+        </div>
+
+        <!-- 🛒 ORDER REVIEW -->
+        <div class="col-lg-6">
+          <h5 class="mb-3" style="color:#335A02;">Your Order</h5>
+          <div id="checkout-items" class="order-items"></div>
+
+          <div class="order-costs">
+            <div class="cost-row"><span>Subtotal</span><span id="checkout-subtotal">₱0.00</span></div>
+            <div class="cost-row"><span>Shipping</span><span id="checkout-shipping">₱100.00</span></div>
+          </div>
+
+          <div class="order-total text-end mt-3">
+            <h4><span>Total</span><span id="checkout-total" class="order-total-value">₱0.00</span></h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ FOOTER -->
+  <footer class="py-5">
+    <div class="container text-center text-md-start">
+      <div class="row justify-content-between align-items-start">
+        <div class="col-md-4 mb-4">
+          <img src="../logo.png" alt="Life In A Box Logo" style="max-width: 140px;">
+          <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
+        </div>
+        <div class="col-md-4 mb-4">
+          <h5 class="fw-bold mb-3">Contact Us</h5>
+          <ul class="list-unstyled small">
+            <li class="mb-2"><i class="fas fa-map-marker-alt"></i> Carmona, Cavite</li>
+            <li class="mb-2"><i class="fas fa-phone"></i> +63 932 241 2734</li>
+            <li class="mb-2"><i class="fas fa-envelope"></i> chaseaquascape09@gmail.com</li>
+          </ul>
+        </div>
+        <div class="col-md-3">
+          <h5 class="fw-bold mb-3">Follow Us</h5>
+          <div class="d-flex gap-3">
+            <a href="#" class="text-white"><i class="fab fa-facebook fa-lg"></i></a>
+            <a href="#" class="text-white"><i class="fab fa-instagram fa-lg"></i></a>
+            <a href="#" class="text-white"><i class="fab fa-youtube fa-lg"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="border-top my-4"></div>
+      <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ✅ JS -->
+  <script src="checkout.js"></script>
+  <script src="../profile/userauth.js"></script>
+</body>
+</html>

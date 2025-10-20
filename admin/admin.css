@@ -1,0 +1,940 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+.navbar {
+    position: relative; 
+    width: 100%;
+    background-color: #EEE9DA;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+    transition: top 0.3s ease-in-out, position 0.3s ease-in-out;
+    z-index: 1000;
+}
+.navbar.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+.navlinks ul {
+    display: flex;
+    list-style: none;
+    gap: 50px;
+    position: relative;
+    top: 5px;
+}
+.navlinks ul li a {
+    text-decoration: none;
+    color: #335A02; 
+    font-size: 20px;
+  }
+a.active:hover {
+    text-decoration: underline;   
+    transition: 1s; 
+}
+.navbar .logo img {
+    height: 40px;
+    margin-left: 10px;
+}
+.nav-icons{
+  display:flex;
+  flex-direction: row;
+  gap:15px;
+  margin-right:20px;
+  padding-left: 63px;
+}
+.nav-icons button{
+    color:#335A02;
+    font-size: 30px;
+    background: none; 
+    border: none;     
+    outline: none;    
+    cursor: pointer;
+}
+
+footer {
+  background-color: #6096B4;
+  color: white;
+  width: 100%;
+}
+
+footer h5 {
+  color: white;
+}
+
+footer p, footer li, footer a {
+  color: white;
+  text-decoration: none;
+}
+
+footer .border-top {
+  border-top: 1px solid white !important;
+}
+
+footer ul {
+  padding-left: 0;
+}
+
+footer ul li {
+  list-style: none;
+}
+
+footer i {
+  margin-right: 8px;
+}
+
+.nav-toggle {
+    display: none;
+}
+
+:root{
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #222;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+
+  --primary: #276EF1;   /* tab active / emphasis */
+  --primary-weak:#e8f0ff;
+  --warn: #f59e0b;      /* Pending */
+  --good: #16a34a;      /* Paid */
+  --done: #2563eb;      /* Completed */
+  --danger:#ef4444;
+
+  --radius: 14px;
+  --shadow: 0 10px 24px rgba(0,0,0,.08);
+}
+
+body{ background: var(--bg); color: var(--text); }
+
+/* Container */
+#admin-orders{
+  max-width: 1200px;
+  margin: 24px auto 64px;
+  padding: 0 16px;
+}
+
+h2{
+  font-size: 32px;
+  font-weight: 700;
+  margin:50px 0px 20px 175px;
+}
+
+/* =========
+   Tabs
+   ========= */
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 14px;
+}
+
+.tab {
+  border: 2px solid #e0e0e0;
+  background: #fff;
+  color: #000;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  border-color: #276EF1;
+  color: #276EF1;
+}
+
+.tab.active {
+  color: #276EF1;
+  border-color: #276EF1;
+  background: #e8f0ff;
+}
+
+
+/* =========
+   Table “box”
+   ========= */
+#ordersTable{
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;              /* keep corners rounded */
+  box-shadow: var(--shadow);
+}
+
+#ordersTable thead th{
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: #fafafa;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 14px;
+}
+
+#ordersTable tbody td{
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+#ordersTable tbody tr:last-child td{ border-bottom: 0; }
+#ordersTable tbody tr.order{ transition: background .12s ease; }
+#ordersTable tbody tr.order:hover{ background: #fcfcff; }
+
+/* Status cell text (uses row data-status; just color-coding by text) */
+#ordersTable .status{
+  font-weight: 700;
+}
+#ordersTable tr[data-status="Pending"]  .status{ color: var(--warn); }
+#ordersTable tr[data-status="Paid"]     .status{ color: var(--good); }
+#ordersTable tr[data-status="Completed"] .status{ color: var(--done); }
+#ordersTable tr[data-status="Cancelled"] .status{ color: var(--danger); }
+
+/* Buttons (View / Mark Paid / Mark Done) */
+#ordersTable button{
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 6px;
+  transition: transform .05s ease, border-color .15s ease, background .15s ease;
+}
+#ordersTable button:active{ transform: scale(0.98); }
+#ordersTable button:hover{ background:#fafafa; border-color:#cbd5e1; }
+
+#ordersTable .markPaid{ color: var(--good); border-color:#d1fae5; background:#f0fff6; }
+#ordersTable .markPaid:hover{ border-color:#86efac; }
+#ordersTable .markDone{ color: var(--done); border-color:#dbeafe; background:#eef6ff; }
+#ordersTable .markDone:hover{ border-color:#93c5fd; }
+#ordersTable .view{ color:#374151; }
+
+/* =========
+   Modal
+   ========= */
+.modal{
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .45);
+  display: none;                 /* toggled inline by JS */
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 50;
+}
+.modal .modal-content{
+  background: var(--card);
+  width: 100%;
+  max-width: 520px;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  padding: 18px 18px 14px;
+}
+.modal .modal-content h3{
+  margin: 4px 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.modal .modal-content p{
+  margin: 6px 0;
+  color: #374151;
+}
+.modal .close{
+  float: right;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.modal .close:hover{ background:#f3f4f6; }
+
+#modalPaid, #modalDone{
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 6px;
+}
+#modalPaid{ color: var(--good); border-color:#d1fae5; background:#f0fff6; }
+#modalDone{ color: var(--done); border-color:#dbeafe; background:#eef6ff; }
+
+/* =========
+   Responsive (your preferred breakpoints)
+   ========= */
+/* Laptop ≥1024px — default styles already look good */
+
+/* Tablet 768–1023px */
+@media (max-width:1023px){
+  #admin-orders{ margin-top: 16px; }
+  #ordersTable thead th, #ordersTable tbody td{ padding: 10px 12px; }
+}
+
+/* Mobile L 425–767px */
+@media (max-width:767px){
+  .tabs{ gap: 6px; }
+  .tab{ padding: 8px 12px; font-size: 14px; }
+  #ordersTable thead th{ font-size: 11px; }
+  #ordersTable button{ padding: 6px 8px; font-size: 13px; }
+}
+
+/* Mobile M 375–424px */
+@media (max-width:424px){
+  #ordersTable thead th:nth-child(3),
+  #ordersTable tbody td:nth-child(3){ /* Payment Method */
+    display: none; /* hide for tighter width */
+  }
+  #ordersTable thead th:nth-child(4),
+  #ordersTable tbody td:nth-child(4){ /* Total */
+    white-space: nowrap;
+  }
+}
+
+/* Mobile S 320–374px */
+@media (max-width:374px){
+  .tab{ padding: 7px 10px; font-size: 13px; }
+  #ordersTable thead th, #ordersTable tbody td{ padding: 8px 10px; }
+  #ordersTable button{ padding: 6px 7px; font-size: 12px; }
+}
+/* ====== Fix header spacing for orders table ====== */
+#ordersTable {
+  table-layout: fixed; /* force equal column widths */
+  width: 100%;
+}
+
+#ordersTable th, 
+#ordersTable td {
+  text-align: center;      /* centers each column title and cell */
+  padding: 14px 10px;
+  word-wrap: break-word;   /* keeps text from overflowing */
+}
+
+#ordersTable thead th {
+  width: calc(100% / 6);   /* since you have 6 columns total */
+}
+
+#ordersTable tbody td:last-child,
+#ordersTable thead th:last-child {
+  text-align: center; /* align Action buttons to center */
+}
+#ordersTable th:nth-child(3) { width: 20%; }  /* Payment Method */
+#ordersTable th:nth-child(6) { width: 15%; }  /* Action buttons */
+/* ===== Stats Strip ===== */
+.stats{
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 10px 0 16px;
+}
+
+.stat-card{
+  flex: 1 1 240px;               /* 3-up on desktop, wraps on small screens */
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stat-label{
+  font-size: 12px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.stat-value{
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  /* Optional subtle gradient text look */
+  background: linear-gradient(0deg, #1f2937, #111827);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===========================================================
+   🧩 Admin Dropdown Styles (Life in a Box)
+   =========================================================== */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.dropdown-toggle:hover {
+  color: #2b4d02;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 45px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: 10px 15px;
+  text-decoration: none;
+  color: #333;
+  font-size: 15px;
+  transition: background 0.3s ease;
+}
+
+.dropdown-menu a i {
+  margin-right: 8px;
+}
+
+.dropdown-menu a:hover {
+  background: #f4f4f4;
+}
+
+
+/* Responsive tweaks (match your breakpoints) */
+@media (max-width:1023px){
+  .stat-value{ font-size: 22px; }
+}
+@media (max-width:767px){
+  .stats{ gap: 12px; }
+  .stat-card{ padding: 14px; }
+  .stat-value{ font-size: 20px; }
+}
+.admin-sections {
+  display: flex;
+  gap: 24px;
+  margin: 1.5rem 0;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.section-btn {
+  cursor: pointer;
+  color: #333;
+  transition: color .2s ease;
+}
+.section-btn:hover {
+  color: #16a34a; /* green on hover */
+}
+.section-btn.active {
+  color: #16a34a;
+  border-bottom: 2px solid #16a34a;
+}
+/* ---- Section nav (text-only tabs) ---- */
+.admin-sections{
+  display:flex; gap:28px; align-items:center;
+  margin: 6px 0 14px;           /* lapit sa H2, layo sa stats */
+  font-weight:600; font-size:1.05rem;
+}
+
+.section-btn{
+  cursor:pointer;
+  color:#2c2c2c;
+  background:transparent; border:0; outline:0;
+  padding:0 0 8px;              /* space for underline */
+  position:relative;
+  transition:color .18s ease;
+  line-height:1;                /* para hindi “buttony” */
+}
+
+/* green text on hover */
+.section-btn:hover{ color:#16a34a; }
+
+/* subtle underline on active + keep green text */
+.section-btn::after{
+  content:"";
+  position:absolute; left:0; bottom:0;
+  width:0; height:2px; background:#16a34a;
+  transition:width .18s ease;
+}
+.section-btn.active{ color:#16a34a; }
+.section-btn.active::after{ width:100%; }
+
+/* optional: make sure they don't wrap too early */
+@media (max-width:600px){
+  .admin-sections{ gap:18px; font-size:1rem; flex-wrap:wrap; }
+}
+
+/* tweak heading spacing para hindi dikit sa top */
+
+/* align section tabs to same margin as content */
+.admin-sections {
+  max-width: 1200px;       /* same width as #admin-orders */
+  margin: 0 auto 1.5rem;   /* center it + spacing below */
+  padding: 0 16px;         /* same side padding as #admin-orders */
+  display: flex;
+  gap: 28px;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+h3 {
+  font-size: 25px;
+  font-weight: 600;
+  margin-bottom: 20px;
+
+}
+
+/* ============================================================
+   📅 Appointments Section
+   ============================================================ */
+
+/* table layout (reuse same style as orders but cleaner) */
+#appointmentsTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-top: 10px;
+}
+
+#appointmentsTable thead th {
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: #fafafa;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 14px;
+}
+
+#appointmentsTable tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+#appointmentsTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+#appointmentsTable tbody tr:hover {
+  background: #fcfcff;
+}
+
+#appointmentsTable .status {
+  font-weight: 700;
+}
+
+#appointmentsTable tr[data-status="Pending"] .status { color: var(--warn); }
+#appointmentsTable tr[data-status="Confirmed"] .status { color: var(--good); }
+#appointmentsTable tr[data-status="Cancelled"] .status { color: var(--danger); }
+
+/* action buttons */
+#appointmentsTable button {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 6px;
+  transition: all 0.15s ease;
+}
+
+#appointmentsTable button:hover {
+  background: #fafafa;
+  border-color: #cbd5e1;
+}
+
+#appointmentsTable .confirmAppt {
+  color: var(--good);
+  border-color: #d1fae5;
+  background: #f0fff6;
+}
+#appointmentsTable .confirmAppt:hover { border-color: #86efac; }
+
+#appointmentsTable .reschedAppt {
+  color: var(--done);
+  border-color: #dbeafe;
+  background: #eef6ff;
+}
+#appointmentsTable .reschedAppt:hover { border-color: #93c5fd; }
+
+#appointmentsTable .cancelAppt {
+  color: var(--danger);
+  border-color: #fee2e2;
+  background: #fff5f5;
+}
+#appointmentsTable .cancelAppt:hover { border-color: #fca5a5; }
+
+/* ===== Modal for appointment ===== */
+#apptModal .modal-content {
+  background: var(--card);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  padding: 20px 24px 16px;
+}
+
+#apptModal .modal-content h3 {
+  margin: 4px 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+#apptModal .modal-content p {
+  margin: 6px 0;
+  color: #374151;
+}
+
+#apptModal .close {
+  float: right;
+  font-size: 20px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+#apptModal .close:hover {
+  background: #f3f4f6;
+}
+
+/* modal buttons */
+#apptModal .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#apptModal .modal-actions button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#apptModal #btnConfirmAppt { color: var(--good); border-color:#d1fae5; background:#f0fff6; }
+#apptModal #btnRescheduleAppt { color: var(--done); border-color:#dbeafe; background:#eef6ff; }
+#apptModal #btnCancelAppt { color: var(--danger); border-color:#fee2e2; background:#fff5f5; }
+/* popover menu */
+.appt-popover{
+  position: absolute;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.12);
+  padding: 6px;
+  z-index: 9999;
+  min-width: 160px;
+}
+.appt-popover button{
+  width:100%;
+  text-align:left;
+  border:0;
+  background:transparent;
+  padding:10px 12px;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
+}
+.appt-popover button:hover{ background:#f6f7fb; }
+
+/* color hints per action */
+.appt-popover [data-action="confirm"]{ color: var(--good); }
+.appt-popover [data-action="reschedule"]{ color: var(--done); }
+.appt-popover [data-action="cancel"]{ color: var(--danger); }
+
+/* make Edit button look clickable (already styled but just in case) */
+#appointmentsTable .editAppt{ position:relative; }
+.appt-popover{
+  position: fixed;                 /* fixed para hindi ma-clipped */
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  box-shadow:0 12px 28px rgba(0,0,0,.12);
+  padding:6px;
+  z-index: 99999;                  /* mas mataas kaysa modal/headers */
+  min-width:160px;
+  pointer-events:auto;             /* ensure clickable */
+}
+.appt-popover{
+  position: fixed;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  box-shadow:0 12px 28px rgba(0,0,0,.12);
+  padding:6px;
+  z-index:99999;
+  min-width:160px;
+  pointer-events:auto;
+}
+/* container spacing para sa Appointments (same as #admin-orders) */
+#section-appointments{
+  max-width: 1200px;
+  margin: 24px auto 64px;  /* center + top/bottom space */
+  padding: 0 16px;         /* left/right gutter */
+}
+
+/* heading style para hindi dikit */
+#section-appointments h3{
+  font-size: 25px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+
+
+
+/* same gutter as orders */
+#section-inventory{ max-width:1200px; margin:24px auto 64px; padding:0 16px; }
+#section-inventory h3{ font-size:32px; font-weight:700; margin:0 0 12px; }
+
+.inv-top{ display:flex; justify-content:flex-end; margin:8px 0 10px; }
+#btnAddProduct{
+  border:1px solid var(--line); background:#fff; padding:10px 14px;
+  border-radius:10px; cursor:pointer; font-weight:600;
+}
+#btnAddProduct:hover{ background:#f7f7fb; }
+
+/* reuse admin-table look already present; add minor rules */
+#inventoryTable td{ vertical-align:middle; }
+#inventoryTable .invEdit{
+  border:1px solid var(--line); background:#fff; padding:8px 12px;
+  border-radius:10px; cursor:pointer; font-weight:600;
+}
+#inventoryTable .invEdit:hover{ background:#f5f6ff; }
+
+/* Add Product modal small layout helpers */
+#addProductModal .modal-content{ max-width:520px; }
+#addProductForm .field{ margin:10px 0; }
+#addProductForm .field.two{ display:flex; gap:10px; }
+#addProductForm label{ display:block; font-weight:600; margin-bottom:6px; }
+#addProductForm input[type="text"],
+#addProductForm input[type="number"],
+#addProductForm input[type="file"],
+#addProductForm textarea{
+  width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff;
+}
+#addProductForm .actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+#saveProduct{ color:var(--good); border:1px solid #d1fae5; background:#f0fff6; padding:10px 12px; border-radius:10px; font-weight:700; }
+#cancelAddProduct{ border:1px solid var(--line); background:#fff; padding:10px 12px; border-radius:10px; font-weight:600; }
+#saveProduct:hover{ border-color:#86efac; }
+
+/* ==== Inventory container spacing (same as others) ==== */
+#section-inventory{
+  max-width: 1200px;
+  margin: 24px auto 64px;   /* center + top/bottom space */
+  padding: 0 16px;          /* left/right gutter */
+}
+#section-inventory h3{
+  font-size: 25px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* ==== Inventory table: full width + card look ==== */
+#inventoryTable{
+  width: 100%;
+  table-layout: fixed;           /* even column widths */
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;              /* keep rounded corners */
+  box-shadow: var(--shadow);
+}
+
+#inventoryTable thead th{
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: #fafafa;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 14px;
+}
+
+#inventoryTable tbody td{
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+#inventoryTable tbody tr:last-child td{ border-bottom: 0; }
+#inventoryTable tbody tr:hover{ background:#fcfcff; }
+
+/* column widths so hindi dikit yung headers */
+#inventoryTable thead th:nth-child(1){ width: 38%; } /* Product */
+#inventoryTable thead th:nth-child(2){ width: 14%; } /* Price */
+#inventoryTable thead th:nth-child(3){ width: 18%; } /* Category */
+#inventoryTable thead th:nth-child(4){ width: 14%; } /* Stock */
+#inventoryTable thead th:nth-child(5){ width: 16%; } 
+
+#inventoryTable th:last-child,
+#inventoryTable td:last-child{
+  text-align: right;           
+}
+#inventoryTable .invEdit{
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+#inventoryTable .invEdit:hover{ background:#f5f6ff; }
+/* danger button look */
+.actions .danger{
+  color: var(--danger);
+  border: 1px solid #fecaca;
+  background: #fff5f5;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+.actions .danger:hover{ border-color:#fca5a5; }
+/* Generic modal toggle */
+.modal { display: none; }
+.modal.show { display: flex; }   /* important: make it visible */
+/* Make close button float over the corner (no layout space) */
+.modal .modal-content {
+  position: relative;         /* anchor for the absolute close btn */
+  padding: 24px;              /* keep your padding */
+}
+.modal .close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  float: none;                /* remove the old float */
+  background: transparent;
+  border: 0;
+  padding: 6px;
+  line-height: 1;
+  font-size: 22px;            /* adjust size as you like */
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 8px;
+}
+.modal .close:hover {
+  background: #f3f4f6;        /* subtle hover circle */
+  color: #111827;
+}
+
+/* ===== Admin Logs (match look of Inventory/Appointments) ===== */
+
+/* container spacing (pareho sa iba) */
+#section-logs{
+  max-width: 1200px;
+  margin: 24px auto 64px;
+  padding: 0 16px;
+}
+
+/* card-style table */
+#logsTable{
+  width: 100%;
+  table-layout: fixed;                 /* even column widths */
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;                    /* keep rounded corners */
+  box-shadow: var(--shadow);
+}
+
+/* header row */
+#logsTable thead th{
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: #fafafa;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 14px;
+}
+
+/* body rows */
+#logsTable tbody td{
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+#logsTable tbody tr:last-child td{ border-bottom: 0; }
+#logsTable tbody tr:hover{ background:#fcfcff; }
+
+/* column widths (adjust mo if needed) */
+#logsTable thead th:nth-child(1){ width: 18%; } /* Date */
+#logsTable thead th:nth-child(2){ width: 14%; } /* Time */
+#logsTable thead th:nth-child(3){ width: 52%; } /* Description */
+#logsTable thead th:nth-child(4){ width: 16%; text-align:right; } /* Action */
+#logsTable td:last-child{ text-align: right; }
+
+/* description preview — single line with ellipsis */
+#logsTable .log-snippet{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* View button (match Edit button look) */
+#logsTable .viewLog{
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+#logsTable .viewLog:hover{ background:#f5f6ff; }
+
+/* modal (reuse global .modal); just cap width + X alignment if needed later */
+#logModal .modal-content{ max-width: 520px; }
+#logClose{ float:right; font-size:20px; cursor:pointer; }
+#logClose:hover{ opacity:.85; }
+

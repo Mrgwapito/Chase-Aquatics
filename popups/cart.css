@@ -1,5 +1,4 @@
-/* carttt */
-
+/* 🛒 CART POPUP */
 .cart-popup {
   position: fixed;
   top: 80px;
@@ -22,6 +21,7 @@
   padding-bottom: 10px;
 }
 
+/* 🧾 CART ITEM LIST */
 .cart-item {
   max-height: 300px;
   display: flex;
@@ -46,14 +46,14 @@
 .item-info h4 {
   margin: 0 0 4px;
   font-size: 14px;
-  font-weight: normal; /* Changed from bold to normal */
+  font-weight: normal;
 }
 
 .item-info p {
   margin: 0;
   font-size: 13px;
   color: #000000;
-  font-weight: 500; /* Slightly bolder than normal */
+  font-weight: 500;
 }
 
 .item-controls {
@@ -63,7 +63,8 @@
   margin-left: 5px;
 }
 
-.qty-btn, .remove-btn {
+.qty-btn,
+.remove-btn {
   background-color: #e0e0e0;
   border: none;
   padding: 6px;
@@ -71,7 +72,8 @@
   cursor: pointer;
 }
 
-.qty-btn:hover, .remove-btn:hover {
+.qty-btn:hover,
+.remove-btn:hover {
   background-color: #d0d0d0;
 }
 
@@ -81,6 +83,7 @@
   font-size: 14px;
 }
 
+/* 🧾 BUTTONS */
 .review-btn {
   display: block;
   width: 100%;
@@ -118,6 +121,59 @@
   padding-right: 10px;
 }
 
+/* 🛒 FIXED CART BADGE POSITION */
+.cart {
+  position: relative; /* Keeps badge attached */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #2b4d23; /* Your brand green */
+}
+
+/* 🔴 Badge top-left, overlapping cart rim */
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  background: #e74c3c; /* Badge only is red */
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+  animation: badgePop 0.4s ease;
+  z-index: 10;
+}
+
+/* 💚 Cart bounce (no color change) */
+.cart i.cart-animate {
+  transform: scale(1.3);
+  color: #2b4d23;
+  transition: transform 0.2s ease;
+}
+
+/* ✨ Smooth badge pop animation */
+@keyframes badgePop {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 📱 HIDE SCROLLBAR IN LANDSCAPE */
 @media screen and (orientation: landscape) {
   .cart-items {
     scrollbar-width: none;

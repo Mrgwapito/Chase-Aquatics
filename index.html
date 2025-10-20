@@ -8,62 +8,127 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous"> 
     <link rel="stylesheet" href="popups/login.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="popups/cart.css">
     <link rel="stylesheet" href="lpage.css">
+    <link rel="stylesheet" href="responsive.css" media="(max-width: 767px)">
     <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
 </head>
 
 <body>
-    <nav class="navbar">
-        <div class="logo"><img src="./logo.png" alt="logo"></div>
-        <div class="navlinks">
+   <nav class="navbar">
+    <div class="logo"><img src="./logo.png" alt="logo"></div>
+
+    <!-- NEW: mobile hamburger -->
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="navlinks" id="navlinks">
         <ul>
-            <li><a class="active" href="./landingpage.html">Home</a></li>
-            <li><a class="active" href="./product.html">Products</a></li>
-            <li><a class="active" href="./service.html">Services</a></li>
-            <li><a class="active" href="./about.html">About US</a></li>
-            <li><a class="active" href="./rus.html">Reach US</a></li>
+        <li><a class="active" href="./index.html">Home</a></li>
+        <li><a class="active" href="./product.html">Products</a></li>
+        <li><a class="active" href="./service.html">Services</a></li>
+        <li><a class="active" href="./about.html">About US</a></li>
+        <li><a class="active" href="./termsncondi.html">Reach US</a></li>
         </ul>
-        </div>
-        <div class="nav-icons">
-            <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
-            <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
-        </div>
-    </nav>
-
-
-  <!-- Login Form (Hidden Initially) -->
-<div class="login-container" id="loginContainer">
-    <div class="login-box">
-        <h2>Sign In</h2>
-        <input type="text" placeholder="Username" id="loginEmail"> <!-- Changed id to match JS -->
-        <input type="password" placeholder="Password" id="password">
-        
-        <div class="remember-me">
-            <input type="checkbox" id="remember">
-            <label for="remember">Remember Me</label>
-        </div>
-
-        <button class="btn" id="signInBtn">Sign In</button>
-        <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
-        <span class="close-x" id="closeLogin">&times;</span>
     </div>
+
+    <div class="nav-icons">
+        <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+        <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+    </div>
+    </nav> 
+
+
+ <!-- Login Form (Hidden Initially) -->    
+<div class="login-container" id="loginContainer" style="display: none;">
+  <div class="login-box">
+    <h2>Sign In</h2>
+    <input type="text" placeholder="Username or Email" id="loginEmail">
+    <input type="password" placeholder="Password" id="password">
+    
+    <div class="remember-me">
+      <input type="checkbox" id="remember">
+      <label for="remember">Remember Me</label>
+    </div>
+
+    <button class="btn" id="signInBtn">Sign In</button>
+
+    <!-- Forgot Password Link -->
+    <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
+
+    <p class="signup-text">
+      Don't have an account? <span id="showRegister">Sign Up</span>
+    </p>
+
+    <span class="close-x" id="closeLogin">&times;</span>
+  </div>
 </div>
+
+<!-- 🔒 Forgot Password Popup -->
+<div class="forgot-container" id="forgotContainer" style="display: none;">
+  <div class="forgot-box">
+    <h2>Reset Password</h2>
+    <p style="font-size: 14px; color: #666;">Enter your email to receive a reset code.</p>
+
+    <input type="email" id="forgotEmail" placeholder="Enter your registered email">
+    <button class="btn" id="forgotSendBtn">Send OTP</button>
+
+    <div id="forgotStep2" style="display:none; margin-top:15px;">
+      <input type="text" id="forgotOtp" placeholder="Enter OTP">
+      <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)">
+      <input type="password" id="forgotConfirmPass" placeholder="Confirm Password">
+      <button class="btn" id="forgotResetBtn">Reset Password</button>
+    </div>
+
+    <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
+    <span class="close-x" id="closeForgot">&times;</span>
+  </div>
+</div>
+
+      </section>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
 
 <!-- Registration Form (Hidden Initially) -->
 <div class="register-container" id="registerContainer">
-    <div class="register-box">
-        <h2>Register</h2>
-        <input type="text" placeholder="Full Name" id="regFullName">
-        <input type="email" placeholder="Email" id="regEmail">
-        <input type="password" placeholder="Create Password" id="regPassword">
-        <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
-        
-        <button class="btn" id="registerBtn">Register</button>
-        <p class="back-to-login" id="backToLogin">Back to Login</p>
-        <span class="close-x" id="closeRegister">&times;</span>
+  <div class="register-box">
+    <h2>Register</h2>
+
+    <!-- 👇 Split name into first + last -->
+    <div class="name-group">
+      <input type="text" placeholder="First Name" id="regFirstName">
+      <input type="text" placeholder="Last Name" id="regLastName">
     </div>
+
+    <input type="email" placeholder="Email" id="regEmail">
+
+    <!-- 🔹 Email Verification Section -->
+    <div class="otp-container">
+      <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
+      <button id="sendOtpBtn" class="otp-btn">Send Code</button>
+      <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+    </div>
+
+    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8">
+    <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+
+    <button class="btn" id="registerBtn" disabled>Register</button>
+    <p class="back-to-login" id="backToLogin">Back to Login</p>
+    <span class="close-x" id="closeRegister">&times;</span>
+  </div>
 </div>
+
+
 
 
     <!-- Cart Popup -->
@@ -78,9 +143,16 @@
 
 
    <section class="hero">
+        <video autoplay muted loop playsinline class="bg-video">
+            <source src="./herobg.mp4" type="video/mp4">
+            Your browser does not support HTML5 video.
+        </video>
+         <div class="hero-content">
         <img src="./Life In A Box.png" alt="life in a box">
         <p>Bring the beauty of underwater world to your home</p>
-        <button type="button" class="btn btn-success"  onclick="location.href='service.html'">Explore Our Collection</button>
+        <button type="button" class="btn btn-success"  onclick="location.href=''">Explore Our Collection</button>
+       
+         </div>
     </section>
 
     <section class="spart">
@@ -143,43 +215,163 @@
         </div>
     </section>
 
-    <section class="tpart">
-        <div class="fdiv">
-            <h1>About Life In A Box</h1>
-            <p>
-                Life in a Box was created from the combined passion and expertise of three stores: Chase Aquascape, Chase Pets, and Slice of Nature. These stores are owned by a team that shares a love for aquatic life and pet care. By bringing them together, we built an all in one e-commerce platform that offers high quality aquariums, fish, pet supplies, and custom aquarium design services. Our goal is to make it easier for hobbyists and enthusiasts to find everything they need in one place while ensuring top notch quality and customer service.
-            </p>
-            <button type="button" class="btn btn-success" onclick="location.href='about.html'">Learn More About Us</button>
-            </div>
-        </div>
-        <div class="sdiv">
-            <img src="./chase.jpg" alt="Chase Logo">
-        </div>
-    </section>
+<section class="fpart">
+  <h1>Our Services</h1>
 
-    <section class="fpart">
-        <h1>Our Services</h1>
-        <div class="fwrap">
-            <div class="boxx">
-                <i class="fa-solid fa-brush"></i>
-                <h2>Custom Design</h2>
-                <p>Professional aquarium design tailored to your space and style preferences</p>
-                <button type="button" class="btn btn-primary">Get Started</button>
-            </div>
-            <div class="boxx">
-                <i class="fa-solid fa-screwdriver-wrench"></i>
-                <h2>Maintenance</h2>
-                <p>Regular maintenance services to keep your aquarium healthy and beautiful</p>
-                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Book Appointment</a>
-            </div>
-            <div class="boxx">
-                <i class="fa-solid fa-headset"></i>
-                <h2>Consultation</h2>
-                <p>Expert advice on fish care, water quality, and aquarium management</p>
-                <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Book Appointment</a>
-            </div>
+  <div class="services-grid">
+    <!-- Card 1 -->
+    <article class="service-card">
+      <i class="fa-solid fa-brush"></i>
+      <h2>Custom Design</h2>
+      <p>Professional aquarium design tailored to your space and style preferences</p>
+      <button type="button" class="btn btn-primary">Get Started</button>
+    </article>
+
+    <!-- Card 2 -->
+    <article class="service-card">
+      <i class="fa-solid fa-screwdriver-wrench"></i>
+      <h2>Maintenance</h2>
+      <p>Regular maintenance services to keep your aquarium healthy and beautiful</p>
+      <button type="button" class="btn btn-primary" data-open="bookingModal">Book Appointment</button>
+    </article>
+
+    <!-- Card 3 -->
+    <article class="service-card">
+      <i class="fa-solid fa-headset"></i>
+      <h2>Consultation</h2>
+      <p>Expert advice on fish care, water quality, and aquarium management</p>
+      <button type="button" class="btn btn-primary" data-open="bookingModal">Book Appointment</button>
+    </article>
+  </div>
+</section>
+
+<!-- ===================== BOOKING POPUP ===================== -->
+<div id="bookingModal" class="booking-modal" role="dialog" aria-modal="true" aria-labelledby="bookingTitle" hidden>
+  <div class="modal__backdrop" data-close></div>
+
+  <div class="modal__panel">
+    <button class="modal__close" type="button" aria-label="Close" data-close>&times;</button>
+
+    <!-- Header -->
+    <header class="booking__header">
+      <h1 id="bookingTitle" class="booking__title">In Person Appointment</h1>
+      <div class="booking__meta">
+        <span class="booking__meta-item" aria-label="Duration">🕒 1 hr</span>
+        <span class="booking__meta-item" aria-label="Location">
+          📍 Paseo de Carmona, Unit 8 Lot E/F paseo square, Governor's Dr, Carmona, 4116 Cavite
+        </span>
+      </div>
+      <p class="booking__intro">Let’s create something beautiful together!</p>
+    </header>
+
+    <!-- Body -->
+    <div class="booking">
+      <!-- Left column -->
+      <aside class="booking__aside">
+        <p>
+          Whether you’re dreaming of a custom-built aquarium, need help with tank maintenance,
+          want to explore our handcrafted cabinets, or simply have questions, we’re here to help.
+          Book an in-person consultation with our team at <strong>Chase Aquatics</strong>.
+        </p>
+        <div class="booking__timezone">
+          <small>Time zone</small>
+          <div class="booking__tz-row">🌐 Philippine Time</div>
         </div>
-    </section>
+      </aside>
+
+      <!-- Right column -->
+<section class="booking__main">
+  <div class="step step--calendar" data-step="calendar" aria-labelledby="stepCalendarTitle">
+    <!-- row 1 (two columns): left = main title, right = selected date -->
+    <h2 id="stepCalendarTitle">Select a Date &amp; Time</h2>
+    <div class="times__date-heading" data-times-date>—</div>
+
+    <!-- row 2: calendar | times list -->
+    <div class="cal-times">
+      <div class="cal__picker">
+        <input id="datePicker" type="text" aria-label="Choose a date" />
+      </div>
+
+      <aside class="times" aria-live="polite">
+        <div class="times__list">
+          <button class="times__btn" type="button" data-time="09:00">9:00am</button>
+          <button class="times__btn" type="button" data-time="10:00">10:00am</button>
+          <button class="times__btn" type="button" data-time="11:00">11:00am</button>
+          <button class="times__btn" type="button" data-time="12:00">12:00pm</button>
+          <button class="times__btn" type="button" data-time="13:00">1:00pm</button>
+          <button class="times__btn" type="button" data-time="14:00">2:00pm</button>
+          <button class="times__btn" type="button" data-time="15:00">3:00pm</button>
+          <button class="times__btn" type="button" data-time="16:00">4:00pm</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+
+        <!-- STEP 2: Details -->
+        <form class="step step--details" data-step="details" aria-labelledby="stepDetailsTitle" hidden>
+          <h2 id="stepDetailsTitle">Enter Details</h2>
+
+          <div class="form__row">
+            <label for="guestName">Name *</label>
+            <input id="guestName" name="name" type="text" required />
+          </div>
+
+          <div class="form__row">
+            <label for="guestEmail">Email *</label>
+            <input id="guestEmail" name="email" type="email" required />
+          </div>
+
+          <details class="form__row">
+            <summary>Add Guests</summary>
+            <input name="guests" type="email" placeholder="guest1@example.com, guest2@example.com" />
+          </details>
+
+          <div class="form__row">
+            <label for="notes">Do you have anything you’d like us to know before the appointment?</label>
+            <textarea id="notes" name="notes" rows="4" placeholder="Feel free to share your space, style, or ideas."></textarea>
+          </div>
+
+<!-- Topics: add a helper class and keep simple label+checkbox items -->
+<fieldset class="form__row form__row--topics">
+  <legend>What would you like to talk about? *</legend>
+
+  <label class="topic">
+    <span>Building of aquarium</span>
+    <input type="checkbox" name="topic" value="build">
+  </label>
+
+  <label class="topic">
+    <span>Tank maintenance</span>
+    <input type="checkbox" name="topic" value="maintenance">
+
+  </label>
+
+  <label class="topic">
+    <span>Inquiry</span>
+    <input type="checkbox" name="topic" value="inquiry">
+  </label>
+
+  <label class="topic topic--other">
+    <span>Other</span>
+    <input type="checkbox" name="topic" value="other" data-other-toggle>
+  </label>
+
+  <!-- full-width, aligned with other text inputs -->
+  <input type="text" name="other_text" placeholder="Please specify" class="other__input" hidden>
+</fieldset>
+
+
+          <button class="btn btn--primary" type="submit">Schedule Event</button>
+        </form>
+      </section>
+    </div>
+  </div>
+</div>
+
+
+
+
 
     <section class="fifpart">
         <h1>Why Choose US</h1>
@@ -287,12 +479,18 @@
 
 
       
-      
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+      <script> emailjs.init("hhTpOoi07kd04LwsH"); </script>
+      <script src="/popups/forgatpass.js"></script>
       <script src="lpage.js"></script>
       <script src="productModal/cartModel.js"></script>
       <script src="productModal/userModel.js"></script>
+      <script src="/profile/userauth.js"></script>
       <script src="popups/login.js"></script>
       <script type="module" src="/popups/cart.js"></script>
-
+      <script src="booking.js"></script>
 </body>

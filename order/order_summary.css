@@ -1,0 +1,419 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+.navbar {
+    position: relative; 
+    width: 100%;
+    background-color: #EEE9DA;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+    transition: top 0.3s ease-in-out, position 0.3s ease-in-out;
+    z-index: 1000;
+}
+.navbar.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+.navlinks ul {
+    display: flex;
+    list-style: none;
+    gap: 50px;
+    position: relative;
+    top: 5px;
+}
+.navlinks ul li a {
+    text-decoration: none;
+    color: #335A02; 
+    font-size: 20px;
+  }
+a.active:hover {
+    text-decoration: underline;   
+    transition: 1s; 
+}
+.navbar .logo img {
+    height: 40px;
+    margin-left: 10px;
+}
+.nav-icons{
+  display:flex;
+  flex-direction: row;
+  gap:15px;
+  margin-right:20px;
+}
+.nav-icons button{
+    color:#335A02;
+    font-size: 30px;
+    background: none; 
+    border: none;     
+    outline: none;    
+    cursor: pointer;
+}
+
+/* ================================
+   ORDER SECTION
+================================== */
+.order-section {
+  background-color: #ffffff;
+  padding: 40px 0 80px; /* was 80px 0 120px */
+  margin-top: -20px; /* pulls section up slightly under navbar */
+}
+
+
+.order-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 25px;
+}
+
+/* Header */
+.order-wrapper h2 {
+  font-weight: 900;
+  font-size: 2.3rem;
+  color: #335A02;
+  text-align: center;
+  margin-bottom: 0.8rem;
+}
+
+.order-subtitle {
+  text-align: center;
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 35px;
+}
+
+/* Order Info */
+.order-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.order-id {
+  font-size: 1rem;
+  color: #666;
+}
+
+.order-id strong {
+  color: #111;
+  margin-left: 5px;
+}
+
+/* Tabs (Summary / Payment / Delivery) */
+.step-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 35px;
+}
+
+.pill-btn {
+  border: 1.5px solid #335A02;
+  background: #fff;
+  color: #335A02;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.pill-btn:hover {
+  background: #f2f7f2;
+}
+
+.pill-btn.active {
+  background: #335A02;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(51, 90, 2, 0.25);
+}
+
+/* ================================
+   SIMPLE ORDER LIST STYLE
+================================ */
+.order-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid #eaeaea;
+  border-bottom: 1px solid #eaeaea;
+  padding: 15px 0;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  background-color: transparent;
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.order-item:hover {
+  background-color: #f8f8f8;
+}
+
+.order-item img {
+  width: 65px;
+  height: 65px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  margin-right: 12px;
+}
+
+.order-item-info {
+  flex: 1;
+}
+
+.order-item-info h6 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 3px;
+}
+
+.order-item-info p {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.order-item strong {
+  font-weight: 700;
+  color: #335A02;
+  font-size: 1rem;
+  min-width: 80px;
+  text-align: right;
+}
+
+
+/* ================================
+   COST SUMMARY
+================================== */
+.order-costs {
+  margin-top: 25px;
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  color: #555;
+  font-weight: 500;
+}
+
+.order-total {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 10px;
+  padding-top: 20px;
+}
+
+.order-total h4 {
+  font-weight: 800;
+  color: #111;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ✅ Peso and number stay together */
+.order-total-value {
+  color: #335A02;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  text-align: right;
+}
+
+
+/* ================================
+   BUTTONS
+================================== */
+
+.remove-btn {
+  border-radius: 6px;                /* slightly smaller corners */
+  padding: 3px 6px;                  /* tighter padding */
+  transition: all 0.2s ease-in-out;
+  background-color: #6e6d6d81;         /* red base */
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.remove-btn i {
+  font-size: 13px;                   /* smaller icon */
+  color: #fff;
+  line-height: 1;
+}
+
+.remove-btn:hover {
+  background-color: #b02a37 !important;
+  transform: scale(1.08);
+}
+
+.remove-btn:active {
+  transform: scale(0.95);
+}
+
+
+.order-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 45px;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.btn {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 12px 25px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* Green Theme Buttons */
+.btn-outline-secondary {
+  border: 2px solid #335A02;
+  color: #335A02;
+  background-color: transparent;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #335A02;
+  color: #fff;
+}
+
+.btn-primary {
+  background-color: #335A02;
+  border: 2px solid #335A02;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background-color: #2a4801;
+  border-color: #2a4801;
+  transform: translateY(-1px);
+}
+
+/* ================================
+   FOOTER
+================================== */
+footer {
+  background-color: #6096B4;
+  color: white;
+  width: 100%;
+  margin-top: 80px;
+}
+
+footer h5 {
+  color: white;
+}
+
+footer p,
+footer li,
+footer a {
+  color: white;
+  text-decoration: none;
+}
+
+footer .border-top {
+  border-top: 1px solid white !important;
+}
+
+footer ul {
+  padding-left: 0;
+}
+
+footer ul li {
+  list-style: none;
+}
+
+footer i {
+  margin-right: 8px;
+}
+
+/* ================================
+   RESPONSIVE DESIGN
+================================== */
+@media (max-width: 992px) {
+  .order-wrapper {
+    padding: 0 20px;
+  }
+
+  .order-wrapper h2 {
+    font-size: 2rem;
+  }
+
+  .order-total {
+    font-size: 1.3rem;
+  }
+
+  .order-actions {
+    flex-direction: column;
+  }
+
+  .order-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .order-item {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .order-item img {
+    width: 100%;
+    max-width: 250px;
+  }
+
+  .order-wrapper h2 {
+    font-size: 1.6rem;
+  }
+
+  .step-tabs {
+    flex-wrap: wrap;
+  }
+}
+
+/* HIDE HAMBURGER ON DESKTOP */
+.nav-toggle {
+  display: none;
+}
+
+/* SHOW HAMBURGER ONLY ON MOBILE */
+@media (max-width: 768px) {
+  .nav-toggle {
+    display: block;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #335A02;
+    cursor: pointer;
+  }
+
+  /* optionally hide normal navlinks when mobile menu is closed */
+  .navlinks ul {
+    display: none;
+  }
+}
+

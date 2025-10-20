@@ -9,44 +9,50 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="popups/cart.css"/>
   <link rel="stylesheet" href="product_shop.css"/>
+  <link rel="stylesheet" href="popups/login.css"/>
+  <link rel="stylesheet" href="nav.css"/>
 </head>
 <body>
 
+<!-- 🧭 NAVBAR -->
+<nav class="navbar">
+  <div class="logo"><img src="./logo.png" alt="logo"></div>
 
-  <nav class="navbar">
-        <div class="logo"><img src="./logo.png" alt="logo"></div>
-        <div class="navlinks">
-       <ul>
-            <li><a class="active" href="./index.html">Home</a></li>
-            <li><a class="active" href="product.html">Products</a></li>
-            <li><a class="active" href="./service.html">Servicecs</a></li>
-            <li><a class="active" href="./about.html">About US</a></li>
-            <li><a class="active" href="./rus.html">Reach US</a></li>
-        </ul>
-        </div>
-        <div class="nav-icons">
-            <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
-            <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
-        </div>
-    </nav>
+  <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
+      <i class="fa-solid fa-bars"></i>
+  </button>
 
-    <!-- Cart Popup -->
-    <div class="cart-popup">
-    <h2>Cart</h2>
-    <div class="cart-items">
-        <!-- Cart items will be dynamically inserted here -->
-    </div>
-    <button class="review-btn">Review My Cart</button>
-    </div>
+  <div class="navlinks" id="navlinks">
+      <ul>
+      <li><a class="active" href="./index.html">Home</a></li>
+      <li><a href="./product.html">Products</a></li>
+      <li><a href="./service.html">Services</a></li>
+      <li><a href="./about.html">About US</a></li>
+      <li><a href="./rus.html">Reach US</a></li>
+      </ul>
+  </div>
 
+  <div class="nav-icons">
+      <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+      <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+  </div>
+</nav> 
+
+<!-- 🛒 CART POPUP -->
+<div class="cart-popup">
+  <h2>Cart</h2>
+  <div class="cart-items"></div>
+  <button class="review-btn">Review My Cart</button>
+</div>
+
+<!-- 🏷️ HEADER -->
 <header class="text-center p-3 bg-light border-bottom">
   <h1>Product Details</h1>
 </header>
 
-<!-- Product Detail Section -->
+<!-- 🧩 PRODUCT DETAILS -->
 <section class="product-detail-section container mt-4">
   <div class="row">
-    <!-- Product Images -->
     <div class="col-md-6">
       <div class="product-images">
         <img id="product-image" src="images/placeholder.jpg" alt="Product Image" class="img-fluid mb-3"/>
@@ -54,13 +60,11 @@
       </div>
     </div>
 
-    <!-- Product Information -->
     <div class="col-md-6">
       <div class="product-info">
         <h2 id="product-name" class="product-name">Loading...</h2>
         <p id="product-category" class="product-category"><strong>Category:</strong> <span></span></p>
 
-        <!-- Price and Quantity -->
         <div class="price-quantity">
           <p id="product-price" class="product-price"><strong>Price:</strong> ₱0.00</p>
           <div class="quantity-section mb-3">
@@ -69,13 +73,11 @@
           </div>
         </div>
 
-        <!-- Description -->
         <div class="product-description mt-3">
           <h5>Description</h5>
           <p id="product-description">No description available.</p>
         </div>
 
-        <!-- Add to Cart & Wishlist Buttons -->
         <div class="action-buttons mt-4">
           <button id="add-to-cart-btn" class="btn btn-primary add-to-cart">
             <i class="fas fa-shopping-cart"></i> Add to Cart
@@ -85,7 +87,6 @@
           </button>
         </div>
 
-        <!-- Product Rating -->
         <div class="product-rating mt-4">
           <h5>Customer Ratings:</h5>
           <div class="rating-stars">
@@ -102,14 +103,7 @@
   </div>
 </section>
 
-
-<!-- Product Detail Section -->
-<section class="product-detail-section container mt-4">
-  <div class="row">
-    <!-- Product Images -->
-    
-
-<!-- Related Products Section -->
+<!-- 🛍️ RELATED PRODUCTS -->
 <section class="related-products container mt-5">
   <h3 class="text-center mb-4">Related Products</h3>
   <div class="row g-4" id="related-products-container">
@@ -117,10 +111,80 @@
   </div>
 </section>
 
+<!-- 🔐 LOGIN POPUP -->
+<div class="login-container" id="loginContainer" style="display: none;">
+  <div class="login-box">
+    <h2>Sign In</h2>
+    <input type="text" placeholder="Username or Email" id="loginEmail">
+    <input type="password" placeholder="Password" id="password">
 
-<script src="product_shop.js"></script>
+    <div class="remember-me">
+      <input type="checkbox" id="remember">
+      <label for="remember">Remember Me</label>
+    </div>
+
+    <button class="btn" id="signInBtn">Sign In</button>
+    <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
+
+    <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+
+    <span class="close-x" id="closeLogin">&times;</span>
+  </div>
+</div>
+
+<!-- 🔒 FORGOT PASSWORD POPUP -->
+<div class="forgot-container" id="forgotContainer" style="display: none;">
+  <div class="forgot-box">
+    <h2>Reset Password</h2>
+    <p style="font-size: 14px; color: #666;">Enter your email to receive a reset code.</p>
+
+    <input type="email" id="forgotEmail" placeholder="Enter your registered email">
+    <button class="btn" id="forgotSendBtn">Send OTP</button>
+
+    <div id="forgotStep2" style="display:none; margin-top:15px;">
+      <input type="text" id="forgotOtp" placeholder="Enter OTP">
+      <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)">
+      <input type="password" id="forgotConfirmPass" placeholder="Confirm Password">
+      <button class="btn" id="forgotResetBtn">Reset Password</button>
+    </div>
+
+    <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
+    <span class="close-x" id="closeForgot">&times;</span>
+  </div>
+</div>
+
+<!-- 🆕 REGISTER POPUP -->
+<div class="register-container" id="registerContainer" style="display: none;">
+  <div class="register-box">
+    <h2>Register</h2>
+    <div class="name-group">
+      <input type="text" placeholder="First Name" id="regFirstName">
+      <input type="text" placeholder="Last Name" id="regLastName">
+    </div>
+
+    <input type="email" placeholder="Email" id="regEmail">
+
+    <div class="otp-container">
+      <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
+      <button id="sendOtpBtn" class="otp-btn">Send Code</button>
+      <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+    </div>
+
+    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8">
+    <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+
+    <button class="btn" id="registerBtn" disabled>Register</button>
+    <p class="back-to-login" id="backToLogin">Back to Login</p>
+    <span class="close-x" id="closeRegister">&times;</span>
+  </div>
+</div>
+
+<!-- 🔗 SCRIPTS -->
+<script src="./product_shop.js"></script>
 <script type="module" src="/popups/cart.js"></script>
-
+<script src="/profile/userauth.js"></script>
+<script src="/popups/forgatpass.js"></script>
+<script type="module" src="/popups/login.js"></script>
 
 </body>
 </html>

@@ -174,9 +174,9 @@ header h1 {
 .related-product-info {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;  /* <-- left-align */
   margin-bottom: 10px;
+  text-align: left;         /* ensure text inside is left-aligned */
 }
 
 /* Title */
@@ -251,6 +251,86 @@ header h1 {
   gap: 20px;
 }
 
+/* ======================== */
+/* Improved Related Products Styling */
+/* ======================== */
+
+.related-products {
+  margin-top: 60px;
+  text-align: center;
+}
+
+.related-products h3 {
+  font-weight: 700;
+  color: #3A5A40;
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+}
+
+.related-products .product-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 15px;
+  transition: all 0.3s ease-in-out;
+  text-align: center;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
+  height: 100%;
+}
+
+.related-products .product-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-5px);
+}
+
+.related-products .product-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  transition: transform 0.3s ease-in-out;
+}
+
+.related-products .product-card:hover img {
+  transform: scale(1.05);
+}
+
+/* Product Title */
+.related-products .product-title {
+  margin-top: 15px;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
+  line-height: 1.4;
+  height: 45px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Product Price */
+.related-products .product-price {
+  font-size: 1.1rem;
+  color: #3A5A40;
+  font-weight: 600;
+  margin: 10px 0;
+}
+
+/* View Details Button */
+.related-products .btn {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.related-products .btn:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
 /* Responsive Improvements */
 @media (max-width: 768px) {
   .product-detail-section {
@@ -318,3 +398,121 @@ a.active:hover {
     cursor: pointer;
 }
 
+/* ===== PHONES ≤ 767px ===== */
+@media (max-width: 767px){
+  /* tidy spacing */
+  .product-detail-section{ padding:16px 14px; border-radius:8px; }
+  header h1{ font-size:clamp(1.25rem, 6vw, 1.75rem); margin:8px 0; }
+
+  /* stack image + info (1 column) */
+  .row > .col-md-6{ width:100%; }
+
+  /* main image + thumbnails */
+  .product-images #product-image{ max-width:100%; aspect-ratio:1/1; }
+  #product-additional-images{
+    display:flex; gap:10px; overflow-x:auto; padding-bottom:6px;
+    -webkit-overflow-scrolling:touch;
+  }
+  #product-additional-images img{ flex:0 0 70px; height:70px; }
+
+  /* text + price/qty */
+  .product-name{ font-size:1.4rem; }
+  .price-quantity{ flex-direction:column; align-items:flex-start; gap:10px; }
+  .quantity-section .form-control{ max-width:120px; }
+
+  /* buttons full-width and comfy */
+  .action-buttons{ display:grid; grid-template-columns:1fr; gap:10px; }
+  .action-buttons .btn{ width:100%; padding:12px 14px; font-weight:700; }
+
+  /* related spacing */
+  .related-products{ margin-top:36px; }
+}
+
+/* ===== TABLETS 768–1023px ===== */
+@media (min-width:768px) and (max-width:1023px){
+  .product-detail-section{ padding:24px; }
+  .product-name{ font-size:1.6rem; }
+
+  /* thumbnails wrap nicely */
+  #product-additional-images{ display:flex; gap:10px; flex-wrap:wrap; }
+}
+/* ===== MOBILE (≤767px): smaller main image + 3-column related grid ===== */
+@media (max-width: 767px){
+
+  /* Main product image — smaller, centered, square */
+  .product-images #product-image{
+    width: 55%;
+    max-width: 260px;          /* tune if you want smaller/bigger */
+    aspect-ratio: 1 / 1;
+    height: auto;
+    object-fit: cover;
+    margin-inline: auto;
+    border-radius: 12px;
+  }
+
+  /* Related products: 3 columns (not 3 rows) */
+  #related-products-container{
+    display: grid !important;                      /* override Bootstrap .row */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px !important;
+    margin: 0 !important;
+    --bs-gutter-x: 0;                              /* neutralize .g-* gutters */
+    --bs-gutter-y: 0;
+  }
+  #related-products-container > *{
+    width: 100% !important;
+    padding: 0 !important;                         /* remove column padding */
+  }
+
+  /* Tighten cards so 3 fit comfortably */
+  .related-products .product-card{
+    padding: 8px;
+    border-radius: 10px;
+    height: auto;
+    margin-bottom: 40px;
+  }
+  .related-products .product-card img{
+    width: 100%;
+    aspect-ratio: 1 / 1;                           /* square thumbs */
+    height: auto;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  .related-products .product-title{
+    font-size: .8rem;
+    line-height: 1.2;
+    height: 2.4em;                                 /* 2 lines max */
+    overflow: hidden;
+  }
+  .related-products .product-price{
+    font-size: .85rem;
+    margin: 6px 0 4px;
+  }
+  .related-products .btn{
+    padding: 6px 8px;
+    font-size: .75rem;
+  }
+  /* If space is really tight, hide the button on mobile:
+     .related-products .btn{ display:none; }
+  */
+}
+/* ===== PHONE SIZE: shrink main image aggressively ===== */
+@media (max-width: 767px){
+  .product-images #product-image{
+    width: 85vw !important;        /* ~half the screen */
+    max-width: 370px !important;   /* hard cap */
+    aspect-ratio: 1 / 1 !important;
+    height: auto !important;
+    object-fit: cover;
+    margin: 0 auto 12px;           /* centered, with a bit of space below */
+    border-radius: 12px;
+  }
+}
+@media (max-width: 767px){
+  .action-buttons{ gap: 8px; }
+  .action-buttons .btn{
+    width: 100%;
+    padding: 9px 12px;     /* was 12px 14px */
+    font-size: .95rem;
+  }
+} 

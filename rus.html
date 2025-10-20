@@ -1,152 +1,290 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life In A Box </title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Life In A Box — Reach Us</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="reachus.css">
-    <link rel="stylesheet" href="./popups/cart.css">
-    <link rel="stylesheet" href="./popups/login.css">
+  <!-- Vendors -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet"/>
+
+  <!-- Project CSS -->
+  <link rel="stylesheet" href="reachus.css"/>
+  <link rel="stylesheet" href="nav.css"/>
+  <link rel="stylesheet" href="./popups/cart.css"/>
+  <link rel="stylesheet" href="./popups/login.css"/>
 </head>
 <body>
- 
-      <nav class="navbar">
-        <div class="logo"><img src="./logo.png" alt="logo"></div>
-        <div class="navlinks">
-        <ul>
-            <li><a class="active" href="./index.html">Home</a></li>
-            <li><a class="active" href="./product.html">Products</a></li>
-            <li><a class="active" href="./service.html">Services</a></li>
-            <li><a class="active" href="./about.html">About US</a></li>
-            <li><a class="active" href="./rus.html">Reach US</a></li>
-        </ul>
-        </div>
-        <div class="nav-icons">
-            <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
-            <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
-        </div>
-    </nav>
-    
+  <!-- NAV -->
+  <nav class="navbar">
+    <div class="logo"><img src="./logo.png" alt="logo"/></div>
 
-     <!-- Login Form (Hidden Initially) -->
-<div class="login-container" id="loginContainer">
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="navlinks" id="navlinks">
+      <ul>
+        <li><a href="./index.html">Home</a></li>
+        <li><a href="./product.html">Products</a></li>
+        <li><a href="./service.html">Services</a></li>
+        <li><a href="./about.html">About Us</a></li>
+        <li><a class="active" href="./rus.html">Reach Us</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-icons">
+      <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+      <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+    </div>
+  </nav>
+
+  <!-- 🔐 Login (same structure/IDs as index) -->
+  <div class="login-container" id="loginContainer" style="display:none;">
     <div class="login-box">
-        <h2>Sign In</h2>
-        <input type="text" placeholder="Username" id="loginEmail"> <!-- Changed id to match JS -->
-        <input type="password" placeholder="Password" id="password">
-        
-        <div class="remember-me">
-            <input type="checkbox" id="remember">
-            <label for="remember">Remember Me</label>
-        </div>
+      <h2>Sign In</h2>
+      <input type="text" placeholder="Username or Email" id="loginEmail"/>
+      <input type="password" placeholder="Password" id="password"/>
 
-        <button class="btn" id="signInBtn">Sign In</button>
-        <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
-        <span class="close-x" id="closeLogin">&times;</span>
+      <div class="remember-me">
+        <input type="checkbox" id="remember"/>
+        <label for="remember">Remember Me</label>
+      </div>
+
+      <button class="btn" id="signInBtn">Sign In</button>
+      <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
+      <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+      <span class="close-x" id="closeLogin">&times;</span>
     </div>
-</div>
+  </div>
 
-<!-- Registration Form (Hidden Initially) -->
-<div class="register-container" id="registerContainer">
+  <!-- 📝 Register (matches index with First/Last + OTP) -->
+  <div class="register-container" id="registerContainer" style="display:none;">
     <div class="register-box">
-        <h2>Register</h2>
-        <input type="text" placeholder="Full Name" id="regFullName">
-        <input type="email" placeholder="Email" id="regEmail">
-        <input type="password" placeholder="Create Password" id="regPassword">
-        <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
-        
-        <button class="btn" id="registerBtn">Register</button>
-        <p class="back-to-login" id="backToLogin">Back to Login</p>
-        <span class="close-x" id="closeRegister">&times;</span>
+      <h2>Register</h2>
+
+      <div class="name-group">
+        <input type="text" placeholder="First Name" id="regFirstName"/>
+        <input type="text" placeholder="Last Name" id="regLastName"/>
+      </div>
+
+      <input type="email" placeholder="Email" id="regEmail"/>
+
+      <div class="otp-container">
+        <input type="text" placeholder="Enter OTP" id="emailOtp" disabled/>
+        <button id="sendOtpBtn" class="otp-btn">Send Code</button>
+        <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+      </div>
+
+      <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8"/>
+      <input type="password" placeholder="Confirm Password" id="regConfirmPassword"/>
+
+      <button class="btn" id="registerBtn" disabled>Register</button>
+      <p class="back-to-login" id="backToLogin">Back to Login</p>
+      <span class="close-x" id="closeRegister">&times;</span>
     </div>
-</div>
+  </div>
 
+  <!-- 🔒 Forgot Password (same as index) -->
+  <div class="forgot-container" id="forgotContainer" style="display:none;">
+    <div class="forgot-box">
+      <h2>Reset Password</h2>
+      <p style="font-size:14px;color:#666;">Enter your email to receive a reset code.</p>
 
-    <!-- Cart Popup -->
-    <div class="cart-popup">
+      <input type="email" id="forgotEmail" placeholder="Enter your registered email"/>
+      <button class="btn" id="forgotSendBtn">Send OTP</button>
+
+      <div id="forgotStep2" style="display:none; margin-top:15px;">
+        <input type="text" id="forgotOtp" placeholder="Enter OTP"/>
+        <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)"/>
+        <input type="password" id="forgotConfirmPass" placeholder="Confirm Password"/>
+        <button class="btn" id="forgotResetBtn">Reset Password</button>
+      </div>
+
+      <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
+      <span class="close-x" id="closeForgot">&times;</span>
+    </div>
+  </div>
+
+  <!-- 🛒 Cart -->
+  <div class="cart-popup">
     <h2>Cart</h2>
-    <div class="cart-items">
-        <!-- Cart items will be dynamically inserted here -->
-    </div>
+    <div class="cart-items"></div>
     <button class="review-btn">Review My Cart</button>
+  </div>
+
+  <!-- ===================== PAGE CONTENT ===================== -->
+  <section class="hero">
+    <div class="title">
+      <h1>Reach Us</h1>
+      <p>We're here to help and answer any questions you might have. We look forward to hearing from you.</p>
     </div>
 
+    <div class="continir">
+      <div class="fconti">
+        <img src="./office.jpeg" alt="office photo">
+        <h2>Visit Our Office</h2>
 
-    
-    <section class="hero">
-        <div class="title">
-            <h1>Reach Us</h1>
-            <p>We're here to help and answer any questions you might have. We look forward to hearing from you.</p>
+        <div class="deets">
+          <div class="icon"><i class="fa-solid fa-location-dot"></i></div>
+          <div class="text">Paseo de Carmona, Unit 8 Lot E/F paseo square, Governor's Dr,<br/>Carmona, 4116 Cavite</div>
         </div>
-      
 
-        <div class="continir">
-            <div class="fconti">
-                <img src="./office.jpeg" alt="map picture">
-                <h2>Visit Our Office</h2>
-                <div class="deets">
-                    <div class="icon"><i class="fa-solid fa-location-dot"></i></div>
-                    <div class="text">Paseo de Carmona, Unit 8 Lot E/F paseo square, Governor's Dr,<br>Carmona, 4116 Cavite</div>
-                  </div>
-                  
-                  <div class="deets">
-                    <div class="icon"><i class="fa-solid fa-clock"></i></div>
-                    <div class="text">
-                      Weekdays: 10:00 AM to 7:00 PM<br>
-                      Weekends: 10:00 AM to 5:00 PM
-                    </div>
-                  </div>
-                  
-                  <div class="deets">
-                    <div class="phone"><i class="fa-solid fa-phone"></i></div>
-                    <div class="text">+63 932 241 2734</div>
-                  </div>
-                  
-                  <div class="deets">
-                    <div class="location"><i class="fa-solid fa-map-pin"></i></div>
-                    <div class="text">Waze address</div>
-                  </div>                  
-            </div>
-            <div class="sconti">
-                <h2>Send Us A Message</h2>
-              <form id="contact-form" action="https://formsubmit.co/aaroncortez2417@gmail.com" method="POST">
-              <input type="hidden" name="_captcha" value="false">
-              <div class="second">
-                <label for="name">Name</label>
-                <input type="text" placeholder="Name" id="name" name="name" required>
-                <label for="email">Email</label>
-                <input type="email" placeholder="Email" id="email" name="email" required>
-                <label for="message">Message</label>
-                <textarea id="message" name="message" placeholder="Message" required></textarea>
-                <button type="submit">Send</button>
-              </div>
-            </form>
-
-            <div id="popup" style="display:none; position:fixed; top:20px; right:20px; background-color:black; color:white; padding:15px; border-radius:5px;">
-              Message sent!
-            </div>
-            </div>
+        <div class="deets">
+          <div class="icon"><i class="fa-solid fa-clock"></i></div>
+          <div class="text">
+            Weekdays: 10:00 AM to 7:00 PM<br/>
+            Weekends: 10:00 AM to 5:00 PM
+          </div>
         </div>
-        <div class="socmed">
-            <ul class="social-icons list-unstyled d-flex justify-content-center gap-4 mt-4">
-                <li><a href="https://www.facebook.com/Chaseaquatics" class="social-link" target="_blank"><i class="fab fa-facebook"></i></a></li>
-                <li><a href="https://www.instagram.com/chaseaquascaping" class="social-link" target="_blank"><i class="fab fa-instagram"></i></a></li>
-                <li><a href="https://www.youtube.com/@chaseaquascape962" class="social-link" target="_blank"><i class="fa-brands fa-youtube"></i></a></li>
-                <li><a href="https://www.tiktok.com/@chase_aquascape" class="social-link" target="_blank"><i class="fa-brands fa-tiktok"></i></a></li>
-              </ul>                    
-        </div>
-        </section>
 
-    <footer >
-        <p>© 2025 Life in a Box. All rights reserved.</p>
-    </footer>
-      <script src="https://cdn.jsdelivr.net/npm/tsparticles@3.3.0/tsparticles.bundle.min.js"></script>
-    <script src="./abt.js"></script>
-    <script src="./popups/cart.js"></script>
-    <script src="./popups/login.js"></script>
+        <div class="deets">
+          <div class="phone"><i class="fa-solid fa-phone"></i></div>
+          <div class="text">+63 932 241 2734</div>
+        </div>
+
+        <div class="deets">
+          <div class="location"><i class="fa-solid fa-map-pin"></i></div>
+          <div class="text">Waze address</div>
+        </div>
+      </div>
+
+      <div class="sconti">
+        <h2>Send Us A Message</h2>
+
+        <!-- You can keep FormSubmit; toast below will confirm send -->
+        <form id="contact-form" action="https://formsubmit.co/aaroncortez2417@gmail.com" method="POST" target="_blank">
+          <input type="hidden" name="_captcha" value="false">
+          <div class="second">
+            <label for="name">Name</label>
+            <input type="text" placeholder="Name" id="name" name="name" required>
+            <label for="email">Email</label>
+            <input type="email" placeholder="Email" id="email" name="email" required>
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="Message" required></textarea>
+            <button type="submit">Send</button>
+          </div>
+        </form>
+
+        <div id="popup" style="display:none; position:fixed; top:20px; right:20px; background-color:black; color:white; padding:15px; border-radius:5px;">
+          Message sent!
+        </div>
+      </div>
+    </div>
+
+    <div class="socmed">
+      <ul class="social-icons list-unstyled d-flex justify-content-center gap-4 mt-4">
+        <li><a href="https://www.facebook.com/Chaseaquatics" class="social-link" target="_blank"><i class="fab fa-facebook"></i></a></li>
+        <li><a href="https://www.instagram.com/chaseaquascaping" class="social-link" target="_blank"><i class="fab fa-instagram"></i></a></li>
+        <li><a href="https://www.youtube.com/@chaseaquascape962" class="social-link" target="_blank"><i class="fa-brands fa-youtube"></i></a></li>
+        <li><a href="https://www.tiktok.com/@chase_aquascape" class="social-link" target="_blank"><i class="fa-brands fa-tiktok"></i></a></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <h2 class="faq__title">Frequently Asked Questions</h2>
+
+    <div class="faq__accordion">
+      <div class="faq__item">
+        <input type="radio" name="faq" id="faq1" class="faq__toggle" checked>
+        <label for="faq1" class="faq__question">Do you offer home visits & installation?
+          <span class="faq__icon" aria-hidden="true"></span>
+        </label>
+        <div class="faq__answer">
+          Yes! We do on-site consultation, delivery, and full installation for custom aquariums within NCR, Cavite, Laguna, and nearby areas. Fee depends on distance and project size—ibabawas ito sa final quote if you proceed.
+        </div>
+      </div>
+
+      <div class="faq__item">
+        <input type="radio" name="faq" id="faq2" class="faq__toggle">
+        <label for="faq2" class="faq__question">How do I book an appointment?
+          <span class="faq__icon" aria-hidden="true"></span>
+        </label>
+        <div class="faq__answer">
+          Click “Book Appointment” sa Services → Maintenance/Consultation. Pili ka ng date & time, then submit your details. You’ll get a confirmation email with the schedule and meeting info.
+        </div>
+      </div>
+
+      <div class="faq__item">
+        <input type="radio" name="faq" id="faq3" class="faq__toggle">
+        <label for="faq3" class="faq__question">What should I prepare before the consultation?
+          <span class="faq__icon" aria-hidden="true"></span>
+        </label>
+        <div class="faq__answer">
+          Helpful ang room photos, desired tank size (L×W×H), peg/reference pics, budget range, and preferred livestock (fish/plants). Kung maintenance, share last water change date at current water parameters if available.
+        </div>
+      </div>
+
+      <div class="faq__item">
+        <input type="radio" name="faq" id="faq4" class="faq__toggle">
+        <label for="faq4" class="faq__question">Do you provide maintenance plans & pricing?
+          <span class="faq__icon" aria-hidden="true"></span>
+        </label>
+        <div class="faq__answer">
+          Oo, meron kaming one-time deep clean and monthly/bi-weekly plans. Pricing depends sa tank size, filtration, at location. We’ll send a quote after assessment—transparent breakdown, walang hidden fees.
+        </div>
+      </div>
+
+      <div class="faq__item">
+        <input type="radio" name="faq" id="faq5" class="faq__toggle">
+        <label for="faq5" class="faq__question">Lead time & warranty for custom aquariums?
+          <span class="faq__icon" aria-hidden="true"></span>
+        </label>
+        <div class="faq__answer">
+          Typical lead time is 2–4 weeks depending sa specs at materials. Glass tanks come with leakage warranty; equipment follows manufacturer warranty. We also support post-install checkups for stability.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="py-5">
+    <div class="container text-center text-md-start">
+      <div class="row justify-content-between align-items-start">
+        <div class="col-md-4 mb-4 mb-md-0">
+          <img src="./logo.png" alt="Life In A Box Logo" style="max-width: 140px;">
+          <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
+        </div>
+        <div class="col-md-4 mb-4 mb-md-0">
+          <h5 class="fw-bold mb-3">Contact Us</h5>
+          <ul class="list-unstyled small">
+            <li class="mb-2"><i class="fas fa-map-marker-alt"></i> Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite</li>
+            <li class="mb-2"><i class="fas fa-phone"></i> +63 932 241 2734</li>
+            <li class="mb-2"><i class="fas fa-envelope"></i> chaseaquascape09@gmail.com</li>
+          </ul>
+        </div>
+        <div class="col-md-3">
+          <h5 class="fw-bold mb-3">Follow Us</h5>
+          <div class="d-flex justify-content-center justify-content-md-start gap-3">
+            <a href="https://www.facebook.com/Chaseaquatics" class="text-white" target="_blank"><i class="fab fa-facebook fa-lg"></i></a>
+            <a href="https://www.instagram.com/chaseaquascaping" class="text-white" target="_blank"><i class="fab fa-instagram fa-lg"></i></a>
+            <a href="https://www.youtube.com/@chaseaquascape962" class="text-white" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+            <a href="https://www.tiktok.com/@chase_aquascape" class="text-white" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-top my-4"></div>
+      <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Vendors -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script> emailjs.init("hhTpOoi07kd04LwsH"); </script>
+
+  <!-- Page script for nav + small helpers (use your existing abt.js or serv.js) -->
+  <script src="./abt.js"></script>
+
+  <!-- Popups & auth (same as index; correct RELATIVE paths) -->
+  <script type="module" src="./popups/cart.js"></script>
+  <script type="module" src="./popups/login.js"></script>
+  <script src="./popups/forgatpass.js"></script>
+  <script src="./profile/userauth.js"></script>
 </body>
 </html>

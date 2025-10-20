@@ -1,0 +1,230 @@
+/* ===== base ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { overflow-x: hidden; }
+body { font-family: 'Montserrat', sans-serif; color: #222; }
+img { display: block; max-width: 100%; height: auto; }
+
+:root{
+  --brand-blue:#6096B4;
+  --brand-green:#2e7d32;
+  --heading: clamp(2rem, 4.5vw, 3.2rem);   /* unified h1 size */
+  --subhead: clamp(1rem, 2vw, 1.25rem);
+  --card-radius: 14px;
+  --gap: 24px;
+}
+
+/* ===== hero ===== */
+.hero{
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  padding: 100px 16px 40px;      /* no giant top gap */
+}
+.title{
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto;
+  position: static;              /* remove previous negative offset */
+}
+.title img{ width: clamp(140px, 18vw, 220px); margin: 0 auto 18px; }
+.title p{ font-size: var(--subhead); margin: 18px auto 28px; max-width: 65ch; }
+.title .btn{ font-weight: 700; padding: 10px 28px; font-size: clamp(0.95rem, 2.2vw, 1.1rem); }
+
+/* ===== services (cards) ===== */
+.fpart{
+  padding: 20px 16px 80px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.fpart h1{
+  font-size: var(--heading);
+  font-weight: 900;
+  color: var(--brand-blue);
+  text-align: center;
+  margin-bottom: 10px;
+}
+.fpart .pp{
+  font-size: var(--subhead);
+  text-align: center;
+  margin: 0 0 36px;
+  max-width: 70ch;
+}
+
+.custom-card{
+  width: 100%;
+  max-width: 360px;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  border: 0;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+  background: #e8e8e8;
+}
+.custom-card .image-area{
+  background: #5a5757 center/cover no-repeat; /* placeholder */
+  height: 200px;
+}
+.custom-card .card-body{ padding: 18px 20px 22px; }
+.custom-card .card-title{ font-weight: 800; margin: 0 0 6px; }
+.small-text{ font-size: .98rem; line-height: 1.55; color: #333; }
+
+/* ===== portfolio ===== */
+.spart{
+  padding: 40px 16px 90px;
+}
+.spart .tit{ text-align: center; max-width: 900px; margin: 0 auto 20px; }
+.spart h1{
+  font-size: var(--heading);
+  font-weight: 900;
+  color: var(--brand-blue);
+  margin-bottom: 8px;
+}
+.spart .pp{ font-size: var(--subhead); margin: 0 auto 22px; max-width: 70ch; }
+
+.buttons{
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 26px;
+}
+.fil-btn{
+  padding: 9px 18px; border: 0; border-radius: 999px; cursor: pointer; background:#ddd; font-weight:600;
+}
+.fil-btn.active{ background:#000; color:#fff; }
+
+.gallery{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  width: min(1200px, 100%);
+  margin: 0 auto;
+}
+.photo{ position: relative; transition: transform .25s ease, opacity .25s ease; }
+.photo img{
+  width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 12px;
+}
+.photo.hide{ opacity: 0; transform: scale(.96); pointer-events: none; }
+
+/* ===== booking steps ===== */
+.lpart{
+  padding: 50px 16px 110px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.lpart .tit{ text-align: center; max-width: 900px; margin: 0 auto 24px; }
+.lpart h2{
+  font-size: var(--heading);
+  color: var(--brand-blue);
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+.lpart p{
+  font-size: var(--subhead);
+  color: #333;
+  max-width: 70ch;
+  margin: 0 auto 26px;
+}
+
+.containerrr{ width: min(1200px, 100%); margin: 0 auto; padding: 10px 0; }
+.step-row{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+  margin-bottom: var(--gap);
+}
+.step-card{
+  padding: 22px 24px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  background: #f9f9f9;
+  font-size: clamp(1rem, 2.1vw, 1.1rem);
+  line-height: 1.4;
+  display: flex; align-items: center;
+  transition: transform .25s ease;
+}
+.step-card:hover{ transform: translateY(-4px); }
+.step-card.dark{
+  background:#3d3d3d; color:#fff; font-weight:800; justify-content:center; text-align:center;
+}
+.step-card.light{ background:#f4f4f4; color:#333; }
+
+.but{ margin-top: 24px; }
+.but .btn{
+  font-weight:800;
+  padding: 12px 36px;
+  font-size: clamp(1rem, 2.6vw, 1.25rem);
+}
+
+/* ===== footer quick tidy (no nav styles included) ===== */
+footer{ background: var(--brand-blue); color:#fff; width:100%; text-align:center; }
+footer h5, footer p, footer li, footer a{ color:#fff; }
+footer a{ text-decoration:none; }
+footer .border-top{ border-top:1px solid #fff !important; }
+footer ul{ padding-left:0; }
+footer li{ list-style:none; }
+footer img {margin: 0 auto;}
+
+/* Calendly overlay on top of everything */
+.calendly-overlay{ z-index: 99999 !important; }
+
+/* ===== responsive tweaks ===== */
+
+/* tablets and down */
+@media (max-width: 1023px){
+  .title p, .fpart .pp, .spart .pp, .lpart p{ max-width: 80%; }
+}
+
+/* phones */
+@media (max-width: 767px){
+  .hero{ padding: 80px 16px 32px; }
+  .title img{ width: 400px;height: 100px; }
+  .title .btn{ padding: 9px 22px;}
+
+  .gallery{ gap: 12px; }
+
+  .step-row{ grid-template-columns: 1fr; }
+
+  .lpart p{ max-width: 90%; }
+
+  /* keep Bootstrap cards comfy on mobile */
+  .custom-card{ max-width: 420px; }
+}
+@media (max-width: 767px){
+  /* hide “All Projects” */
+  .buttons .fil-btn[data-filter="all"]{ display:none; }
+}
+
+/* Mobile: stack steps and keep the correct order */
+@media (max-width: 767px){
+  /* change rows to vertical stacks */
+  .step-row{
+    display: flex;             /* override grid */
+    flex-direction: column;    /* Step then Description */
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+  }
+  /* rows where the description comes first in the DOM */
+  .step-row:nth-of-type(even){
+    flex-direction: column-reverse;  /* put Step above its Description */
+  }
+  .step-card{ width: 100%; }         /* full-width cards on mobile */
+}
+/* --- Tighten space before CTA + enlarge button --- */
+.lpart{ padding-bottom: 60px; }                        /* was 110px */
+.containerrr{ padding-bottom: 0; }
+.containerrr .step-row:last-of-type{ margin-bottom: 12px; } /* reduce gap after last step */
+.but{ margin-top: 12px; }                                /* was 24px */
+
+.but .btn{
+  padding: 16px 56px;                                    /* larger */
+  font-weight: 800;
+  font-size: clamp(1.1rem, 2.6vw, 1.4rem);
+  border-radius: 10px;
+}
+
+/* Phone tweaks */
+@media (max-width: 767px){
+  .lpart{ padding-bottom: 0px; }
+  .but{ margin-top: 8px; }
+  .but .btn{
+    width: 92%;
+    max-width: 420px;
+    padding: 18px 22px;
+    font-size: 1.25rem;
+  }
+}
+

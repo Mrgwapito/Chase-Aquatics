@@ -1,29 +1,36 @@
 /* Login & Register Containers */
 .login-container,
 .register-container {
-    position: relative;  
-    z-index: 10;  
-    display: none;
     position: fixed;
-    top: 50%;
+    top: 50%; /* perfectly balanced */
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -45%); /* adjusted for navbar height */
     background: white;
-    padding: 35px; /* Increased padding */
+    padding: 35px;
     border-radius: 10px;
     box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
     animation: fadeIn 0.3s ease-in-out;
-    width: 450px; /* Wider */
+    width: 450px;
+    z-index: 5;
+    display: none;
 }
 
-/* Form Boxes */
+/* Show popup when active */
+.login-container.show,
+.register-container.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto; /* clickable */
+}
+
+/* Form boxes */
 .login-box,
 .register-box {
     text-align: center;
     width: 100%;
 }
 
-/* Input Fields */
+/* Input fields */
 .login-box input,
 .register-box input {
     width: 100%;
@@ -34,46 +41,66 @@
     font-size: 16px;
 }
 
-/* Remember Me (Aligned Left & Smaller) */
+/* Remember me section */
 .remember-me {
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Align to the left */
+    justify-content: flex-start;
     gap: 6px;
     margin: 10px 0;
-    font-size: 14px; /* Slightly smaller */
+    font-size: 14px;
 }
 
 /* Fix checkbox size */
 .remember-me input[type="checkbox"] {
-    width: 14px; /* Smaller */
+    width: 14px;
     height: 14px;
     cursor: pointer;
 }
 
-/* Sign In Button */
+/* Sign in button */
 #signInBtn {
     display: block;
-    width: 220px; /* Wider */
+    width: 220px;
     margin: 20px auto 0;
-    padding: 10px 16px; /* Smaller height */
+    padding: 10px 16px;
     background-color: #3A5A40;
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 16px; /* Slightly smaller */
+    font-size: 16px;
     cursor: pointer;
-    transition: background 0.3s, transform 0.2s;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
 }
 
 #signInBtn:hover {
     background-color: #6096B4;
     transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(96, 150, 180, 0.4);
 }
 
+/* Register button */
+#registerBtn {
+    display: block;
+    width: 220px;
+    margin: 20px auto 0;
+    padding: 10px 16px;
+    background-color: #3A5A40; /* Green default */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+}
 
+#registerBtn:hover {
+    background-color: #6096B4; /* Turns blue on hover */
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(96, 150, 180, 0.4);
+}
 
-/* Signup & Back to Login Text */
+/* Signup & Back to login text */
 .signup-text,
 .back-to-login {
     margin-top: 14px;
@@ -87,8 +114,162 @@
     text-decoration: underline;
 }
 
+/* ============================================================
+   🧩 Registration Form — Improved Name Fields Layout
+   ============================================================ */
+.name-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* two equal columns */
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.name-group input {
+  padding: 14px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+}
+
+.name-group input:focus {
+  border-color: #3A5A40;
+  box-shadow: 0 0 5px rgba(58, 90, 64, 0.3);
+  outline: none;
+}
+
+/* 🟩 Consistent input look with other register fields */
+.register-box input {
+  margin: 10px 0;
+}
+
+/* 📱 Mobile responsive (stacked layout for smaller screens) */
+@media (max-width: 600px) {
+  .name-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Optional subtle enhancement to make the popup look smoother */
+.register-container {
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
 
 
+/* OTP section */
+.otp-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.otp-container input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 15px;
+}
+
+.otp-btn {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 5px;
+    background-color: #3A5A40;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.otp-btn:hover:not(:disabled) {
+    background-color: #6096B4;
+    transform: scale(1.05);
+}
+
+.otp-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Forgot password link */
+.forgot-text {
+    margin-top: 10px;
+    font-size: 15px;
+    color: #3A5A40;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.forgot-text:hover {
+    text-decoration: underline;
+    color: #6096B4;
+}
+
+/* Forgot password popup */
+.forgot-container {
+    position: fixed;
+    top: 55%; /* same fix for overlap */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 35px;
+    border-radius: 10px;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+    width: 400px;
+    z-index: 5;
+    display: none;
+}
+
+.forgot-box {
+    text-align: center;
+}
+
+.forgot-box input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 15px;
+}
+
+.forgot-box .btn {
+    background-color: #3A5A40;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.forgot-box .btn:hover {
+    background-color: #6096B4;
+    transform: scale(1.05);
+}
+
+.forgot-box .back-to-login {
+    margin-top: 14px;
+    color: #3A5A40;
+    cursor: pointer;
+}
+
+.forgot-box .back-to-login:hover {
+    text-decoration: underline;
+}
+
+/* Close button (X) */
 .close-x {
     position: absolute;
     top: 10px;
@@ -105,3 +286,12 @@
     color: red;
 }
 
+/* Navbar fix */
+nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000; /* keeps navbar above popups */
+    background-color: #f5f3e7; /* or your preferred tone */
+}
