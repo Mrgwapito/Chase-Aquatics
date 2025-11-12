@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="popups/cart.css">
     <link rel="stylesheet" href="lpage.css">
+    <link rel="stylesheet" href="/assets/toast.css">
     <link rel="stylesheet" href="responsive.css" media="(max-width: 767px)">
-    <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
 </head>
 
 <body>
@@ -29,8 +29,8 @@
         <li><a class="active" href="./index.html">Home</a></li>
         <li><a class="active" href="./product.html">Products</a></li>
         <li><a class="active" href="./service.html">Services</a></li>
-        <li><a class="active" href="./about.html">About US</a></li>
-        <li><a class="active" href="./termsncondi.html">Reach US</a></li>
+        <li><a class="active" href="./about.html">About Us</a></li>
+        <li><a class="active" href="./rus.html">Reach Us</a></li>
         </ul>
     </div>
 
@@ -58,8 +58,8 @@
     <!-- Forgot Password Link -->
     <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
 
-    <p class="signup-text">
-      Don't have an account? <span id="showRegister">Sign Up</span>
+    <p class="signup-text" id="showRegister">
+      Don't have an account? Sign Up
     </p>
 
     <span class="close-x" id="closeLogin">&times;</span>
@@ -75,20 +75,23 @@
     <input type="email" id="forgotEmail" placeholder="Enter your registered email">
     <button class="btn" id="forgotSendBtn">Send OTP</button>
 
-    <div id="forgotStep2" style="display:none; margin-top:15px;">
-      <input type="text" id="forgotOtp" placeholder="Enter OTP">
-      <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)">
-      <input type="password" id="forgotConfirmPass" placeholder="Confirm Password">
-      <button class="btn" id="forgotResetBtn">Reset Password</button>
-    </div>
+<div id="forgotStep2" style="display:none; margin-top:15px;">
+  <input type="text" id="forgotOtp" placeholder="Enter OTP">
+
+  <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)" autocomplete="new-password">
+  <!-- strength meter -->
+  <div class="pw-meter" id="forgotPwMeter">
+    <div class="bar"><span class="fill"></span></div>
+  </div>
+  <div class="pw-strength" id="forgotPwLabel"></div>
+
+  <input type="password" id="forgotConfirmPass" placeholder="Confirm Password" autocomplete="new-password">
+  <button class="btn" id="forgotResetBtn">Reset Password</button>
+</div>
+
 
     <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
     <span class="close-x" id="closeForgot">&times;</span>
-  </div>
-</div>
-
-      </section>
-    </div>
   </div>
 </div>
 
@@ -100,34 +103,47 @@
 
 
 <!-- Registration Form (Hidden Initially) -->
-<div class="register-container" id="registerContainer">
+<div class="register-container" id="registerContainer" style="display:none;">
+  <span id="closeRegister" class="close-x">&times;</span>
+
   <div class="register-box">
     <h2>Register</h2>
 
-    <!-- 👇 Split name into first + last -->
+    <!-- First / Last name -->
     <div class="name-group">
-      <input type="text" placeholder="First Name" id="regFirstName">
-      <input type="text" placeholder="Last Name" id="regLastName">
+      <input type="text" placeholder="First Name" id="regFirstName" autocomplete="given-name">
+      <input type="text" placeholder="Last Name" id="regLastName" autocomplete="family-name">
     </div>
 
-    <input type="email" placeholder="Email" id="regEmail">
+    <input type="email" placeholder="Email" id="regEmail" autocomplete="email">
 
-    <!-- 🔹 Email Verification Section -->
-    <div class="otp-container">
-      <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
-      <button id="sendOtpBtn" class="otp-btn">Send Code</button>
-      <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8" autocomplete="new-password">
+    <!-- strength meter -->
+    <div class="pw-meter" id="regPwMeter">
+      <div class="bar"><span class="fill"></span></div>
+    </div>
+    <div class="pw-strength" id="regPwLabel"></div>
+
+    <input type="password" placeholder="Confirm Password" id="regConfirmPassword" autocomplete="new-password">
+
+    <!-- Consent -->
+    <div class="legal-consent">
+      <label class="legal-check" for="agreeTerms">
+        <input type="checkbox" id="agreeTerms">
+        <span>
+          I agree to the
+          <a href="./termsncondi.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+          and
+          <a href="./termsncondi.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+        </span>
+      </label>
     </div>
 
-    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8">
-    <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+    <button id="registerBtn" disabled>Register</button>
 
-    <button class="btn" id="registerBtn" disabled>Register</button>
-    <p class="back-to-login" id="backToLogin">Back to Login</p>
-    <span class="close-x" id="closeRegister">&times;</span>
+    <div class="back-to-login" id="backToLogin">Back to Login</div>
   </div>
 </div>
-
 
 
 
@@ -150,70 +166,243 @@
          <div class="hero-content">
         <img src="./Life In A Box.png" alt="life in a box">
         <p>Bring the beauty of underwater world to your home</p>
-        <button type="button" class="btn btn-success"  onclick="location.href=''">Explore Our Collection</button>
+        <button type="button" class="btn btn-success"  onclick="location.href='service.html#spart'">Explore Our Collection</button>
        
          </div>
     </section>
 
-    <section class="spart">
-        <h1>Featured Products</h1>
-        <div class="prodcont">
-            <button class="previous bton"><i class="fa-solid fa-square-caret-left"></i></button>
-        <div class="wrapper">
-            <div class="cont">
-                <div class="box">
-                    <div class="text">Ledstar Model X</div>
-                     <a href="product.html"><img src="./fprod/led.jpg" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Shiruba Hang On Filter</div>
-                    <a href="product.html"><img src="./fprod/shiruba.jpg" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Shiruba Canister Filter</div>
-                    <a href="product.html"><img src="./fprod/canister.jpeg" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Anislag Driftwood</div>
-                    <a href="product.html"><img src="./fprod/anislag.jpg" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Dragon Stone</div>
-                    <a href="product.html"><img src="./fprod/dragon.jpeg" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Ista Premium Soil</div>
-                    <a href="product.html"><img src="./fprod/soil.jpg" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Black Sand</div>
-                    <a href="product.html"><img src="./fprod/sand.jpeg" alt=" "></a>
-            </div>
-                <div class="box">
-                    <div class="text">Ceramic Ring</div>
-                    <a href="product.html"><img src="./fprod/ring.jpg" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Nerite Snail</div>  
-                    <a href="product.html"><img src="./fprod/snail.png" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Glofish Tetra </div>
-                    <a href="product.html"><img src="./fprod/glofish.png" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Blue Danio</div>
-                    <a href="product.html"><img src="./fprod/blue.png" alt=" "></a>
-                </div>
-                <div class="box">
-                    <div class="text">Purple Danio</div>
-                    <a href="product.html"><img src="./fprod/purple.jpeg" alt=" "></a>
-                </div>
-            </div>
+<section class="spart">
+  <h1>Featured Products</h1>
+  <div class="prodcont">
+    <button class="previous bton"><i class="fa-solid fa-square-caret-left"></i></button>
+
+    <div class="wrapper">
+      <div class="cont">
+
+        <!-- SAMPLE CARD -->
+        <div class="box">
+          <div class="text">Ledstar Model X</div>
+          <a
+            href="product.html?slug=ledstar-model-x"
+            class="prod-trigger"
+            data-name="Ledstar Model X"
+            data-category="lighting"
+            data-price="₱1,250"
+            data-img="./fprod/led.jpg"
+            data-desc="High-output LED for planted tanks; energy-efficient and slim profile."
+          >
+            <img src="./fprod/led.jpg" alt="Ledstar Model X">
+          </a>
         </div>
-        <button class="next bton"><i class="fa-solid fa-square-caret-right"></i></button>
+
+        <div class="box">
+          <div class="text">Shiruba Hang On Filter</div>
+          <a
+            href="product.html?slug=shiruba-hob"
+            class="prod-trigger"
+            data-name="Shiruba Hang On Filter"
+            data-category="filters"
+            data-price="₱750"
+            data-img="./fprod/shiruba.jpg"
+            data-desc="Quiet HOB filter; crystal-clear water for nano to mid-size tanks."
+          >
+            <img src="./fprod/shiruba.jpg" alt="Shiruba Hang On Filter">
+          </a>
         </div>
-    </section>
+
+        <div class="box">
+          <div class="text">Shiruba Canister Filter</div>
+          <a
+            href="product.html?slug=shiruba-canister"
+            class="prod-trigger"
+            data-name="Shiruba Canister Filter"
+            data-category="filters"
+            data-price="₱2,650"
+            data-img="./fprod/canister.jpeg"
+            data-desc="External canister with strong flow and multi-stage media baskets."
+          >
+            <img src="./fprod/canister.jpeg" alt="Shiruba Canister Filter">
+          </a>
+        </div>
+
+        <div class="box">
+          <div class="text">Anislag Driftwood</div>
+          <a
+            href="product.html?slug=anislag-driftwood"
+            class="prod-trigger"
+            data-name="Anislag Driftwood"
+            data-category="driftwoods-stones"
+            data-price="₱220/kg"
+            data-img="./fprod/anislag.jpg"
+            data-desc="Natural wood for aquascaping; safe for shrimp and fish."
+          >
+            <img src="./fprod/anislag.jpg" alt="Anislag Driftwood">
+          </a>
+        </div>
+
+        <div class="box">
+          <div class="text">Dragon Stone</div>
+          <a
+            href="product.html?slug=dragon-stone"
+            class="prod-trigger"
+            data-name="Dragon Stone"
+            data-category="driftwoods-stones"
+            data-price="₱150/kg"
+            data-img="./fprod/dragon.jpeg"
+            data-desc="Iconic texture stone; perfect for Iwagumi and natural layouts."
+          >
+            <img src="./fprod/dragon.jpeg" alt="Dragon Stone">
+          </a>
+        </div>
+
+        <div class="box">
+          <div class="text">Ista Premium Soil</div>
+          <a
+            href="product.html?slug=ista-premium-soil"
+            class="prod-trigger"
+            data-name="Ista Premium Soil"
+            data-category="substrates"
+            data-price="₱980/9L"
+            data-img="./fprod/soil.jpg"
+            data-desc="Nutrient-rich soil; buffers pH and boosts plant growth."
+          >
+            <img src="./fprod/soil.jpg" alt="Ista Premium Soil">
+          </a>
+        </div>
+
+        <div class="box">
+          <div class="text">Black Sand</div>
+          <a
+            href="product.html?slug=black-sand"
+            class="prod-trigger"
+            data-name="Black Sand"
+            data-category="substrates"
+            data-price="₱45/kg"
+            data-img="./fprod/sand.jpeg"
+            data-desc="Inert black sand for clean, striking aquascapes."
+          >
+            <img src="./fprod/sand.jpeg" alt="Black Sand">
+          </a>
+        </div>
+
+        <div class="box">
+          <div class="text">Ceramic Ring</div>
+          <a
+            href="product.html?slug=ceramic-ring"
+            class="prod-trigger"
+            data-name="Ceramic Ring"
+            data-category="filter-media"
+            data-price="₱120/pack"
+            data-img="./fprod/ring.jpg"
+            data-desc="Porous media for beneficial bacteria and stable cycles."
+          >
+            <img src="./fprod/ring.jpg" alt="Ceramic Ring">
+          </a>
+        </div>
+
+        <div class="box">
+          <div class="text">Nerite Snail</div>
+          <a
+            href="product.html?slug=nerite-snail"
+            class="prod-trigger"
+            data-name="Nerite Snail"
+            data-category="livestock"
+            data-price="₱60/pc"
+            data-img="./fprod/snail.png"
+            data-desc="Top algae eater; won’t breed in freshwater."
+          >
+            <img src="./fprod/snail.png" alt="Nerite Snail">
+          </a>
+        </div>
+
+        <div class="box">
+          <div class="text">Glofish Tetra</div>
+          <a
+            href="product.html?slug=glofish-tetra"
+            class="prod-trigger"
+            data-name="Glofish Tetra"
+            data-category="livestock"
+            data-price="₱90/pc"
+            data-img="./fprod/glofish.png"
+            data-desc="Colorful schooling fish; active and hardy."
+          >
+            <img src="./fprod/glofish.png" alt="Glofish Tetra">
+          </a>
+        </div>
+
+        <div class="box">
+          <div class="text">Blue Danio</div>
+          <a
+            href="product.html?slug=blue-danio"
+            class="prod-trigger"
+            data-name="Blue Danio"
+            data-category="livestock"
+            data-price="₱70/pc"
+            data-img="./fprod/blue.png"
+            data-desc="Fast swimmers; peaceful community fish."
+          >
+            <img src="./fprod/blue.png" alt="Blue Danio">
+          </a>
+        </div>
+
+        <div class="box">
+          <div class="text">Purple Danio</div>
+          <a
+            href="product.html?slug=purple-danio"
+            class="prod-trigger"
+            data-name="Purple Danio"
+            data-category="livestock"
+            data-price="₱75/pc"
+            data-img="./fprod/purple.jpeg"
+            data-desc="Unique purple sheen; thrives in groups."
+          >
+            <img src="./fprod/purple.jpeg" alt="Purple Danio">
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <button class="next bton"><i class="fa-solid fa-square-caret-right"></i></button>
+  </div>
+</section>
+
+<!-- QUICK VIEW MODAL -->
+<div id="prodModal" class="prod-modal" aria-hidden="true">
+  <div class="pm-backdrop" data-close-modal></div>
+
+  <div class="pm-dialog" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+    <button class="pm-close" type="button" title="Close" data-close-modal>&times;</button>
+
+    <div class="pm-grid">
+      <div class="pm-media">
+        <img id="pmImg" src="" alt="">
+      </div>
+
+      <div class="pm-info">
+        <h2 id="pmTitle">Product Name</h2>
+        <p class="pm-cat" id="pmCat">Category: —</p>
+        <p class="pm-price" id="pmPrice">Price: —</p>
+
+
+        <p class="pm-desc" id="pmDesc">Description here…</p>
+
+        <div class="pm-actions pm-actions--single">
+          <a id="pmViewMore" class="pm-btn primary" href="#" rel="nofollow">
+            View more
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
 
 <section class="fpart">
   <h1>Our Services</h1>
@@ -362,7 +551,7 @@
 </fieldset>
 
 
-          <button class="btn btn--primary" type="submit">Schedule Event</button>
+          <button class="btn btn--primary" type="submit">Schedule Appointment</button>
         </form>
       </section>
     </div>
@@ -471,10 +660,18 @@
       
     </div>
 
-    <div class="border-top my-4"></div>
+<div class="border-top my-4"></div>
 
-    <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
-  </div>
+<!-- add mb-1 so there’s a little gap below the copyright -->
+<p class="small mb-1 legal-copy">© 2025 Life in a Box. All rights reserved.</p>
+
+<!-- add 'small' so links match size; add a hook class for styling -->
+<a class="small legal-link" href="./termsncondi.html">Terms &amp; Conditions</a>
+<span class="mx-2">•</span>
+<a class="small legal-link" href="./termsncondi.html#privacy">Privacy Policy</a>
+
+</div>
+
 </footer>
 
 
@@ -486,12 +683,19 @@
       <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
       <script> emailjs.init("hhTpOoi07kd04LwsH"); </script>
       <script src="popups/forgatpass.js"></script>
-      <script src="lpage.js"></script>
+      <script src="./lpage.js"></script>
       <script src="productModal/cartModel.js"></script>
       <script src="productModal/userModel.js"></script>
       <script src="./profile/userauth.js"></script>
-      <script src="popups/login.js"></script>
+      <script type="module" src="/popups/login.js"></script>
       <script type="module" src="/popups/cart.js"></script>
       <script src="./booking.js"></script>
+      <script src="/assets/toast.js" defer></script>
+      <script>
+  // show any queued message (useful after redirects)
+  window.addEventListener('DOMContentLoaded', () => {
+    window.Toast && window.Toast.consumeFlashToast && window.Toast.consumeFlashToast();
+  });
+</script>
 </body>
 </html>

@@ -27,6 +27,7 @@ body {
     display: flex;
     list-style: none;
     gap: 50px;
+    padding-right: 80px;
     position: relative;
     top: 5px;
 }

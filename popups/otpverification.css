@@ -1,0 +1,170 @@
+:root{
+  --brand:#335A02;
+  --nav-bg:#EEE9DA;
+  --page-bg:#f9f9f9;
+  --ink:#111827;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --soft:#f3f4f6;
+  --radius-lg:18px;
+}
+
+/* reset */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Montserrat",system-ui,sans-serif;
+  background:
+    radial-gradient(1100px 600px at 60% 0%, rgba(96,150,180,.12) 0%, transparent 70%),
+    var(--page-bg);
+  color:var(--ink);
+  min-height:100vh;
+}
+
+/* Bulletproof centering (independent of any global body styles) */
+.otp-wrap{
+  min-height:100dvh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+}
+
+/* Card matches your radius + shadow language */
+.otp-card{
+  width:min(480px,92vw);
+  background:#fff;
+  border-radius:var(--radius-lg);
+  box-shadow:0 8px 20px rgba(15,23,42,.06);
+  padding:28px;
+}
+
+/* Headings match tone from your pages */
+.otp-title{
+  margin:0 0 6px;
+  font-size:28px;
+  font-weight:900;
+  color:#111827;
+  text-align:center;
+}
+.otp-sub{
+  text-align:center;
+  color:var(--muted);
+  font-size:15px;
+  margin:0 0 16px;
+}
+
+/* 6 input boxes (same borders/focus as site inputs) */
+.otp-inputs{
+  display:flex; justify-content:center; gap:14px; margin:18px 0 14px;
+}
+.otp-box{
+  width:56px; height:56px; text-align:center; font-size:22px; font-weight:800;
+  border-radius:12px;
+  border:1.5px solid var(--line);
+  outline:0;
+  caret-color:transparent;
+  transition:border-color .18s, box-shadow .18s, transform .06s;
+}
+.otp-box:focus{
+  border-color:var(--brand);
+  box-shadow:0 0 0 3px rgba(51,90,2,.15); /* your green focus ring */
+}
+.otp-box.filled{ border-color:var(--brand); }
+
+/* Primary button = brand green */
+.otp-submit{
+  width:100%;
+  border:0;
+  background:var(--brand);
+  color:#fff;
+  font-weight:800;
+  font-size:16px;
+  padding:14px 18px;
+  border-radius:12px;
+  cursor:pointer;
+  transition:filter .15s, transform .05s, opacity .15s;
+}
+.otp-submit:hover{ filter:brightness(.96); }
+.otp-submit:active{ transform:translateY(1px); }
+.otp-submit:disabled{ opacity:.55; cursor:not-allowed; }
+
+/* Resend follows your outline/button vibe */
+.otp-resend{
+  width:100%;
+  margin-top:10px;
+  background:#fff;
+  color:var(--brand);
+  border:1px solid var(--brand);
+  border-radius:12px;
+  padding:12px 16px;
+  font-weight:800;
+  cursor:pointer;
+  transition:background .15s, color .15s, opacity .15s;
+}
+.otp-resend:hover{ background:var(--brand); color:#fff; }
+.otp-resend:disabled{
+  opacity:.5; cursor:not-allowed;
+  color:#374151; border-color:var(--line); background:#f9fafb;
+}
+
+.otp-timer{
+  margin:12px 0 8px;
+  color:var(--muted);
+  font-size:14px;
+  text-align:center;
+}
+
+/* Link tone matches site */
+/* Center the Back to Registration link */
+.otp-back{
+  display: block;        /* take full row */
+  width: 100%;
+  text-align: center;    /* center the text */
+  font-weight: 400;      /* not bold */
+  margin-top: 12px;      /* nice spacing */
+}
+
+
+/* error shake feedback */
+@keyframes otpShake{
+  10%,90%{transform:translateX(-2px)}
+  20%,80%{transform:translateX(3px)}
+  30%,50%,70%{transform:translateX(-5px)}
+  40%,60%{transform:translateX(5px)}
+}
+.otp-card.error{ animation:otpShake .35s ease both }
+
+/* responsive tighten */
+@media (max-width:420px){
+  .otp-box{ width:52px; height:52px; font-size:20px; }
+  .otp-card{ padding:24px; }
+}
+
+/* === OTP overrides === */
+.otp-title{
+  color: var(--brand);   /* #335A02 */
+}
+
+.otp-back{
+  font-weight: 400;      /* not bold */
+}
+
+/* ——— Clean spacing ——— */
+.otp-card{ padding:32px 34px; }
+.otp-inputs{ gap:16px; margin:20px 0 18px; }
+.otp-submit{ padding:14px 20px; border-radius:14px; }
+.otp-timer{ margin:12px 0 10px; }
+.otp-resend{ margin-top:12px; padding:12px 18px; border-radius:14px; }
+
+/* ——— Back to Registration (centered, brand color, not bold, no purple visited) ——— */
+.otp-back{
+  display:block;
+  width:100%;
+  text-align:center;
+  margin-top:14px;
+  padding-top:4px;
+  color:var(--brand);
+  text-decoration:none;
+  font-weight:400;     /* not bold */
+}
+.otp-back:visited{ color:var(--brand); }
+.otp-back:hover{ text-decoration:underline; }

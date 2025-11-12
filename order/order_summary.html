@@ -28,8 +28,8 @@
         <li><a class="active" href="../index.html">Home</a></li>
         <li><a class="active" href="../product.html">Products</a></li>
         <li><a class="active" href="../service.html">Services</a></li>
-        <li><a class="active" href="../about.html">About US</a></li>
-        <li><a class="active" href="../rus.html">Reach US</a></li>
+        <li><a class="active" href="../about.html">About Us</a></li>
+        <li><a class="active" href="../rus.html">Reach Us</a></li>
         </ul>
     </div>
 
@@ -57,32 +57,57 @@
     <!-- Forgot Password Link -->
     <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
 
-    <p class="signup-text">
-      Don't have an account? <span id="showRegister">Sign Up</span>
+    <p class="signup-text" id="showRegister">
+      Don't have an account? Sign Up
     </p>
 
     <span class="close-x" id="closeLogin">&times;</span>
   </div>
 </div>
 
-<!-- 🔒 Forgot Password Popup -->
-<div class="forgot-container" id="forgotContainer" style="display: none;">
-  <div class="forgot-box">
-    <h2>Reset Password</h2>
-    <p style="font-size: 14px; color: #666;">Enter your email to receive a reset code.</p>
+<!-- Registration Form (Hidden Initially) -->
+<div class="register-container" id="registerContainer" style="display:none;">
 
-    <input type="email" id="forgotEmail" placeholder="Enter your registered email">
-    <button class="btn" id="forgotSendBtn">Send OTP</button>
+  <div class="register-box">
+    <h2>Register</h2>
 
-    <div id="forgotStep2" style="display:none; margin-top:15px;">
-      <input type="text" id="forgotOtp" placeholder="Enter OTP">
-      <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)">
-      <input type="password" id="forgotConfirmPass" placeholder="Confirm Password">
-      <button class="btn" id="forgotResetBtn">Reset Password</button>
+    <!-- 👇 Split name into first + last -->
+    <div class="name-group">
+      <input type="text" placeholder="First Name" id="regFirstName">
+      <input type="text" placeholder="Last Name" id="regLastName">
     </div>
 
-    <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
-    <span class="close-x" id="closeForgot">&times;</span>
+    <input type="email" placeholder="Email" id="regEmail">
+
+    <!-- 🔹 Email Verification Section -->
+    <div class="otp-container">
+      <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
+      <button id="sendOtpBtn" class="otp-btn">Send Code</button>
+      <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+    </div>
+
+    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8">
+    <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+
+    
+<!-- Consent: place above the Register button -->
+<div class="legal-consent">
+  <label class="legal-check" for="agreeTerms">
+    <input type="checkbox" id="agreeTerms">
+    <span>
+      I agree to the
+      <a href="./termsncondi.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+      and
+      <a href="./termsncondi.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+    </span>
+  </label>
+</div>
+
+
+
+    <button class="btn" id="registerBtn" disabled>Register</button>
+    <p class="back-to-login" id="backToLogin">Back to Login</p>
+    <span class="close-x" id="closeRegister">&times;</span>
   </div>
 </div>
 
@@ -140,8 +165,6 @@
     <!-- (ADD) Step tabs like the reference -->
     <div class="step-tabs">
       <button class="pill-btn active">Order Summary</button>
-      <button class="pill-btn ">Gcash/Bank</button>
-      <button class="pill-btn ">Cash On Delivery</button>
     </div>
     <!-- /additions above -->
 
@@ -232,7 +255,7 @@
       <script src="/order/order_summary.js"></script>
       <script src="../productModal/cartModel.js"></script>
       <script src="../productModal/userModel.js"></script>
-      <script src="../popups/login.js"></script>
+      <script type="module" src="/popups/login.js"></script>
       <script src="../profile/userauth.js"></script>
       <script type="module" src="/popups/cart.js"></script>
 

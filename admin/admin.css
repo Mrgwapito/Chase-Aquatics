@@ -938,3 +938,685 @@ h3 {
 #logClose{ float:right; font-size:20px; cursor:pointer; }
 #logClose:hover{ opacity:.85; }
 
+
+
+
+/* =========================
+   Card (container above table)
+========================= */
+.card--calendar {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  margin-bottom: 16px;
+}
+.card--calendar .card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.card--calendar .card__title { margin: 0; font-size: 16px; font-weight: 600; }
+.card--calendar .card__controls { display: flex; gap: 12px; }
+.btn { border: 1px solid #d1d5db; background: #f9fafb; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.btn--sm { padding: 4px 8px; font-size: 13px; }
+
+/* =========================
+   FullCalendar look & feel
+========================= */
+#adminCalendar { --cell-min-h: 92px; }
+#adminCalendar,
+#adminCalendar .fc {
+  --fc-border-color: #e5e7eb;          /* thin gray grid lines */
+  --fc-page-bg-color: #ffffff;
+  --fc-neutral-bg-color: #ffffff;
+  --fc-today-bg-color: #f8fafc;        /* subtle today highlight */
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans";
+}
+
+/* Hide FC’s built-in header (we use our own controls) */
+#adminCalendar .fc-header-toolbar { display: none; }
+
+/* Day-of-week header like your sample */
+#adminCalendar .fc-col-header {
+  border-top: 1px solid var(--fc-border-color);
+  border-left: 1px solid var(--fc-border-color);
+  border-right: 1px solid var(--fc-border-color);
+}
+#adminCalendar .fc-col-header-cell {
+  background: #fafafa;
+  font-weight: 700;
+  font-size: 12px;
+  color: #6b7280;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 8px 10px;
+}
+
+/* Grid + cells */
+#adminCalendar .fc-scrollgrid,
+#adminCalendar .fc-theme-standard .fc-scrollgrid { border-color: var(--fc-border-color); }
+#adminCalendar .fc-daygrid-day { min-height: var(--cell-min-h); }
+#adminCalendar .fc-daygrid-day-frame { padding: 0 0 6px 0; }
+#adminCalendar .fc-daygrid-day-events { margin: 0; padding: 0 6px 6px; }
+
+/* Day numbers (top-right, muted) */
+#adminCalendar .fc-daygrid-day-number {
+  font-size: 12px;
+  color: #6b7280;
+  padding: 6px 8px;
+}
+#adminCalendar .fc-day-other .fc-daygrid-day-number { color: #9ca3af; }
+
+/* Events (your “Not Available” blocks) */
+#adminCalendar .fc-event { border: 0; border-radius: 6px; }
+
+/* =========================
+   Availability <dialog> modal
+========================= */
+#availabilityModal::backdrop { background: rgba(0,0,0,.25); }
+#availabilityModal {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  width: min(520px, 92vw);
+}
+.avail-form header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.avail-form .row { display: flex; gap: 10px; }
+.avail-form .row > .field { flex: 1; }
+.avail-form label { font-size: .85rem; color: #374151; display: block; margin-bottom: 6px; }
+.avail-form input[type="time"],
+.avail-form input[type="text"] {
+  width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px;
+}
+.actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+.btn--primary { background: #111827; color: #fff; border-color: #111827; }
+.btn--danger  { background: #ef4444; color: #fff; border-color: #ef4444; }
+.btn--ghost   { background: transparent; border: 0; }
+.spacer { flex: 1; }
+/* Header: 3 columns = [spacer] [title] [controls] */
+.cal-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.cal-header__title {
+  margin: 0;
+  text-align: center;          /* center the month title */
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cal-header__right {
+  justify-self: end;           /* controls stick to the right */
+  display: flex;
+  gap: 10px;
+}
+/* Dialog footer cleanup */
+/* Neutral button (gray) */
+.btn {
+  appearance: none;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #111827;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .15s ease, filter .15s ease;
+}
+.btn:hover { background: #f3f4f6; }     /* slightly darker gray */
+.btn:active { transform: translateY(1px); }
+
+/* SAVE = green */
+.btn--primary {
+  background: #16a34a;                  /* green-600 */
+  border-color: #16a34a;
+  color: #fff;
+}
+.btn--primary:hover { background: #15803d; }  /* darker green */
+
+/* REMOVE = red */
+.btn--danger  {
+  background: #ef4444;                  /* red-500 */
+  border-color: #ef4444;
+  color: #fff;
+}
+.btn--danger:hover { background: #dc2626; }   /* darker red */
+
+/* Ghost (Cancel) */
+.btn--ghost {
+  background: transparent;
+  border: 0;
+  color: #6b7280;
+}
+.btn--ghost:hover { background: #f3f4f6; color: #111827; }
+
+/* Footer layout (unchanged) */
+.actions {
+  display: flex; align-items: center; gap: 10px;
+  padding-top: 12px; background: transparent;
+  border-top: 1px solid #e5e7eb; margin-top: 14px;
+}
+.actions .spacer { flex: 1 1 auto; }
+
+/* Hide when JS sets [hidden] */
+#deleteBlock[hidden] { display: none !important; }
+/* Target the Cancel button in the modal footer */
+.actions .btn[type="reset"][value="cancel"] {
+  background: transparent;
+  border: 0;
+  color: #6b7280;
+}
+
+.actions .btn[type="reset"][value="cancel"]:hover {
+  background: #f3f4f6;   /* subtle darken */
+  color: #111827;
+}
+
+.actions .btn[type="reset"][value="cancel"]:active {
+  background: #e5e7eb;   /* slightly darker on press */
+}
+
+.actions .btn[type="reset"][value="cancel"]:focus-visible {
+  outline: 2px solid #93c5fd;  /* accessible focus ring */
+  outline-offset: 2px;
+}
+/* Center the <dialog> */
+#availabilityModal[open]{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  z-index: 1000;
+}
+#availabilityModal::backdrop {
+  background: rgba(0,0,0,.35);
+}
+
+.orders-pagination {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: .75rem;
+  flex-wrap: wrap;
+}
+
+.pg-btn {
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: .35rem .6rem;
+  border-radius: .5rem;
+  cursor: pointer;
+  min-width: 2rem;
+}
+
+
+.pg-btn:hover { background: #f6f6f6; }
+.pg-btn:disabled { opacity: .5; cursor: not-allowed; }
+.pg-btn.active {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+#availabilityModal[open]{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); }
+#availabilityModal::backdrop{ background:rgba(0,0,0,.35); }
+/* one consistent centered content width for the whole dashboard */
+.admin-section-content{
+  max-width: 1200px;
+  margin: 0 auto 1.5rem;   /* center + spacing below */
+  padding: 0 16px;         /* side gutter */
+}
+
+/* align the H2 with the same container */
+h2{
+  font-size: 32px;
+  font-weight: 700;
+  margin: 50px auto 20px;  /* center instead of margin-left */
+  padding: 0 16px;         /* same gutter as content */
+  max-width: 1200px;
+}
+/* ===== Order Details — polished layout ===== */
+#orderModal .modal-content {
+  max-width: 980px;
+  width: min(92vw, 980px);
+  padding: 22px 24px 16px;
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(2, 6, 23, .18);
+  background: #fff;
+}
+
+.order-modal__title {
+  margin: 4px 0 14px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* Two-column grid (left meta / right items) */
+.order-modal__grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr);
+  gap: 24px;
+  align-items: start;
+  max-height: 70vh;
+}
+
+/* Left column: label/value alignment */
+.order-modal__left p {
+  margin: 8px 0;
+  display: grid;
+  grid-template-columns: 160px 1fr; /* label / value */
+  column-gap: 12px;
+}
+.order-modal__left p b {
+  color: #0f172a;
+}
+.order-modal__left p span {
+  color: #374151;
+}
+
+/* Right column: card with its own scroll */
+.order-modal__right {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  max-height: 62vh;
+  overflow: auto;
+}
+
+.order-modal__itemsHead {
+  font-weight: 800;
+  font-size: 14px;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.order-modal__items {
+  margin: 0;
+  padding-left: 18px;
+}
+.order-modal__items li {
+  margin: 6px 0;
+  line-height: 1.35;
+}
+
+/* Receipt → chip link */
+#orderModal #mReceipt a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef6ff;
+  border: 1px solid #dbeafe;
+  color: #1e40af;
+  font-weight: 600;
+  text-decoration: none;
+}
+#orderModal #mReceipt a:hover {
+  background: #e3efff;
+}
+
+/* Status badge colors (set via JS class above) */
+#orderModal #mStatus {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  line-height: 1;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+#orderModal #mStatus.badge--pending {
+  background: #fff7ed; color: #9a3412; border-color: #fed7aa;
+}
+#orderModal #mStatus.badge--paid {
+  background: #ecfdf5; color: #065f46; border-color: #a7f3d0;
+}
+#orderModal #mStatus.badge--completed {
+  background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;
+}
+
+/* Footer: right-aligned, tidy, no weird bars */
+.order-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 14px;
+  background: transparent;
+}
+
+/* Action buttons: pill + brand colors */
+#orderModal #modalPaid,
+#orderModal #modalDone {
+  appearance: none;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: filter .12s ease, transform .04s ease;
+}
+#orderModal #modalPaid {
+  background: #16a34a; border-color: #16a34a; color: #fff;
+}
+#orderModal #modalDone {
+  background: #2563eb; border-color: #2563eb; color: #fff;
+}
+#orderModal #modalPaid:hover,
+#orderModal #modalDone:hover { filter: brightness(0.98); }
+#orderModal #modalPaid:active,
+#orderModal #modalDone:active { transform: translateY(1px); }
+
+/* Close button hover */
+#orderModal .close {
+  position: absolute; top: 10px; right: 12px;
+  background: transparent; border: 0;
+  padding: 6px; line-height: 1; font-size: 22px; color: #6b7280;
+  border-radius: 8px; cursor: pointer;
+}
+#orderModal .close:hover { background: #f3f4f6; color: #111827; }
+
+/* Mobile: stack columns */
+@media (max-width: 900px) {
+  .order-modal__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-height: 72vh;
+  }
+  .order-modal__right { max-height: 42vh; }
+}
+.modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; }
+.modal.show { display: flex; } /* centers the modal */
+/* === Make "View receipt" a normal link === */
+#orderModal #mReceipt a{
+  background: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-weight: normal !important;
+  color: inherit !important;          /* use page text color */
+  text-decoration: underline;         /* typical link look */
+}
+
+/* === Make Status plain text (e.g., Completed) === */
+#orderModal #mStatus{
+  background: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  color: inherit !important;
+  display: inline !important;
+  font-weight: 600;                    /* or normal if you prefer */
+}
+
+/* remove any badge variants just in case */
+#orderModal #mStatus.badge--pending,
+#orderModal #mStatus.badge--paid,
+#orderModal #mStatus.badge--completed{
+  all: unset !important;
+}
+/* Center any modal (incl. #logModal) */
+.modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; }
+.modal.show { display: flex; }
+
+/* Optional: size + close button for the logs modal */
+#logModal .modal-content { width: min(92vw, 520px); max-width: 520px; }
+#logModal .close-x {
+  position: absolute; top: 10px; right: 12px; background: transparent; border: 0;
+  padding: 6px; line-height: 1; font-size: 22px; color: #6b7280; border-radius: 8px; cursor: pointer;
+}
+#logModal .close-x:hover { background: #f3f4f6; color: #111827; }
+
+
+/* ================================
+   ✅ Normalize headings sitewide
+   ================================ */
+h2{
+  font-size:32px;
+  font-weight:700;
+  margin:50px auto 20px !important; /* center like other panes */
+  padding:0 16px;
+  max-width:1200px;
+}
+
+
+
+
+/* =========================================
+   ✅ ID Verification — same look as other panes
+   ========================================= */
+
+/* Pane container */
+#section-id-verify{
+  max-width:1200px;
+  margin:24px auto 64px;
+  padding:0 16px;
+}
+#section-id-verify h3{
+  font-size:25px;
+  font-weight:600;
+  margin-bottom:12px;
+}
+
+/* Header strip */
+.idv-header{
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;
+}
+.idv-header .spacer{ margin-left:auto; }
+
+/* Soft badge */
+.badge-soft{
+  display:inline-block; padding:4px 10px; border-radius:999px; font-weight:700; line-height:1;
+  background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; font-size:.85rem;
+}
+
+/* Toolbar */
+.idv-toolbar{
+  display:flex; align-items:flex-end; flex-wrap:wrap; gap:12px; margin:8px 0 12px;
+}
+.idv-toolbar .field{ display:flex; flex-direction:column; gap:6px; }
+.idv-toolbar .grow{ flex:1 1 340px; min-width:240px; }
+.idv-toolbar label{ font-size:.9rem; color:#374151; }
+.idv-toolbar select,
+.idv-toolbar input[type="search"]{
+  width:100%; border:1px solid var(--line); background:#fff; padding:10px 12px; border-radius:10px;
+}
+.idv-toolbar .input-wrap{ display:flex; align-items:center; gap:8px; }
+.idv-toolbar .input-wrap .prefix{
+  border:1px solid var(--line); border-radius:10px; padding:10px 12px; background:#fafafa; color:#6b7280;
+}
+.idv-toolbar .btn-refresh{
+  border:1px solid var(--btn-bd); background:var(--btn-bg); color:var(--btn-fg);
+  padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer;
+  transition:background .15s ease,border-color .15s ease;
+}
+.idv-toolbar .btn-refresh:hover{ background:#f3f4f6; border-color:#cbd5e1; }
+
+/* Table card */
+.table-responsive{ width:100%; overflow:auto; border-radius:var(--radius); box-shadow:var(--shadow); }
+
+#idVerifyTable{
+  width:100%; table-layout:fixed; border-collapse:collapse;
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  overflow:hidden; box-shadow:var(--shadow);
+}
+#idVerifyTable thead th{
+  text-align:left; font-size:12px; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--muted); background:#fafafa; border-bottom:1px solid var(--line); padding:12px 14px;
+}
+#idVerifyTable tbody td{
+  padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:middle;
+}
+#idVerifyTable tbody tr:last-child td{ border-bottom:0; }
+#idVerifyTable tbody tr:hover{ background:#fcfcff; }
+
+/* Column widths */
+#idVerifyTable thead th:nth-child(1){ width:16%; } /* Submitted */
+#idVerifyTable thead th:nth-child(2){ width:18%; } /* User */
+#idVerifyTable thead th:nth-child(3){ width:22%; } /* Email */
+#idVerifyTable thead th:nth-child(4){ width:16%; } /* File */
+#idVerifyTable thead th:nth-child(5){ width:14%; } /* Status */
+#idVerifyTable thead th:nth-child(6){ width:14%; text-align:right; } /* Action */
+#idVerifyTable td:last-child{ text-align:right; }
+
+/* Status color hints */
+#idVerifyTable .status{ font-weight:700; }
+#idVerifyTable tr[data-status="Pending"]  .status{ color:var(--warn); }
+#idVerifyTable tr[data-status="Approved"] .status{ color:var(--good); }
+#idVerifyTable tr[data-status="Declined"] .status{ color:var(--danger); }
+
+/* Row user cell (avatar + meta) */
+.idv-user{ display:flex; align-items:center; gap:10px; }
+.idv-user .avatar{
+  width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid #e5e7eb; background:#fff;
+}
+.idv-user .meta .name{ font-weight:700; color:#111827; line-height:1.1; }
+.idv-user .meta .uid{ font-size:.85rem; color:#6b7280; }
+
+/* Action buttons */
+#idVerifyTable .idvAction{
+  appearance:none; border:1px solid var(--btn-bd); background:var(--btn-bg); color:var(--btn-fg);
+  padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer;
+  transition:background .15s ease, border-color .15s ease, transform .04s ease, filter .12s ease;
+}
+#idVerifyTable .idvAction:hover{ background:#f3f4f6; border-color:#cbd5e1; }
+
+/* Responsive trims */
+@media (max-width:900px){
+  #idVerifyTable thead th:nth-child(4),
+  #idVerifyTable tbody td:nth-child(4){ display:none; } /* File */
+}
+@media (max-width:640px){
+  #idVerifyTable thead th:nth-child(3),
+  #idVerifyTable tbody td:nth-child(3){ display:none; } /* Email */
+}
+
+/* =========================================
+   🔍 Preview Modal — Better UX
+   ========================================= */
+#idPreviewModal.modal{ z-index:1120; }
+#idPreviewModal .modal-content{
+  width:min(96vw, 980px);
+  padding:0;
+  border-radius:18px; box-shadow:var(--shadow);
+  border:1px solid var(--line); background:var(--card);
+  position:relative; overflow:hidden;
+}
+
+/* Sticky header inside modal */
+.idv-modal__header{
+  position:sticky; top:0; z-index:2;
+  display:flex; align-items:center; gap:10px;
+  padding:14px 18px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(#ffffff 0%, #ffffff 80%, rgba(255,255,255,.92) 100%);
+}
+.idv-modal__title{ margin:0; font-size:18px; font-weight:800; color:#0f172a; }
+.idv-modal__meta{ margin-left:auto; font-size:.9rem; color:#6b7280; }
+
+#idPreviewModal .close,
+#idPreviewModal .close-x{
+  position:absolute; top:10px; right:12px; background:transparent; border:0; padding:6px; line-height:1;
+  font-size:22px; color:#6b7280; border-radius:8px; cursor:pointer;
+}
+#idPreviewModal .close:hover,
+#idPreviewModal .close-x:hover{ background:#f3f4f6; color:#111827; }
+
+/* Body */
+.idv-modal__body{ padding:14px 18px 10px 18px; }
+
+/* Tools (Zoom / Open / Download) */
+.idv-tools{
+  display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;
+}
+.idv-tools .tool-btn{
+  appearance:none; background:#fff; color:#111827; border:1px solid var(--btn-bd);
+  padding:8px 10px; border-radius:10px; font-weight:600; cursor:pointer;
+  transition:background .15s ease, border-color .15s ease, transform .04s ease;
+}
+.idv-tools .tool-btn:hover{ background:#f3f4f6; border-color:#cbd5e1; }
+.idv-tools .tool-btn:active{ transform:translateY(1px); }
+.idv-tools .tool-btn--icon{ width:36px; text-align:center; font-size:18px; line-height:1; }
+.idv-tools .tool-spacer{ flex:1 1 auto; }
+
+/* Framed viewer */
+.idv-view{
+  padding:10px; border:1px solid #e5e7eb; border-radius:12px; background:#fff;
+  max-height:68vh; overflow:auto;
+}
+#idvImg,
+#idvPdf{
+  display:none; width:100%;
+  border:1px solid #eee; border-radius:8px; background:#fff;
+}
+#idvImg{ max-height:64vh; object-fit:contain; }
+#idvPdf{ height:64vh; }
+
+/* Loading / error states */
+.idv-view.is-loading::before{
+  content:"Loading preview…";
+  display:block; padding:16px; text-align:center; color:#6b7280; font-style:italic;
+}
+.idv-view.is-error::before{
+  content:"Unable to load preview. Try downloading the file.";
+  display:block; padding:16px; text-align:center; color:#b91c1c; font-weight:600;
+}
+
+/* Sticky footer with actions */
+.idv-modal__footer{
+  position:sticky; bottom:0; z-index:2;
+  display:flex; gap:8px; justify-content:flex-end; align-items:center;
+  padding:12px 18px; border-top:1px solid var(--line);
+  background:linear-gradient(rgba(255,255,255,.92) 0%, #ffffff 40%, #ffffff 100%);
+}
+
+/* Approve / Decline */
+#idvApprove{
+  appearance:none; background:#16a34a; border:1px solid #16a34a; color:#fff;
+  padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer;
+  transition:filter .12s ease, transform .04s ease;
+}
+#idvApprove:hover{ filter:brightness(.98); }
+#idvApprove:active{ transform:translateY(1px); }
+
+#idvDecline{
+  appearance:none; background:#fff; color:#ef4444; border:1px solid #ef4444;
+  padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer;
+  transition:background .15s ease, border-color .15s ease, transform .04s ease;
+}
+#idvDecline:hover{ background:#fff5f5; border-color:#dc2626; }
+#idvDecline:active{ transform:translateY(1px); }
+
+/* Utilities */
+.small{ font-size:.9rem; }
+.text-muted{ color:#6b7280; }
+.text-end{ text-align:right; }
+.ms-1{ margin-left:.25rem; }
+.mt-2{ margin-top:.5rem; }
+.mt-3{ margin-top:.75rem; }
+.mb-0{ margin-bottom:0; }
+.mb-2{ margin-bottom:.5rem; }
+.btn-group{ display:flex; gap:8px; }
+
+/* Optional pill variants */
+.badge-pill{
+  display:inline-block; padding:3px 10px; border-radius:999px; font-weight:700; line-height:1;
+  border:1px solid var(--line); background:#f3f4f6; color:#374151; font-size:.8rem;
+}
+.badge-pill--pending{ background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
+.badge-pill--approved{ background:#ecfdf5; color:#065f46; border-color:#a7f3d0; }
+.badge-pill--declined{ background:#fff5f5; color:#991b1b; border-color:#fecaca; }
+#idPreviewModal .idv-tools { display: none !important; }

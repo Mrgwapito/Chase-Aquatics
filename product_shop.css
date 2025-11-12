@@ -85,7 +85,7 @@ header h1 {
 .product-price {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #28a745;
+  color: #335A02;
 }
 
 .quantity-section label {
@@ -108,30 +108,21 @@ header h1 {
 }
 
 .btn-outline-secondary {
-  border-color: #6c757d;
-  color: #6c757d;
+  border-color: #335A02;
+  color: #335A02;
 }
 
 .btn-outline-secondary:hover {
-  background-color: #6c757d;
+  background-color: #335A02;
   color: #fff;
-}
-
-/* Ratings */
-.rating-stars i {
-  color: #ffc107;
-  margin-right: 3px;
-}
-
-.rating-stars span {
-  margin-left: 8px;
-  font-weight: 500;
 }
 
 /* ==================== */
 /* Shared Product Styles */
 /* ==================== */
-
+.related-products {
+  margin-bottom: 40px;
+}
 .product-card,
 .related-product-card {
   border: 1px solid #ccc;
@@ -367,6 +358,7 @@ header h1 {
     display: flex;
     list-style: none;
     gap: 50px;
+    padding-right: 80px;
     position: relative;
     top: 5px;
 }
@@ -396,6 +388,36 @@ a.active:hover {
     border: none;     
     outline: none;    
     cursor: pointer;
+}
+footer {
+  background-color: #6096B4;
+  color: white;
+  width: 100%;
+}
+
+footer h5 {
+  color: white;
+}
+
+footer p, footer li, footer a {
+  color: white;
+  text-decoration: none;
+}
+
+footer .border-top {
+  border-top: 1px solid white !important;
+}
+
+footer ul {
+  padding-left: 0;
+}
+
+footer ul li {
+  list-style: none;
+}
+
+footer i {
+  margin-right: 8px;
 }
 
 /* ===== PHONES ≤ 767px ===== */

@@ -31,14 +31,24 @@
 }
 
 /* Input fields */
+/* Input fields */
 .login-box input,
 .register-box input {
     width: 100%;
     padding: 14px;
     margin: 14px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border: 1.5px solid #e1e5e9; /* Light gray border */
+    border-radius: 6px;
     font-size: 16px;
+    background: #fff;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+/* Add placeholder color for login fields */
+.login-box input::placeholder {
+    color: #8a94a6; /* Same gray color as your register fields */
+    font-weight: 400;
 }
 
 /* Remember me section */
@@ -83,9 +93,9 @@
 #registerBtn {
     display: block;
     width: 220px;
-    margin: 20px auto 0;
+    margin: 20px auto;  /* Changed to auto on both sides for centering */
     padding: 10px 16px;
-    background-color: #3A5A40; /* Green default */
+    background-color: #3A5A40;
     color: white;
     border: none;
     border-radius: 8px;
@@ -95,10 +105,18 @@
 }
 
 #registerBtn:hover {
-    background-color: #6096B4; /* Turns blue on hover */
+    background-color: #6096B4;
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(96, 150, 180, 0.4);
 }
+
+/* REMOVE or COMMENT OUT this conflicting section: */
+/*
+ Button spacing 
+#registerBtn {
+    margin: 10px 0 20px;
+}
+*/
 
 /* Signup & Back to login text */
 .signup-text,
@@ -112,6 +130,7 @@
 .signup-text:hover,
 .back-to-login:hover {
     text-decoration: underline;
+    color: #6096B4;
 }
 
 /* ============================================================
@@ -127,23 +146,30 @@
 }
 
 .name-group input {
-  padding: 14px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 16px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  width: 100%;
+    padding: 14px;
+    border: 1.5px solid #e1e5e9; /* Light gray border */
+    border-radius: 6px;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    width: 100%;
+    background: #fff;
+    margin: 0; /* Remove default margins */
 }
 
+/* Focus states */
+.login-box input:focus,
+.register-box input:focus,
 .name-group input:focus {
-  border-color: #3A5A40;
-  box-shadow: 0 0 5px rgba(58, 90, 64, 0.3);
-  outline: none;
+    border-color: #3A5A40;
+    box-shadow: 0 0 0 3px rgba(58, 90, 64, 0.1);
+    outline: none;
 }
 
-/* 🟩 Consistent input look with other register fields */
-.register-box input {
-  margin: 10px 0;
+/* Placeholder styling */
+.login-box input::placeholder,
+.register-box input::placeholder {
+    color: #8a94a6;
+    font-weight: 400;
 }
 
 /* 📱 Mobile responsive (stacked layout for smaller screens) */
@@ -213,10 +239,13 @@
     color: #6096B4;
 }
 
-/* Forgot password popup */
+/* ============================================================
+   🎯 FORGOT PASSWORD - UPDATED STYLING
+   ============================================================ */
+
 .forgot-container {
     position: fixed;
-    top: 55%; /* same fix for overlap */
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     background: white;
@@ -224,7 +253,7 @@
     border-radius: 10px;
     box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
     width: 400px;
-    z-index: 5;
+    z-index: 1000;
     display: none;
 }
 
@@ -232,13 +261,39 @@
     text-align: center;
 }
 
+.forgot-box h2 {
+    margin-bottom: 15px;
+    font-size: 24px;
+    color: #1a1a1a;
+}
+
+.forgot-box p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
 .forgot-box input {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border: 1.5px solid #e1e5e9; /* Light gray border */
+    border-radius: 6px;
     font-size: 15px;
+    background: #fff;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.forgot-box input:focus {
+    border-color: #3A5A40;
+    box-shadow: 0 0 0 3px rgba(58, 90, 64, 0.1);
+    outline: none;
+}
+
+.forgot-box input::placeholder {
+    color: #8a94a6;
+    font-weight: 400;
 }
 
 .forgot-box .btn {
@@ -246,27 +301,30 @@
     color: white;
     border: none;
     border-radius: 8px;
-    padding: 10px 15px;
-    font-size: 15px;
+    padding: 12px 16px;
+    font-size: 16px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s;
+    transition: all 0.3s ease;
     width: 100%;
-    margin-top: 8px;
+    margin: 15px 0 8px;
 }
 
 .forgot-box .btn:hover {
-    background-color: #6096B4;
-    transform: scale(1.05);
+    background-color: #2d4733;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(58, 90, 64, 0.3);
 }
 
 .forgot-box .back-to-login {
-    margin-top: 14px;
+    margin-top: 15px;
     color: #3A5A40;
     cursor: pointer;
+    font-size: 15px;
 }
 
 .forgot-box .back-to-login:hover {
     text-decoration: underline;
+    color: #6096B4;
 }
 
 /* Close button (X) */
@@ -294,4 +352,327 @@ nav {
     width: 100%;
     z-index: 1000; /* keeps navbar above popups */
     background-color: #f5f3e7; /* or your preferred tone */
+}
+/* =========================
+   Account Quick — cart-sized popup (rounded, shows both items)
+   ========================= */
+:root{
+  --aq-beige: #f2ebdc;
+  --aq-brand: #2b4d23;
+  --aq-ink:   #1f2937;
+  --aq-line:  #e5e7eb;
+}
+
+.account-quick{
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: none;
+}
+.account-quick:not([hidden]){ display:block; }
+
+/* Transparent overlay to catch outside-clicks */
+.aq-backdrop{
+  position:absolute;
+  inset:0;
+  background: transparent;
+}
+
+.aq-panel{
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 320px;
+  background: var(--aq-beige);
+  border-radius: 12px;              /* rounded corners */
+  background-clip: padding-box;     /* keep corners crisp */
+  overflow: visible;                 /* never clip buttons */
+  padding: 16px 16px 12px;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+  font-family: "Montserrat", system-ui, sans-serif;
+  animation: aqPop .18s ease-out both;
+  min-height: 140px;                /* guarantee room for 2 buttons */
+}
+
+@keyframes aqPop{
+  from{ opacity:0; transform: translateY(-6px) scale(.98); }
+  to  { opacity:1; transform: none; }
+}
+
+.aq-head{
+  color: var(--aq-brand);
+  font-weight: 800;
+  font-size: 18px;
+  padding: 2px 2px 10px;
+  border-bottom: 2px solid var(--aq-brand);
+  background: transparent;
+}
+
+.aq-actions{
+  display: grid;      /* each button takes its own height */
+  gap: 10px;
+  padding-top: 12px;
+  padding-bottom: 10px;             /* space for bottom radius */
+}
+
+.aq-btn{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid var(--aq-line);
+  border-radius: 10px;
+  color: var(--aq-ink);
+  font: 600 14px/1.2 "Montserrat", system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s, transform .06s, background .15s;
+}
+.aq-btn i{ font-size: 16px; color: var(--aq-brand); }
+.aq-btn:hover{
+  background: #fff;
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 14px rgba(0,0,0,.08);
+}
+.aq-btn:active{ transform: translateY(1px); }
+
+@media (max-width: 420px){
+  .aq-panel{
+    right: 12px;
+    top: 74px;
+    width: calc(100vw - 24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .aq-panel{ animation: none; }
+}
+
+
+
+/* your register/forgot markup is: .pw-meter > .bar > .fill */
+.pw-meter .bar{
+  height: 100%;
+}
+.pw-meter .bar .fill{
+  display: block;
+  height: 100%;
+  width: 0%;
+  transform-origin: left center;
+  transition: width 260ms ease, background-color 160ms ease;
+  border-radius: inherit;
+}
+
+
+
+/* ===== Confirm Password state styles (mirror profile look) ===== */
+input.is-valid {
+  border-color: #198754 !important;                /* green */
+  box-shadow: 0 0 0 .25rem rgba(25,135,84,.15) !important;
+}
+
+input.is-invalid {
+  border-color: #dc3545 !important;                /* red */
+  box-shadow: 0 0 0 .25rem rgba(220,53,69,.15) !important;
+}
+
+/* Optional: nicer focus ring while typing */
+input.is-valid:focus {
+  border-color: #198754 !important;
+  box-shadow: 0 0 0 .3rem rgba(25,135,84,.18) !important;
+}
+input.is-invalid:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 .3rem rgba(220,53,69,.18) !important;
+}
+
+
+/* ============================================================
+   🎯 PASSWORD STRENGTH TEXT - SMALLER & LEFT ALIGNED
+   ============================================================ */
+
+.pw-strength {
+    color: #6c757d;
+    margin-bottom: .5rem;
+    font-size: 12px; /* Smaller font size */
+    text-align: left; /* Left aligned */
+    margin-top: 2px; /* Reduced top margin */
+    line-height: 1.3;
+}
+
+/* Optional: Make the password meter smaller too */
+.pw-meter {
+    position: relative;
+    height: 4px; /* Reduced from 6px */
+    border-radius: 999px;
+    background: rgba(13,110,253,0.12);
+    margin-top: 4px; /* Reduced spacing */
+    margin-bottom: 4px; /* Reduced spacing */
+    overflow: hidden;
+}
+
+/* Adjust the password input field spacing */
+#regPassword {
+    margin-bottom: 8px; /* Reduced space below password field */
+}
+
+/* Keep the existing register container styles but add the text adjustments */
+.register-box .pw-strength {
+    font-size: 12px;
+    text-align: left;
+    color: #666;
+    margin: 2px 0 8px 0;
+}
+
+/* Make sure the text appears immediately below the password field */
+.register-box input[type="password"] + .pw-meter + .pw-strength {
+    margin-top: 2px;
+}
+
+/* Specifically target the register password strength label */
+#regPwLabel {
+    font-size: 12px !important;
+    text-align: left !important;
+    color: #666 !important;
+    margin: 2px 0 8px 0 !important;
+    display: block;
+    width: 100%;
+}
+/* ============================================================
+   🎯 TERMS & CONDITIONS - MINIMAL VERSION
+   ============================================================ */
+
+.legal-consent {
+    margin: 12px 0 18px;
+}
+
+.legal-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+    line-height: 1.3;
+}
+
+.legal-check input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.legal-check a {
+    color: #3A5A40;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.legal-check a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================================
+   🎯 FORM FIELDS CONSISTENT SPACING & ALIGNMENT
+   ============================================================ */
+
+/* Reset all input margins and padding for consistency */
+.register-box input {
+    width: 100%;
+    padding: 14px 16px;
+    margin: 0;
+    border: 1.5px solid #e1e5e9;
+    border-radius: 6px;
+    font-size: 15px;
+    background: #fff;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+/* Consistent spacing between form groups */
+.name-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+/* Space after each input field group */
+.register-box input[type="email"],
+.register-box input[type="password"] {
+    margin-bottom: 16px;
+}
+
+/* Specific spacing for password fields */
+#regPassword {
+    margin-bottom: 8px; /* Less space to keep strength meter close */
+}
+
+/* Password strength meter spacing */
+.pw-meter {
+    margin: 4px 0 8px 0;
+}
+
+.pw-strength {
+    font-size: 12px;
+    text-align: left;
+    color: #666;
+    margin: 0 0 16px 0; /* Consistent bottom margin */
+    line-height: 1.3;
+}
+
+/* Confirm password field */
+#regConfirmPassword {
+    margin-top: 0;
+}
+
+/* Terms and conditions spacing */
+.legal-consent {
+    margin: 20px 0;
+}
+
+
+/* Button spacing */
+#registerBtn {
+    margin: 20px auto;
+}
+
+/* Back to login spacing */
+.back-to-login {
+    margin-top: 15px;
+}
+
+/* Focus states for all inputs */
+.register-box input:focus {
+    border-color: #3A5A40;
+    box-shadow: 0 0 0 3px rgba(58, 90, 64, 0.1);
+    outline: none;
+}
+
+/* Placeholder styling */
+.register-box input::placeholder {
+    color: #8a94a6;
+    font-weight: 400;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    .name-group {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .register-box input {
+        margin-bottom: 16px;
+    }
+    
+    #regPassword {
+        margin-bottom: 8px;
+    }
 }

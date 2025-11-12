@@ -10,15 +10,34 @@
   <link rel="stylesheet" href="../popups/login.css">
   <link rel="stylesheet" href="../popups/cart.css">
   <link rel="stylesheet" href="./profile.css">
+  <link rel="stylesheet" href="/assets/toast.css">
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+
+  <!-- Palette + components -->
+  <style>
+    :root{
+      --brand-green:#335A02;
+      --brand-blue:#6096B4;
+      --brand-cream:#EEE9DA;
+    }
+    .btn-brand{background:var(--brand-green);color:#fff;border:0;}
+    .btn-brand:hover{filter:brightness(.95);}
+    .btn-outline-brand{border:1px solid var(--brand-green);color:var(--brand-green);background:#fff;}
+    .btn-outline-brand:hover{background:var(--brand-green);color:#fff;}
+    .badge-soft{background:var(--brand-cream);color:var(--brand-green);border:1px solid var(--brand-green);}
+    .form-control:focus{border-color:var(--brand-blue);box-shadow:0 0 0 .2rem rgba(96,150,180,.15)}
+    .pw-meter{height:6px;background:#e9ecef;border-radius:999px;overflow:hidden;margin-top:.4rem}
+    .pw-meter__bar{height:100%;width:0;transition:width .25s ease}
+    .address-grid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+    .address-grid .full{grid-column:1/-1}
+  </style>
 </head>
 
 <body>
   <nav class="navbar">
     <div class="logo"><img src="/logo.png" alt="logo"></div>
 
-    <!-- NEW: mobile hamburger -->
     <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
       <i class="fa-solid fa-bars"></i>
     </button>
@@ -62,16 +81,12 @@
     <div class="register-box">
       <h2>Register</h2>
 
-      <!-- ✅ Added separate fields for first and last name -->
       <input type="text" placeholder="First Name" id="regFirstName">
       <input type="text" placeholder="Last Name" id="regLastName">
 
-      <!-- keep full name hidden (for backward compatibility) -->
       <input type="hidden" id="regFullName">
-
       <input type="email" placeholder="Email" id="regEmail">
 
-      <!-- 🔹 Email Verification Section -->
       <div class="otp-container">
         <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
         <button id="sendOtpBtn" class="otp-btn">Send Code</button>
@@ -94,91 +109,268 @@
     <button class="review-btn">Review My Cart</button>
   </div>
 
-  <section class="profile-section">
-    <div class="profile-card">
-      <div class="profile-header">
-        <img src="images/default-user.png" alt="Profile Picture" class="profile-img">
-        <h2 class="user-name">Loading...</h2>
-      </div>
-
-      <div class="profile-info">
-        <div class="info-item">
-          <span class="label">User ID:</span>
-          <span class="value" id="userIdValue"></span>
+<section class="profile-shell container-xxl py-4">
+  <div class="row gx-4">
+    <!-- LEFT DASHBOARD -->
+    <aside class="col-lg-3">
+      <div class="dash-card shadow-sm border-0 rounded-4 sticky-top" style="top:88px;">
+        <div class="px-4 pt-4 pb-3 d-flex align-items-center gap-3">
+          <div class="avatar-circle">
+            <span class="avatar-initials">AP</span>
+          </div>
+          <div class="min-w-0">
+            <div class="fw-semibold text-truncate user-name">Loading...</div>
+            <div class="text-muted small"><i class="fa-solid fa-pen-to-square me-1"></i>Edit Profile</div>
+          </div>
         </div>
 
-        <!-- ✅ Added separate display/edit fields for first and last name -->
-        <div class="info-item editable">
-          <span class="label">First Name:</span>
-          <input type="text" class="edit-input" id="firstNameInput" placeholder="Enter first name" disabled>
-        </div>
+        <hr class="my-0">
 
-        <div class="info-item editable">
-          <span class="label">Last Name:</span>
-          <input type="text" class="edit-input" id="lastNameInput" placeholder="Enter last name" disabled>
-        </div>
-
-        <div class="info-item editable">
-          <span class="label">Email:</span>
-          <input type="email" class="edit-input" id="emailInput" value="" disabled>
-        </div>
-
-        <div class="otp-section" id="emailOtpSection">
-          <label for="emailOtp">Enter OTP sent to your email</label>
-          <input type="text" id="emailOtp" placeholder="Enter OTP">
-          <button class="otp-btn" id="sendEmailOtp">Send Code</button>
-          <button class="otp-btn" id="verifyEmailOtp">Verify</button>
-        </div>
-
-        <div class="info-item editable">
-          <span class="label">Mobile Number:</span>
-          <input type="text" class="edit-input" id="phoneInput" placeholder="Enter mobile number" disabled>
-        </div>
-
-        <div class="info-item editable">
-          <span class="label">Address:</span>
-          <input type="text" class="edit-input" id="addressInput" placeholder="Enter address" disabled>
-        </div>
-
-        <div class="info-item editable">
-          <span class="label">Gender:</span>
-          <select class="edit-input" id="genderInput" disabled>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-        </div>
-
-        <div class="info-item editable">
-          <span class="label">Birthday:</span>
-          <input type="date" class="edit-input" id="birthdayInput" disabled>
+        <div class="p-3">
+          <div class="side-title"><i class="fa-regular fa-user me-2"></i>My Account</div>
+          <ul class="side-nav list-unstyled">
+            <li><button class="side-link active" data-bs-toggle="pill" data-bs-target="#pane-profile">Profile</button></li>
+            <li><button class="side-link" data-bs-toggle="pill" data-bs-target="#pane-address">Address</button></li>
+            <li><button class="side-link" data-bs-toggle="pill" data-bs-target="#pane-security">Change Password</button></li>
+          </ul>
         </div>
       </div>
+    </aside>
 
-      <div class="profile-actions">
-        <button class="btn-edit" id="editProfileBtn"><i class="fa-solid fa-pen"></i> Edit Profile</button>
-        <button class="btn-save" id="saveProfileBtn" style="display:none;"><i class="fa-solid fa-save"></i> Save Changes</button>
-        <button class="btn-change-password" id="changePasswordBtn"><i class="fa-solid fa-lock"></i> Change Password</button>
-        <!-- ✅ Added logout button -->
-        <button class="btn-logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-      </div>
+    <!-- RIGHT CONTENT -->
+    <div class="col-lg-9">
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
 
-      <div class="change-password-section" id="changePasswordSection">
-        <h3>Change Password</h3>
-        <div class="password-inputs">
-          <label>New Password</label>
-          <input type="password" id="newPassword" placeholder="Enter new password">
-        </div>
-        <div class="password-inputs">
-          <label>Confirm Password</label>
-          <input type="password" id="confirmPassword" placeholder="Confirm new password">
-        </div>
-        <div class="password-actions">
-          <button class="btn-save" id="savePasswordBtn"><i class="fa-solid fa-check"></i> Save Password</button>
-          <button class="btn-edit" id="cancelPasswordBtn"><i class="fa-solid fa-times"></i> Cancel</button>
+          <h3 class="mb-1">My Profile</h3>
+          <div class="text-muted mb-4">Manage and protect your account</div>
+
+          <div class="row">
+            <!-- LEFT: form -->
+            <div class="col-xl-8">
+              <div class="tab-content" id="profileTabsContent">
+                <!-- PROFILE -->
+                <div class="tab-pane fade show active" id="pane-profile" role="tabpanel">
+                  <div class="row g-3">
+
+                    <div class="col-12">
+                      <label class="form-label fw-semibold">Username</label>
+                      <input type="text" class="form-control" value="aaronpogi" disabled>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Surname</label>
+                      <input type="text" class="form-control edit-input text-end-input" id="lastNameInput" placeholder="Surname" disabled>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">First Name</label>
+                      <input type="text" class="form-control edit-input text-end-input" id="firstNameInput" placeholder="First name" disabled>
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label fw-semibold">Full Name</label>
+                      <input type="text" class="form-control" id="fullNameComputed" placeholder="Auto-filled from Surname, First name" disabled>
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label fw-semibold">Email</label>
+                      <input type="email" class="form-control" id="emailInput" disabled>
+                      <!-- small hint always visible -->
+                      <small id="emailHint" class="form-text text-muted d-block mt-1">
+                        Change your email and we’ll send a 6-digit code to verify.
+                      </small>
+                    </div>
+
+                    <!-- INLINE email verification: appears only when email changes -->
+                    <div class="col-12" id="profileEmailOtpSection" hidden>
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="badge badge-soft" id="profileEmailStatus">Verify new email</span>
+                        <input type="text"
+                               id="profileEmailOtp"
+                               class="form-control"
+                               placeholder="Enter 6-digit code"
+                               inputmode="numeric"
+                               maxlength="6"
+                               style="max-width:220px">
+                        <button class="btn btn-sm btn-outline-success" id="profileSendEmailOtp" type="button">Send Code</button>
+                        <button class="btn btn-sm btn-success" id="profileVerifyEmailOtp" type="button" disabled>Verify</button>
+                      </div>
+                      <small class="form-text">
+                        Code will be sent to <span id="profileEmailTarget" class="fw-semibold"></span>. Check your inbox/spam.
+                      </small>
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label fw-semibold">Phone Number</label>
+                      <div class="input-group phone-group">
+                        <span class="input-group-text">+63</span>
+                        <input
+                          type="text"
+                          class="form-control edit-input text-end-input"
+                          id="phoneInput"
+                          placeholder="9XXXXXXXXX"
+                          inputmode="numeric"
+                          maxlength="10"
+                          disabled>
+                      </div>
+                    </div>
+
+                    <div class="col-12">
+                      <div class="verify-box mx-auto">
+                        <label class="form-label fw-semibold d-block text-start">Valid ID (JPG/PNG/PDF)</label>
+                        <input class="form-control" id="validIdFile" type="file" accept="image/*,.pdf">
+                        <div class="form-text">Max 8MB. Examples: Student ID, Driver’s License, Passport.</div>
+                        <button class="btn btn-outline-primary w-100" id="submitValidIdBtn">
+                          Submit ID for verification
+                        </button>
+                        <div class="small mt-2" id="validIdNote" hidden></div>
+                      </div>
+                    </div>
+
+
+                    <div class="col-12">
+                      <button class="btn btn-primary px-4" id="editProfileBtn"><i class="fa-solid fa-pen me-1"></i>Save Changes</button>
+                      <button class="btn btn-success px-4 d-none" id="saveProfileBtn"><i class="fa-solid fa-floppy-disk me-1"></i>Save Changes</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ADDRESS -->
+<div class="tab-pane fade" id="pane-address" role="tabpanel">
+  <h4 class="mb-3">My Address</h4>
+
+  <div class="address-grid">
+    <!-- House / Street -->
+    <div class="full">
+      <label for="addrLine1" class="form-label addr-label">House No. / Street / Subdivision</label>
+      <input
+        class="form-control addr-input"
+        id="addrLine1"
+        placeholder="Lot 11 San Pablo Street, Blk 2, Subdivision"
+        disabled>
+    </div>
+
+    <!-- Region -->
+    <div>
+      <label for="addrRegion" class="form-label addr-label">Region</label>
+   <select class="form-select form-select-sm" id="addrRegion" disabled></select>
+    </div>
+
+    <!-- Province -->
+    <div>
+      <label for="addrProvince" class="form-label addr-label">Province</label>
+      <select class="form-select form-select-sm" id="addrProvince" disabled></select>
+    </div>
+
+    <!-- City / Municipality -->
+    <div>
+      <label for="addrCity" class="form-label addr-label">City / Municipality</label>
+      <select class="form-select form-select-sm" id="addrCity" disabled></select>
+    </div>
+
+    <!-- Barangay -->
+    <div>
+      <label for="addrBrgy" class="form-label addr-label">Barangay</label>
+      <select class="form-select form-select-sm" id="addrBrgy" disabled></select>
+    </div>
+
+    <!-- Postal Code (manual input) -->
+    <div class="full full-sm">
+      <label for="addrZip" class="form-label addr-label">Postal Code</label>
+      <input
+        class="form-control addr-input"
+        id="addrZip"
+        placeholder="Enter 4-digit PH postal code (e.g., 1000 Manila)"
+        inputmode="numeric"
+        maxlength="4"
+        pattern="\d{4}"
+        title="Philippine postal codes are 4 digits (e.g., 1000)"
+        disabled>
+    </div>
+  </div>
+
+  <button class="btn btn-brand mt-3" id="saveAddressBtn">Save Address</button>
+  <button class="btn btn-outline-secondary mt-3 ms-2" id="editAddressBtn">Edit</button>
+</div>
+
+
+                <!-- SECURITY -->
+                <div class="tab-pane fade" id="pane-security" role="tabpanel">
+                  <h4 class="mb-2">Change Password</h4>
+                  <div class="text-muted mb-3">You can change your password while logged in, or use an email code if you forgot it.</div>
+
+                  <label class="form-label fw-semibold">New Password</label>
+                  <input type="password" id="newPassword" class="form-control" placeholder="Enter new password" minlength="8" required>
+
+                  <div class="pw-meter" id="pwMeter">
+                    <div class="pw-meter__bar" id="pwMeterBar"></div>
+                  </div>
+                  <div class="pw-meter__label small" id="pwMeterLabel">Enter a strong password (min 8 chars)</div>
+
+                  <label class="form-label fw-semibold mt-3">Confirm New Password</label>
+                  <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm new password" minlength="8" required>
+
+                  <!-- ✉️ OTP for password change -->
+                  <div class="mt-3" id="pwOtpBlock">
+                    <label class="form-label fw-semibold d-block">Verify by Email</label>
+                    <div class="d-flex gap-2 flex-wrap">
+                      <input type="text" id="pwOtpInput" class="form-control" placeholder="Enter 6-digit code" style="max-width:220px" disabled>
+                      <button class="btn btn-outline-brand" id="pwSendOtpBtn" type="button">Send Code</button>
+                      <button class="btn btn-brand" id="pwVerifyOtpBtn" type="button" disabled>Verify</button>
+                      <span class="badge badge-soft align-self-center d-none" id="pwOtpStatus"></span>
+                    </div>
+                    <div class="form-text">We’ll email a code to your account email. You must verify before you can update your password.</div>
+                  </div>
+
+                  <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-brand" id="savePasswordBtn" disabled><i class="fa-solid fa-check me-1"></i>Update Password</button>
+                  </div>
+
+                  <div class="mt-4 pt-3 border-top">
+                    <div class="fw-semibold mb-2">Forgot your password?</div>
+                    <button class="btn btn-outline-brand">Request Password Reset (via email)</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT: avatar pane (only shown on Profile tab) -->
+            <div class="col-xl-4 right-pane">
+              <div class="text-center">
+                <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+                  <span class="badge verify-badge" id="emailVerifyBadge">Email: Half-verified</span>
+                  <span class="badge verify-badge subtle" id="idVerifyBadge">ID: Not submitted</span>
+                </div>
+
+                <div class="big-avatar mx-auto mb-3">
+                  <span class="big-initials">AP</span>
+                </div>
+                <button class="btn btn-outline-brand px-4" id="selectImageBtn">Select Image</button>
+                <input type="file" id="profileImageInput" accept="image/*" hidden>
+                <div class="text-muted small mt-3">Maximum file size: 5MB<br>Format: JPG, PNG</div>
+                <div class="text-muted small mt-3"><span class="me-2">User ID:</span><span id="userIdValue">—</span></div>
+
+                <div class="mt-4 verify-legacy" style="display:none;">
+                  <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                    <span class="badge verify-badge" id="emailVerifyBadge2">Email: Half-verified</span>
+                    <span class="badge verify-badge subtle" id="idVerifyBadge2">ID: Not submitted</span>
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-3">
+                  <button class="btn btn-outline-danger" id="logoutBtn">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i>Logout
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div><!-- /row -->
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
   <form id="emailForm" style="display:none;">
     <input type="hidden" name="to_email" id="hiddenEmail">
@@ -188,8 +380,17 @@
     <input type="hidden" name="message" id="hiddenMessage">
   </form>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="/assets/toast.js"></script>
   <script src="./profile.js"></script>
   <script src="../profile/userauth.js"></script>
+
+  <script>
+  window.addEventListener('DOMContentLoaded', () => {
+    window.Toast && window.Toast.consumeFlashToast && window.Toast.consumeFlashToast();
+
+  });
+</script>
 
 </body>
 </html>

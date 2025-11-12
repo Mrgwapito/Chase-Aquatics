@@ -1,131 +1,326 @@
 document.addEventListener("DOMContentLoaded", () => {
-  emailjs.init("hhTpOoi07kd04LwsH");
+  // Local toast helper (falls back to alert if toast not loaded yet)
+  function notify({ title = 'Notice', message = '', type = 'info', duration = 2200, position = 'top' } = {}) {
+    if (window.Toast?.showToast) {
+      window.Toast.showToast({ title, message, type, duration, position });
+    } else {
+      alert(`${title}\n${message}`);
+    }
+  }
 
-  const forgotContainer = document.getElementById("forgotContainer");
-  const showForgotPassword = document.getElementById("showForgotPassword");
-  const closeForgot = document.getElementById("closeForgot");
-  const backToLoginFromForgot = document.getElementById("backToLoginFromForgot");
+  // You don't actually need EmailJS on the client because the server sends the email,
+  // but keeping init here won't hurt anything.
+  try { emailjs.init("hhTpOoi07kd04LwsH"); } catch {}
 
-  // Inputs and buttons
-  const forgotEmailInput = document.getElementById("forgotEmail");
-  const forgotSendBtn = document.getElementById("forgotSendBtn");
-  const otpInput = document.getElementById("forgotOtp");
-  const newPassInput = document.getElementById("forgotNewPass");
-  const confirmPassInput = document.getElementById("forgotConfirmPass");
-  const resetBtn = document.getElementById("forgotResetBtn");
+  const API_BASE = "http://localhost:3000";
+
+  // Popup containers & controls
+  const forgotContainer        = document.getElementById("forgotContainer");
+  const showForgotPassword     = document.getElementById("showForgotPassword");
+  const closeForgot            = document.getElementById("closeForgot");
+  const backToLoginFromForgot  = document.getElementById("backToLoginFromForgot");
+
+  // Fields & buttons
+  const forgotEmailInput   = document.getElementById("forgotEmail");
+  const forgotSendBtn      = document.getElementById("forgotSendBtn");
+  const otpInput           = document.getElementById("forgotOtp");
+  const newPassInput       = document.getElementById("forgotNewPass");
+  const confirmPassInput   = document.getElementById("forgotConfirmPass");
+  const resetBtn           = document.getElementById("forgotResetBtn");
+  const forgotStep2        = document.getElementById("forgotStep2");
 
   let currentEmail = "";
-  let generatedOtp = "";
+  let otpRequested = false;
 
-  // ✅ Show Forgot Password Popup
+  // Open popup
   if (showForgotPassword) {
     showForgotPassword.addEventListener("click", () => {
       const loginContainer = document.getElementById("loginContainer");
       if (loginContainer) loginContainer.style.display = "none";
-      forgotContainer.style.display = "block";
+      if (forgotContainer) forgotContainer.style.display = "block";
     });
   }
 
-  // ✅ Close Popup (just hides forgot password)
+  // Close popup
   if (closeForgot) {
     closeForgot.addEventListener("click", () => {
-      forgotContainer.style.display = "none";
+      if (forgotContainer) forgotContainer.style.display = "none";
     });
   }
 
-  // ✅ Back to Login (closes forgot password and opens login)
+  // Back to login
   if (backToLoginFromForgot) {
     backToLoginFromForgot.addEventListener("click", () => {
-      forgotContainer.style.display = "none";
+      if (forgotContainer) forgotContainer.style.display = "none";
       const loginContainer = document.getElementById("loginContainer");
-      if (loginContainer) {
-        loginContainer.style.display = "block";
-      }
+      if (loginContainer) loginContainer.style.display = "block";
     });
   }
 
-  // ✅ Send OTP
+  // Send OTP
   if (forgotSendBtn) {
     forgotSendBtn.addEventListener("click", async () => {
-      const email = forgotEmailInput.value.trim();
+      const email = (forgotEmailInput?.value || "").trim();
       if (!email) {
-        alert("Please enter your email.");
-        return;
+        notify({
+          title: 'Missing email',
+          message: 'Please enter your email.',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
+        return; // stop here
       }
 
       try {
-        const res = await fetch("/api/forgot-password", {
+        forgotSendBtn.disabled = true;
+
+        const res = await fetch(`${API_BASE}/api/forgot-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email })
         });
 
         const data = await res.json();
-        if (data.success) {
-          generatedOtp = data.otp;
-          currentEmail = email;
 
-          emailjs.send("service_2bfbogr", "template_bcfsv7i", {
-            to_email: email,
-            name: "Life in a Box User",
-            otp_code: generatedOtp,
-            message: `Your password reset code is: ${generatedOtp}`
+        if (!res.ok || !data.success) {
+          notify({
+            title: 'OTP error',
+            message: data.message || 'Failed to send OTP.',
+            type: 'error',
+            duration: 6000,
+            position: 'top'
           });
-
-          alert("✅ OTP sent to your email!");
-          document.getElementById("forgotStep2").style.display = "block";
-        } else {
-          alert(`⚠️ ${data.message}`);
+          return;
         }
+
+      // Success: show step 2 (OTP + new password fields)
+currentEmail = email;
+otpRequested = true;
+
+if (forgotStep2) forgotStep2.style.display = "block";
+if (otpInput) otpInput.disabled = false;
+if (newPassInput) newPassInput.disabled = false;
+if (resetBtn) resetBtn.disabled = false;
+
+// If your backend returns the OTP for DEV: send via EmailJS too
+// (In production, prefer the server to send and don't expose the OTP.)
+if (data.otp) {
+  try {
+    await sendResetOtpEmail({
+      to_email: email,
+      to_name: email,
+      otp: data.otp,
+      reset_url: `https://lifeinabox.com/reset?email=${encodeURIComponent(email)}`
+    });
+  } catch (e) {
+    console.warn("EmailJS reset send failed (continuing):", e);
+  }
+}
+
+notify({
+  title: 'OTP sent',
+  message: `We sent a code to ${email}. Check your inbox.`,
+  type: 'info',
+  duration: 5000,
+  position: 'top'
+});
+
+
       } catch (err) {
-        console.error("Error:", err);
-        alert("❌ Failed to send OTP.");
+        console.error("Forgot OTP error:", err);
+        notify({
+          title: 'Send failed',
+          message: 'Could not send OTP. Please try again.',
+          type: 'error',
+          duration: 6000,
+          position: 'top'
+        });
+      } finally {
+        forgotSendBtn.disabled = false;
       }
     });
   }
 
-  // ✅ Reset Password
+  // Reset Password (verify OTP)
   if (resetBtn) {
     resetBtn.addEventListener("click", async () => {
-      const otp = otpInput.value.trim();
-      const newPassword = newPassInput.value.trim();
-      const confirmPassword = confirmPassInput.value.trim();
+      const email        = currentEmail;
+      const otp          = (otpInput?.value || "").trim();
+      const newPassword  = (newPassInput?.value || "").trim();
+      const confirmPwd   = (confirmPassInput?.value || "").trim();
 
-      if (!otp || !newPassword || !confirmPassword) {
-        alert("Please fill in all fields.");
+      if (!email || !otp || !newPassword || !confirmPwd) {
+        notify({
+          title: 'Missing info',
+          message: 'Please fill in all fields.',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
         return;
       }
-
       if (newPassword.length < 8) {
-        alert("Password must be at least 8 characters long.");
+        notify({
+          title: 'Weak password',
+          message: 'Password must be at least 8 characters long.',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
         return;
       }
-
-      if (newPassword !== confirmPassword) {
-        alert("Passwords do not match.");
+      if (newPassword !== confirmPwd) {
+        notify({
+          title: 'Passwords do not match',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
+        return;
+      }
+      if (!otpRequested) {
+        notify({
+          title: 'No OTP yet',
+          message: 'Please request an OTP first.',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
         return;
       }
 
       try {
-        const res = await fetch("/api/reset-password", {
+        resetBtn.disabled = true;
+
+        const res = await fetch(`${API_BASE}/api/verify-reset-otp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: currentEmail, otp, newPassword })
+          body: JSON.stringify({ email, otp, newPassword })
         });
 
         const data = await res.json();
-        if (data.success) {
-          alert("✅ Password reset successfully!");
-          forgotContainer.style.display = "none";
-          const loginContainer = document.getElementById("loginContainer");
-          if (loginContainer) loginContainer.style.display = "block"; // 👈 show login popup again
-        } else {
-          alert(`⚠️ ${data.message}`);
+
+        if (!res.ok || !data.success) {
+          notify({
+            title: 'Reset failed',
+            message: data.message || 'Failed to reset password.',
+            type: 'error',
+            duration: 6000,
+            position: 'top'
+          });
+          return;
         }
+
+        notify({
+          title: 'Password reset',
+          message: 'You can now log in with your new password.',
+          type: 'success',
+          duration: 2200,
+          position: 'br'
+        });
+
+        if (forgotContainer) forgotContainer.style.display = "none";
+        const loginContainer = document.getElementById("loginContainer");
+        if (loginContainer) loginContainer.style.display = "block";
       } catch (err) {
-        console.error("Error:", err);
-        alert("❌ Failed to reset password.");
+        console.error("Reset error:", err);
+        notify({
+          title: 'Reset failed',
+          message: 'Could not reset your password. Please try again.',
+          type: 'error',
+          duration: 6000,
+          position: 'top'
+        });
+      } finally {
+        resetBtn.disabled = false;
       }
     });
   }
 });
+
+
+const EMAILJS_SERVICE_ID = "service_2bfbogr";
+const EMAILJS_TEMPLATE_ID = "template_bcfsv7i";
+
+function sendResetOtpEmail({ to_email, to_name, otp, reset_url }) {
+  return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    show_contact: "none",
+    show_reg: "none",
+    show_reset: "block",
+
+    brand: "Life In A Box",
+    logo_url: location.origin + "/logo.png",
+    support_email: "support@lifeinabox.com",
+    year: new Date().getFullYear(),
+    sent_at: new Date().toLocaleString(),
+
+    to_name,
+    to_email,
+    otp,
+    otp_window_minutes: 10,
+    reset_url,
+
+    email_subject: `Reset code: ${otp} — Life In A Box`,
+  });
+}
+
+
+// ===== Password strength meter (Register + Forgot) =====
+(function(){
+  function scorePassword(p){
+    if(!p) return 0;
+    let s = 0;
+    if(p.length >= 8)  s++;
+    if(p.length >= 12) s++;
+    const sets = [
+      /[a-z]/.test(p), /[A-Z]/.test(p), /\d/.test(p), /[^A-Za-z0-9]/.test(p)
+    ].filter(Boolean).length;
+    if(sets >= 2) s++;
+    if(sets >= 3) s++;
+    return Math.max(0, Math.min(4, s)); // 0..4
+  }
+
+  function paintStrength(inputEl, meterEl, labelEl){
+    const s   = scorePassword(inputEl.value);
+    const pct = [8, 25, 50, 75, 100][s];
+    // colors: 0/1 red, 2 orange, 3 green, 4 darker green (like screenshot)
+    const col = ['#dc3545', '#dc3545', '#fd7e14', '#198754', '#157347'][s];
+    const txt = ['Too short','Weak','Fair','Strong','Very strong'][s];
+
+    const fill = meterEl?.querySelector('.fill');
+    if(fill){
+      fill.style.width = pct + '%';
+      fill.style.backgroundColor = col;
+    }
+    if(labelEl){
+      labelEl.textContent = txt;
+      labelEl.style.color = (s<=2 ? (s<=1 ? '#c0392b' : '#b06d00') : '#335A02');
+    }
+  }
+
+  function checkMatch(pwEl, confirmEl){
+    if(!pwEl || !confirmEl) return;
+    const same = pwEl.value.length > 0 && confirmEl.value === pwEl.value;
+    confirmEl.classList.toggle('is-valid',  same);
+    confirmEl.classList.toggle('is-invalid', !same && confirmEl.value.length>0);
+  }
+
+  function bindMeter({input, meter, label, confirm}){
+    const i = document.getElementById(input);
+    const m = document.getElementById(meter);
+    const l = document.getElementById(label);
+    const c = confirm ? document.getElementById(confirm) : null;
+    if(!i || !m || !l) return;
+
+    const render = () => paintStrength(i, m, l);
+    i.addEventListener('input', () => { render(); if(c) checkMatch(i,c); });
+    if(c) c.addEventListener('input', () => checkMatch(i,c));
+    render(); // initial render for prefilled cases
+  }
+
+  // Register
+  bindMeter({ input:'regPassword',    meter:'regPwMeter',    label:'regPwLabel',    confirm:'regConfirmPassword' });
+  // Forgot
+  bindMeter({ input:'forgotNewPass',  meter:'forgotPwMeter', label:'forgotPwLabel', confirm:'forgotConfirmPass' });
+})();

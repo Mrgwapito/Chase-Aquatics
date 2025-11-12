@@ -55,37 +55,58 @@
       </div>
       <button class="btn" id="signInBtn">Sign In</button>
       <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
-      <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+      <p class="signup-text" id="showRegister">
+      Don't have an account? Sign Up
+    </p>
       <span class="close-x" id="closeLogin">&times;</span>
     </div>
   </div>
 
-  <!-- 📝 Register (now matches index with First/Last + OTP) -->
-  <div class="register-container" id="registerContainer" style="display:none;">
-    <div class="register-box">
-      <h2>Register</h2>
+  <!-- Registration Form (Hidden Initially) -->
+<div class="register-container" id="registerContainer" style="display:none;">
 
-      <div class="name-group">
-        <input type="text" placeholder="First Name" id="regFirstName" />
-        <input type="text" placeholder="Last Name" id="regLastName" />
-      </div>
+  <div class="register-box">
+    <h2>Register</h2>
 
-      <input type="email" placeholder="Email" id="regEmail" />
-
-      <div class="otp-container">
-        <input type="text" placeholder="Enter OTP" id="emailOtp" disabled />
-        <button id="sendOtpBtn" class="otp-btn">Send Code</button>
-        <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
-      </div>
-
-      <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8" />
-      <input type="password" placeholder="Confirm Password" id="regConfirmPassword" />
-
-      <button class="btn" id="registerBtn" disabled>Register</button>
-      <p class="back-to-login" id="backToLogin">Back to Login</p>
-      <span class="close-x" id="closeRegister">&times;</span>
+    <!-- 👇 Split name into first + last -->
+    <div class="name-group">
+      <input type="text" placeholder="First Name" id="regFirstName">
+      <input type="text" placeholder="Last Name" id="regLastName">
     </div>
+
+    <input type="email" placeholder="Email" id="regEmail">
+
+    <!-- 🔹 Email Verification Section -->
+    <div class="otp-container">
+      <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
+      <button id="sendOtpBtn" class="otp-btn">Send Code</button>
+      <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+    </div>
+
+    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8">
+    <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+
+    
+<!-- Consent: place above the Register button -->
+<div class="legal-consent">
+  <label class="legal-check" for="agreeTerms">
+    <input type="checkbox" id="agreeTerms">
+    <span>
+      I agree to the
+      <a href="./termsncondi.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+      and
+      <a href="./termsncondi.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+    </span>
+  </label>
+</div>
+
+
+
+    <button class="btn" id="registerBtn" disabled>Register</button>
+    <p class="back-to-login" id="backToLogin">Back to Login</p>
+    <span class="close-x" id="closeRegister">&times;</span>
   </div>
+</div>
 
   <!-- 🔒 Forgot Password (same as index) -->
   <div class="forgot-container" id="forgotContainer" style="display:none;">
@@ -161,6 +182,8 @@
       </div>
     </div>
   </section>
+  
+
 
   <!-- FOOTER -->
   <footer class="py-5">
@@ -189,9 +212,17 @@
         </div>
       </div>
 
-      <div class="border-top my-4"></div>
-      <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
-    </div>
+<div class="border-top my-4"></div>
+
+<!-- add mb-1 so there’s a little gap below the copyright -->
+<p class="small mb-1 legal-copy">© 2025 Life in a Box. All rights reserved.</p>
+
+<!-- add 'small' so links match size; add a hook class for styling -->
+<a class="small legal-link" href="./termsncondi.html">Terms &amp; Conditions</a>
+<span class="mx-2">•</span>
+<a class="small legal-link" href="./termsncondi.html#privacy">Privacy Policy</a>
+
+</div>
   </footer>
 
   <!-- Vendors -->

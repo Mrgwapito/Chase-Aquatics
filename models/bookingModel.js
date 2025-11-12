@@ -1,27 +1,26 @@
 const mongoose = require("mongoose");
 
-const bookingSchema = new mongoose.Schema(
-  {
-    name:   { type: String, required: true },
-    email:  { type: String, required: true },
-    guests: { type: [String], default: [] },
+const bookingSchema = new mongoose.Schema({
+  name:   { type: String, required: true },
+  email:  { type: String, required: true },
+  guests: { type: [String], default: [] },
 
-    // Store as strings as you do now (server normalizes to "HH:mm")
-    date:   { type: String, required: true }, // "YYYY-MM-DD"
-    time:   { type: String, required: true }, // "HH:mm"
+  // NEW: what service was chosen (e.g., "Aquascaping")
+  service: { type: String, default: "General Consultation", index: true },
 
-    notes:  { type: String, default: "" },
-    topics: { type: [String], default: [], required: true },
+  date:   { type: String, required: true }, // "YYYY-MM-DD"
+  time:   { type: String, required: true }, // "HH:mm"
 
-    // ✅ Add status so updates persist
-    status: {
-      type: String,
-      enum: ["Pending", "Confirmed", "Cancelled", "Rescheduled"],
-      default: "Pending",
-      index: true,
-    },
+  notes:  { type: String, default: "" },
+  topics: { type: [String], default: [], required: true },
+
+  status: {
+    type: String,
+    enum: ["Pending", "Confirmed", "Cancelled", "Rescheduled"],
+    default: "Pending",
+    index: true,
   },
-  { timestamps: true } // adds createdAt/updatedAt automatically
-);
+}, { timestamps: true });
+
 
 module.exports = mongoose.model("Booking", bookingSchema);

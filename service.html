@@ -17,9 +17,8 @@
   <link rel="stylesheet" href="./responsserv.css" media="(max-width: 767px)" />
   <link rel="stylesheet" href="./popups/cart.css" />
   <link rel="stylesheet" href="./popups/login.css" />
-
-  <!-- Calendly (if you still use the external booking link) -->
-  <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
+  <link rel="stylesheet" href="/assets/toast.css">
+  <!-- Calendly REMOVED -->
 </head>
 
 <body>
@@ -59,8 +58,8 @@
     <div class="title">
       <img src="./book.png" alt="booking" />
       <p>Transform your space into a living masterpiece with our expert aquascaping and terrarium design services</p>
-      <!-- You can switch this to open the in-page booking modal by adding: data-open="bookingModal" -->
-      <a href="https://calendly.com/aaronbienc/appointments" class="btn btn-success" target="_blank" rel="noopener noreferrer">Book an Appointment</a>
+      <!-- Switched to open the in-page booking modal -->
+      <button type="button" class="btn btn-success" data-open="bookingModal">Book an Appointment</button>
     </div>
   </section>
 
@@ -73,49 +72,138 @@
       <div class="first py-5">
         <div class="container">
           <div class="row justify-content-center g-5">
-            <!-- 1 -->
-            <div class="col-md-6 col-lg-4">
-              <div class="card custom-card border-0 mx-auto">
-                <div class="image-area"></div>
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-2">Aquascaping Design</h5>
-                  <p class="card-text small-text">Professional aquarium design with premium plants, hardscape, and unique layouts tailored to your space.</p>
-                  <div class="d-flex justify-content-between align-items-center mt-4">
-                    <span class="fw-bold">Starting at ₱100</span>
-                    <button class="btn btn-success rounded-pill px-4 py-1" data-open="bookingModal">Book Now</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- 2 -->
-            <div class="col-md-6 col-lg-4">
-              <div class="card custom-card border-0 mx-auto">
-                <div class="image-area"></div>
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-2">Terrarium Creation</h5>
-                  <p class="card-text small-text">Bring nature indoors with personalized terrarium designs perfect for homes and offices.</p>
-                  <div class="d-flex justify-content-between align-items-center mt-4">
-                    <span class="fw-bold">Starting at ₱120</span>
-                    <button class="btn btn-success rounded-pill px-4 py-1" data-open="bookingModal">Book Now</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- 3 -->
-            <div class="col-md-6 col-lg-4">
-              <div class="card custom-card border-0 mx-auto">
-                <div class="image-area"></div>
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-2">Pond Maintenance</h5>
-                  <p class="card-text small-text">Crystal-clear ponds with regular professional maintenance and cleaning.</p>
-                  <div class="d-flex justify-content-between align-items-center mt-4">
-                    <span class="fw-bold">Starting at ₱150</span>
-                    <button class="btn btn-success rounded-pill px-4 py-1" data-open="bookingModal">Book Now</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- more ... -->
+           <!-- 1) Aquascaping Design -->
+<div class="col-md-6 col-lg-4">
+  <div class="card custom-card border-0 mx-auto">
+    <div class="image-area">
+      <img src="./servp/aquascape.jpeg" alt="Aquascaping design sample">
+    </div>
+    <div class="card-body">
+      <h5 class="card-title fw-bold mb-2">Aquascaping</h5>
+      <p class="card-text small-text">
+        Immerse yourself in a living masterpiece! We design and build stunning underwater landscapes that mimic nature's tranquillity.
+      </p>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <span class="fw-bold">Starting at ₱100</span>
+        <button class="btn btn-success rounded-pill px-4 py-1"
+        data-open="bookingModal"
+        data-service="Aquascaping">Book Now</button>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2) Terrarium Creation -->
+<div class="col-md-6 col-lg-4">
+  <div class="card custom-card border-0 mx-auto">
+    <div class="image-area">
+      <img src="./servp/terarium.jpg" alt="Terrarium creation sample">
+    </div>
+    <div class="card-body">
+      <h5 class="card-title fw-bold mb-2">Terrarium</h5>
+      <p class="card-text small-text">
+        Create a unique habitat where land and water meet. Perfect for showcasing both aquatic and terrestrial life.
+      </p>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <span class="fw-bold">Starting at ₱120</span>
+        <button class="btn btn-success rounded-pill px-4 py-1"
+        data-open="bookingModal"
+        data-service="Terrarium">Book Now</button>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3) Pond Maintenance -->
+<div class="col-md-6 col-lg-4">
+  <div class="card custom-card border-0 mx-auto">
+    <div class="image-area">
+      <img src="./servp/ponds.jpg" alt="Pond maintenance service">
+    </div>
+    <div class="card-body">
+      <h5 class="card-title fw-bold mb-2">Nature Pond</h5>
+      <p class="card-text small-text">
+        Transform your outdoor space into a serene retreat with a beautifully balanced natural pond ecosystem.
+      </p>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <span class="fw-bold">Starting at ₱150</span>
+        <button class="btn btn-success rounded-pill px-4 py-1"
+        data-open="bookingModal"
+        data-service="Nature Pond">Book Now</button>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4) Paludarium Setup -->
+<div class="col-md-6 col-lg-4">
+  <div class="card custom-card border-0 mx-auto">
+    <div class="image-area">
+      <img src="./servp/polidarium.jpg" alt="Paludarium setup sample">
+    </div>
+    <div class="card-body">
+      <h5 class="card-title fw-bold mb-2">Paludarium</h5>
+      <p class="card-text small-text">
+       Create a unique habitat where land and water meet. Perfect for showcasing both aquatic and terrestrial life.
+      </p>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <span class="fw-bold">Starting at ₱140</span>
+        <button class="btn btn-success rounded-pill px-4 py-1"
+        data-open="bookingModal"
+        data-service="Paludarium">Book Now</button>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5) Pet Enclosure Design -->
+<div class="col-md-6 col-lg-4">
+  <div class="card custom-card border-0 mx-auto">
+    <div class="image-area">
+      <img src="./servp/petenclosure.jpg" alt="Custom pet enclosure design">
+    </div>
+    <div class="card-body">
+      <h5 class="card-title fw-bold mb-2">Pet Enclosure</h5>
+      <p class="card-text small-text">
+        Custom-built, naturalistic enclosures designed to keep your pets happy and healthy.
+      </p>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <span class="fw-bold">Starting at ₱130</span>
+        <button class="btn btn-success rounded-pill px-4 py-1"
+        data-open="bookingModal"
+        data-service="Pet Enclosure">Book Now</button>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6) Custom Cabinets -->
+<div class="col-md-6 col-lg-4">
+  <div class="card custom-card border-0 mx-auto">
+    <div class="image-area">
+      <img src="./servp/cabinet (1).jpg" alt="Custom aquarium cabinet">
+    </div>
+    <div class="card-body">
+      <h5 class="card-title fw-bold mb-2">Custom Cabinet</h5>
+      <p class="card-text small-text">
+        We bring your vision to life! Get a tailor-made tank and a sleek cabinet to seamlessly integrate your aquarium into your home or office.
+      </p>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <span class="fw-bold">Starting at ₱180</span>
+        <button class="btn btn-success rounded-pill px-4 py-1"
+        data-open="bookingModal"
+        data-service="Custom Cabinet">Book Now</button>
+
+      </div>
+    </div>
+  </div>
+</div>
+
           </div>
         </div>
       </div>
@@ -123,7 +211,7 @@
   </section>
 
   <!-- PORTFOLIO -->
-  <section class="spart">
+ <section class="spart" id="spart">
     <div class="tit">
       <h1>Our Portfolio</h1>
       <p class="pp">Browse our completed projects and get inspired</p>
@@ -155,7 +243,7 @@
     </div>
   </section>
 
-  <!-- OPTIONAL: In-page BOOKING MODAL (same behavior as index) -->
+  <!-- ===================== BOOKING POPUP (hardcoded; same as index) ===================== -->
   <div id="bookingModal" class="booking-modal" role="dialog" aria-modal="true" aria-labelledby="bookingTitle" hidden>
     <div class="modal__backdrop" data-close></div>
 
@@ -169,6 +257,8 @@
           <span class="booking__meta-item">📍 Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, Cavite</span>
         </div>
         <p class="booking__intro">Let’s create something beautiful together!</p>
+        <p class="booking__intro"><strong>Service:</strong> <span id="selectedService">General Consultation</span></p>
+
       </header>
 
       <div class="booking">
@@ -209,6 +299,9 @@
           <!-- STEP 2 -->
           <form class="step step--details" data-step="details" aria-labelledby="stepDetailsTitle" hidden>
             <h2 id="stepDetailsTitle">Enter Details</h2>
+
+            <!-- ✅ NEW: hidden field to submit the chosen service -->
+            <input type="hidden" name="service" id="serviceField" value="General Consultation" />
 
             <div class="form__row">
               <label for="guestName">Name *</label>
@@ -273,11 +366,15 @@
         </div>
       </div>
       <div class="border-top my-4"></div>
-      <p class="small mb-0">© 2025 Life in a Box. All rights reserved.</p>
+
+      <p class="small mb-1 legal-copy">© 2025 Life in a Box. All rights reserved.</p>
+      <a class="small legal-link" href="./termsncondi.html">Terms &amp; Conditions</a>
+      <span class="mx-2">•</span>
+      <a class="small legal-link" href="./termsncondi.html#privacy">Privacy Policy</a>
     </div>
   </footer>
 
-  <!-- AUTH POPUPS (same as index) -->
+  <!-- AUTH POPUPS -->
   <div id="loginContainer" class="login-container" style="display: none;">
     <div class="login-box">
       <h2>Sign In</h2>
@@ -289,31 +386,58 @@
       </div>
       <button class="btn" id="signInBtn">Sign In</button>
       <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
-      <p class="signup-text">Don't have an account? <span id="showRegister">Sign Up</span></p>
+      <p class="signup-text" id="showRegister">
+      Don't have an account? Sign Up
+    </p>
       <span class="close-x" id="closeLogin">&times;</span>
     </div>
   </div>
 
-  <div id="registerContainer" class="register-container" style="display: none;">
-    <div class="register-box">
-      <h2>Register</h2>
-      <div class="name-group">
-        <input type="text" id="regFirstName" placeholder="First Name" />
-        <input type="text" id="regLastName" placeholder="Last Name" />
-      </div>
-      <input type="email" id="regEmail" placeholder="Email" />
-      <div class="otp-container">
-        <input type="text" id="emailOtp" placeholder="Enter OTP" disabled />
-        <button id="sendOtpBtn" class="otp-btn">Send Code</button>
-        <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
-      </div>
-      <input type="password" id="regPassword" placeholder="Create Password" minlength="8" />
-      <input type="password" id="regConfirmPassword" placeholder="Confirm Password" />
-      <button class="btn" id="registerBtn" disabled>Register</button>
-      <p class="back-to-login" id="backToLogin">Back to Login</p>
-      <span class="close-x" id="closeRegister">&times;</span>
+  <!-- Registration Form (Hidden Initially) -->
+<div class="register-container" id="registerContainer" style="display:none;">
+
+  <div class="register-box">
+    <h2>Register</h2>
+
+    <!-- 👇 Split name into first + last -->
+    <div class="name-group">
+      <input type="text" placeholder="First Name" id="regFirstName">
+      <input type="text" placeholder="Last Name" id="regLastName">
     </div>
+
+    <input type="email" placeholder="Email" id="regEmail">
+
+    <!-- 🔹 Email Verification Section -->
+    <div class="otp-container">
+      <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
+      <button id="sendOtpBtn" class="otp-btn">Send Code</button>
+      <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+    </div>
+
+    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8">
+    <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+
+    
+<!-- Consent: place above the Register button -->
+<div class="legal-consent">
+  <label class="legal-check" for="agreeTerms">
+    <input type="checkbox" id="agreeTerms">
+    <span>
+      I agree to the
+      <a href="./termsncondi.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+      and
+      <a href="./termsncondi.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+    </span>
+  </label>
+</div>
+
+
+
+    <button class="btn" id="registerBtn" disabled>Register</button>
+    <p class="back-to-login" id="backToLogin">Back to Login</p>
+    <span class="close-x" id="closeRegister">&times;</span>
   </div>
+</div>
 
   <div id="forgotContainer" class="forgot-container" style="display: none;">
     <div class="forgot-box">
@@ -338,17 +462,24 @@
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script> emailjs.init("hhTpOoi07kd04LwsH"); </script>
 
-  <!-- Project JS (same behavior as index; fixed paths) -->
+  <!-- Project JS -->
   <script src="./serv.js"></script>
   <script type="module" src="./popups/cart.js"></script>
   <script type="module" src="./popups/login.js"></script>
   <script src="./popups/forgatpass.js"></script>
   <script src="./profile/userauth.js"></script>
-  <!-- If you need the client-side models for any page logic: -->
   <script src="./models/cartModel.js"></script>
   <script src="./models/userModel.js"></script>
+  <script src="./lpage.js"></script>
 
-  <!-- In-page booking logic (same as index if you use the modal) -->
+  <!-- Shared booking logic (same as index) -->
   <script src="./booking.js"></script>
+  <script src="/assets/toast.js" defer></script>
+      <script>
+  // show any queued message (useful after redirects)
+  window.addEventListener('DOMContentLoaded', () => {
+    window.Toast && window.Toast.consumeFlashToast && window.Toast.consumeFlashToast();
+  });
+</script>
 </body>
 </html>

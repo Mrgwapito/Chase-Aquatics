@@ -7,7 +7,7 @@ body {
     font-family: 'Montserrat', sans-serif;
 }
 .navbar {
-    position: relative; 
+    position: sticky; 
     width: 100%;
     background-color: #EEE9DA;
     display: flex;
@@ -27,6 +27,7 @@ body {
     display: flex;
     list-style: none;
     gap: 50px;
+    padding-right: 80px;
     position: relative;
     top: 5px;
 }
@@ -63,7 +64,7 @@ a.active:hover {
 ================================== */
 .order-section {
   background-color: #ffffff;
-  padding: 40px 0 80px; /* was 80px 0 120px */
+  padding: 20px 0 0px; /* was 80px 0 120px */
   margin-top: -20px; /* pulls section up slightly under navbar */
 }
 
@@ -124,18 +125,18 @@ a.active:hover {
   padding: 8px 18px;
   border-radius: 8px;
   font-size: 0.95rem;
-  cursor: pointer;
   transition: all 0.25s ease;
+
 }
 
-.pill-btn:hover {
-  background: #f2f7f2;
-}
+
 
 .pill-btn.active {
   background: #335A02;
   color: #fff;
   box-shadow: 0 2px 6px rgba(51, 90, 2, 0.25);
+   cursor: default;
+  pointer-events: none; /* 👈 disables hover + click */
 }
 
 /* ================================
@@ -219,6 +220,7 @@ a.active:hover {
   border-top: 1px solid #e5e7eb;
   margin-top: 10px;
   padding-top: 20px;
+  margin-bottom: 50px;
 }
 
 .order-total h4 {
@@ -305,6 +307,7 @@ a.active:hover {
   background-color: #335A02;
   border: 2px solid #335A02;
   color: #fff;
+  position: relative;
 }
 
 .btn-primary:hover {
@@ -415,5 +418,161 @@ footer i {
   .navlinks ul {
     display: none;
   }
+}
+
+
+
+/* ========== Payment Method cards ========== */
+.payment-section .pay-option {
+  margin-bottom: .75rem;
+  position: relative;
+}
+
+/* Clickable card (the label) */
+.payment-section .pay-label {
+  display: block;
+  padding: 12px 14px;
+  border: 1.5px solid var(--bs-border-color, #dee2e6);
+  border-radius: .6rem;
+  font-weight: 600;
+  background: var(--bs-body-bg, #fff);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+/* Hover state */
+.payment-section .pay-label:hover {
+  border-color: var(--bs-primary, #0d6efd);
+}
+
+/* Focus ring when tabbing to the radio */
+.payment-section input[type="radio"]:focus + .pay-label {
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15); /* uses Bootstrap primary as fallback */
+}
+
+/* Selected state (checked) */
+.payment-section input[type="radio"]:checked + .pay-label {
+  border-color: var(--bs-primary, #0d6efd);
+  background: var(--bs-primary-bg-subtle, #e7f1ff);
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+}
+
+/* Note panel (hidden by default) */
+.payment-section .pay-note {
+  display: none;
+  padding: 10px 14px;
+  border-left: 4px solid var(--bs-border-color, #dee2e6);
+  background: var(--bs-light, #f8f9fa);
+  border-radius: 0 0 .6rem .6rem;
+}
+
+/* Show note only for the selected option */
+.payment-section input[type="radio"]:checked ~ .pay-note {
+  display: block;
+}
+
+/* Optional: space between stacked cards */
+.payment-section .pay-option + .pay-option {
+  margin-top: .5rem;
+}
+/* Fallback if Bootstrap’s .visually-hidden is not available */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+/* ========== Payment Method cards ========== */
+.payment-section .pay-option { margin-bottom: .75rem; position: relative; }
+
+/* Clickable card */
+.payment-section .pay-label {
+  display: block;
+  padding: 12px 14px;
+  border: 1.5px solid var(--bs-border-color, #dee2e6);
+  border-radius: .6rem;
+  font-weight: 700;
+  background: var(--bs-body-bg, #fff);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.payment-section .pay-label:hover { border-color: var(--bs-primary, #0d6efd); }
+
+/* Focus ring when tabbing to the radio */
+.payment-section input[type="radio"]:focus + .pay-label {
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+}
+
+/* Selected state */
+.payment-section input[type="radio"]:checked + .pay-label {
+  border-color: var(--bs-primary, #0d6efd);
+  background: var(--bs-primary-bg-subtle, #e7f1ff);
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+}
+
+/* Note panel (hidden by default) */
+.payment-section .pay-note {
+  display: none;
+  padding: 10px 14px;
+  border-left: 4px solid var(--bs-border-color, #dee2e6);
+  background: var(--bs-light, #f8f9fa);
+  border-radius: 0 0 .6rem .6rem;
+
+}
+
+/* Show note only for the selected option */
+.payment-section input[type="radio"]:checked ~ .pay-note { display: block; }
+
+/* Space between stacked cards */
+.payment-section .pay-option + .pay-option { margin-top: .5rem; }
+
+ .hide { display:none; }
+ 
+   #paymentQRWrap { margin-top: 12px; }
+
+  /* Fixed-size frame to make both images look identical in size */
+/* Center the QR block and its contents */
+#paymentQRWrap {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#paymentQRWrap img {
+  max-width: none !important;
+  width: 380px !important;
+  height: 440px !important;
+  object-fit: contain !important;
+  display: block;
+  margin: 0 auto;
+
+  /* remove all framing */
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 520px) {
+  #paymentQRWrap img {
+    width: 92vw !important;
+    height: calc(92vw * 1.16) !important;
+  }
+}
+#paymentQRLabel {
+  margin-top: 8px;
+  text-align: center;
+  color: #333;
+  line-height: 1.25;
+  font-size: 0.95rem;
+  margin-bottom: 30px;
+}
+#paymentQRLabel .qr-title {
+  font-weight: 700;
+  margin-bottom: 40px;
 }
 

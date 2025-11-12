@@ -1,31 +1,51 @@
+// models/User.js
 const mongoose = require('mongoose');
 
+const validIdSchema = new mongoose.Schema({
+  path: { type: String, default: '' },                                  // e.g. /uploads/valid-id/USR123...pdf
+  status: { type: String, enum: ['none','pending','approved','rejected'], default: 'none' },
+  note: { type: String, default: '' },
+  submittedAt: { type: Date },
+  reviewedAt: { type: Date }
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
-  // 🧩 Name Fields (New)
-  firstName: { type: String, default: "" },
-  lastName: { type: String, default: "" },
+  firstName:   { type: String, default: "" },
+  lastName:    { type: String, default: "" },
+  fullName:    { type: String, required: true },
 
-  // 🧩 Keep existing fullName for backward compatibility
-  fullName: { type: String, required: true },
+  email:       { type: String, required: true, unique: true, lowercase: true },
+  password:    { type: String, required: true },
 
-  email: { type: String, required: true, unique: true, lowercase: true },
-  password: { type: String, required: true },
-  phone: { type: String, default: "" },
-  address: { type: String, default: "" },
-  gender: { type: String, default: "" },
-  birthday: { type: String, default: "" },
+  phone:       { type: String, default: "" },
 
-  // ✅ Role for admin/user
-  role: { type: String, enum: ["user", "admin"], default: "user" },
+  // 👇 Structured address (new) + legacy flat string (kept for backward compatibility)
+  addressLine1:{ type: String, default: "" },
+  region:      { type: String, default: "" },
+  province:    { type: String, default: "" },
+  city:        { type: String, default: "" },
+  barangay:    { type: String, default: "" }, 
+  postalCode:  { type: String, default: "" },
+  address:     { type: String, default: "" }, // ← keep this for old data / emails / printing
 
-  // ✅ OTP fields
-  resetOtp: { type: Number, default: null },
+  gender:      { type: String, default: "" },
+  birthday:    { type: String, default: "" },
+
+
+  role:        { type: String, enum: ["user", "admin"], default: "user" },
+
+  resetOtp:    { type: Number, default: null },
   registerOtp: { type: Number, default: null },
-  otpExpires: { type: Date, default: null },
+  otpExpires:  { type: Date,   default: null },
 
-  // ✅ Profile-related (safe optional)
-  userId: { type: String, default: "" },
+  emailVerified: { type: Boolean, default: false },  // 🔹 add this
+
+  userId:       { type: String, default: "" },
   profileImage: { type: String, default: "images/default-user.png" },
-}, { timestamps: true }); // adds createdAt + updatedAt automatically
+
+  // NEW: where we keep the uploaded Valid ID state
+  validId: { type: validIdSchema, default: () => ({ status: 'none' }) },
+
+}, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

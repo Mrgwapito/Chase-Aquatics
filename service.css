@@ -27,6 +27,7 @@ body {
     display: flex;
     list-style: none;
     gap: 50px;
+    padding-right: 80px;
     position: relative;
     top: 5px;
 }
@@ -81,6 +82,15 @@ a.active:hover {
     font-size: 25px;
     padding:4px 50px;
 }
+
+/* Bigger hero booking button (works when it's a <button> with .btn-success) */
+.hero .btn.btn-success{
+  font-weight:700;
+  font-size:22px;
+  padding:12px 48px;
+  border-radius:9999px;
+}
+
 /* fpart section */
 .fpart {
     min-height: 80vh;
@@ -90,11 +100,16 @@ a.active:hover {
     padding-top: 50px;
     padding-bottom:100px;
 }
-.custom-card {
-    width: 350px;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+/* === CARD EQUAL HEIGHT + ALIGNED CONTENT === */
+.custom-card{
+  width: 350px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,.1);
+  display: flex;                 /* card becomes a column */
+  flex-direction: column;
+  height: 100%;
 }
 .fpart h1 {
     font-size: 7vh;
@@ -107,18 +122,26 @@ a.active:hover {
     color: #333;
     margin-bottom: 50px;
 }
-.custom-card .image-area {
-    background-color: #5a5757;
-    height: 200px;
+.custom-card .image-area{
+  background-color:#5a5757;
+  height:200px;                  /* fixed media area height */
+  flex: 0 0 200px;
 }
 
-.custom-card .card-body {
-    background-color: #e8e8e8;
+/* ORIGINAL FLEX (kept), but overridden below by GRID for alignment */
+.custom-card .card-body{
+  background-color:#e8e8e8;
+  display:flex;                  /* (will be overridden by grid later) */
+  flex-direction:column;
+  gap:10px;
+  flex:1 1 auto;                 /* body stretches to fill */
 }
+
 .small-text {
     font-size: 2vh;
     color: #333;
 }
+
 /* spart section */
 .spart {
     min-height: 100vh;
@@ -179,6 +202,7 @@ a.active:hover {
   pointer-events: none;
   position: absolute;
 }
+
 /*lpart section*/
 .lpart{
     min-height: 100vh;
@@ -251,6 +275,7 @@ a.active:hover {
     font-weight: 700;
     margin-top: 80px;
 }
+
 /* Footer */
 footer {
     background-color: #6096B4;
@@ -279,3 +304,381 @@ footer i {
   z-index: 99999 !important;
 }
 
+/* ==================== BOOKING MODAL ==================== */
+
+/* popup shell */
+.booking-modal{position:fixed;inset:0;z-index:4000;display:none}
+.booking-modal:not([hidden]){display:flex}
+.booking-modal .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.booking-modal .modal__panel{
+  position:relative;margin:auto;
+  width:min(1280px,98vw);              /* wider so no horizontal scroll */
+  max-height:95vh; overflow:auto;      /* scroll inside panel only */
+  background:#fff;border-radius:22px;box-shadow:0 24px 60px rgba(0,0,0,.25);
+  padding:26px 40px; font-family:'Montserrat',sans-serif;
+  scrollbar-gutter:stable both-edges;  /* reserve gutter for scrollbar */
+}
+.modal__close{position:absolute;top:10px;right:12px;border:0;background:transparent;font-size:28px;cursor:pointer}
+
+/* layout */
+.booking{display:grid;grid-template-columns:1fr 1.35fr;gap:24px}
+.booking__aside{background:#f6fafb;border:1px solid #e2eef4;border-radius:16px;padding:14px 16px;color:#334155}
+.booking__title{font-weight:900;font-size:clamp(22px,2.2vw,32px);margin:0 0 6px}
+.booking__meta{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:#334155}
+.step h2{font-size:clamp(18px,2vw,26px);font-weight:800;margin:0 0 10px}
+
+.cal-times{
+  display:grid;
+  grid-template-columns:minmax(380px,1fr) 360px; /* shorter calendar | times rail */
+  gap:24px; align-items:start;
+}
+
+/* times rail (always visible) */
+.times{margin-top:0; padding-right:12px; box-sizing:border-box}
+.times__date-heading{font-weight:700;margin:0 0 12px;color:#0f172a}
+.times__list{display:flex;flex-direction:column;gap:12px}
+.times__btn{
+  width:100%;height:52px;border:1px solid #a5c8ff;border-radius:12px;background:#fff;font-weight:700;
+  transition:border-color .15s, box-shadow .15s; cursor:pointer;
+}
+.times__btn:hover{border-color:#93c5fd;box-shadow:0 6px 14px rgba(29,78,216,.12)}
+
+/* summary + form bits (unchanged) */
+.appt__summary{margin:14px 0 6px;padding:10px 12px;background:#f8fafc;border:1px solid #e2eef4;border-radius:10px;font-size:14px;color:#334155}
+.form__row{display:grid;gap:6px;margin:12px 0}
+.form__row input,.form__row textarea{border:1px solid #dbe5ec;border-radius:10px;padding:10px 12px;width:100%}
+fieldset.form__row{border:1px solid #e2eef4;border-radius:12px;padding:10px 12px}
+.btn.btn--primary{background:#1d4ed8;border:0;color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;cursor:pointer}
+
+/* ===== SHORTEST POSSIBLE FLATPICKR (still nice) ===== */
+.cal__picker input.flatpickr-input,
+.cal__picker input.flatpickr-alt-input{display:none!important} /* hide text fields */
+
+.flatpickr-calendar.inline{
+  box-shadow:none;border:1px solid #e2eef4;border-radius:16px;padding:6px;width:100%;
+}
+.flatpickr-calendar .flatpickr-months{border-bottom:1px solid #e2eef4}
+.flatpickr-calendar .flatpickr-months .flatpickr-month{height:40px}      /* shorter header */
+.flatpickr-weekdays{height:28px}                                         /* shorter weekdays row */
+.flatpickr-day{
+  width:30px;height:30px;line-height:30px;margin:2px;border-radius:9999px;font-size:14px;
+}
+.flatpickr-day:hover{background:#f1f7ff;border-color:#bfdbfe}
+.flatpickr-day.today{border-color:#3b82f6}
+.flatpickr-day.selected,.flatpickr-day.startRange,.flatpickr-day.endRange{
+  background:#1d4ed8;border-color:#1d4ed8;color:#fff;
+}
+
+/* responsive */
+@media (max-width:920px){
+  .booking{grid-template-columns:1fr}
+  .modal__panel{width:min(720px,96vw);padding:22px}
+  .cal-times{grid-template-columns:1fr}
+  .times{padding-right:0}
+}
+/* Make the step a 2x2 grid: 
+   Row 1 = [Title | Date heading], Row 2 = [Calendar | Times] */
+.step--calendar{
+  display:grid;
+  grid-template-columns: minmax(380px,1fr) 360px; /* left | right */
+  grid-template-rows: auto auto;
+  column-gap:24px;
+  row-gap:12px;
+  align-items:start;
+}
+
+/* Row 1 placements */
+.step--calendar > h2{
+  grid-column:1;
+  margin:0;        /* tighten spacing */
+}
+.step--calendar > .times__date-heading{
+  grid-column:2;
+  margin:0;
+  font-weight:800;
+  color:#0f172a;
+  align-self:end;  /* baseline feel with the H2 */
+}
+
+/* Row 2: calendar | times sit in their own 2-col grid for flexibility */
+.step--calendar > .cal-times{
+  grid-column:1 / -1;                 /* span both columns under the headers */
+  display:grid;
+  grid-template-columns:minmax(380px,1fr) 360px; /* calendar | times list */
+  gap:24px;
+  align-items:start;
+}
+
+/* No extra top gap in the right rail */
+.times{ margin-top:0; }
+/* Make only the textboxes shorter — not the form */
+.form__row input,
+.form__row textarea {
+  width: 85%;                /* ⬅️ narrower boxes */
+  margin-left: 0;            /* keeps them aligned to left */
+  border: 1px solid #dbe5ec;
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+}
+
+/* Keep the “What would you like to talk about” fieldset full width */
+fieldset.form__row {
+  width: 100%;
+  border: 1px solid #e2eef4;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-sizing: border-box;
+}
+
+/* Align the checkboxes and labels nicely */
+fieldset.form__row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+/* Slightly larger checkboxes for visibility */
+fieldset.form__row input[type="checkbox"] {
+  transform: scale(1.2);
+}
+/* Fix "What would you like to talk about" layout */
+fieldset.form__row {
+  width: 100%;
+  max-width: 600px;             /* bigger box */
+  border: 1px solid #e2eef4;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Label layout: text first, box after */
+fieldset.form__row label {
+  display: flex;
+  justify-content: space-between;  /* space between text and checkbox */
+  align-items: center;
+  font-size: 15px;
+  color: #111827;
+  font-weight: 500;
+}
+
+/* Checkboxes slightly bigger */
+fieldset.form__row input[type="checkbox"] {
+  transform: scale(1.1);
+  accent-color: #1d4ed8; /* blue accent */
+}
+
+/* Legend alignment and spacing */
+fieldset.form__row legend {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+/* Shorten spacing overall */
+.step--details {
+  margin-top: 8px;
+}
+
+/* Shrink overall modal padding to make it shorter */
+.booking-modal .modal__panel {
+  padding: 20px 28px;
+}
+/* 1) Narrow ONLY the big notes textarea */
+.form__row--notes textarea{
+  max-width: 720px;         /* adjust to taste */
+  width: 100%;
+}
+
+/* === Fix topic section width + alignment === */
+
+/* Shorter width like other input fields (centered) */
+.form__row--topics {
+  width: 85%;
+  max-width: 720px;
+  margin: 12px auto;      /* centers it nicely */
+  padding: 10px 0;
+  border: none !important; /* remove the border */
+  border-radius: 0;
+  box-sizing: border-box;
+  position: relative;
+  right: 50px;
+}
+
+/* Proper alignment: text + checkbox close together */
+.form__row--topics label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;               /* tighter spacing between text and checkbox */
+  font-size: 16px;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+/* Checkbox styling */
+.form__row--topics input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #1d4ed8;
+}
+
+/* Legend styling (the title "What would you like to talk about?") */
+.form__row--topics legend {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* “Other” input field styled like other text boxes */
+.form__row--topics .other__input {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dbe5ec;
+  font: inherit;
+}
+/* Make the Schedule Event button longer */
+.btn.btn--primary {
+  background: #1d4ed8;
+  border: 0;
+  color: #fff;
+  padding: 14px 228px;     /* wider padding for longer button */
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-block;
+  min-width: 260px;       /* ensures it looks wide enough */
+  text-align: center;
+}
+
+.btn.btn--primary:hover {
+  filter: brightness(1.05);
+}
+
+/* ==================== ADDED / OVERRIDE HELPERS ==================== */
+
+/* Make Bootstrap columns stretch the cards so all end up equal height */
+.row.g-5 > [class*="col-"]{ display:flex; }
+.row.g-5 > [class*="col-"] > .custom-card{ flex:1 1 auto; width:100%; }
+
+/* Inside the card, use grid so middle text grows and bottom row aligns */
+.custom-card .card-body{
+  display: grid;                            /* override earlier flex */
+  grid-template-rows: auto 1fr auto;        /* title | description | price+button */
+  padding: 16px 18px;                        /* comfy spacing */
+}
+
+/* Normalize heading spacing so titles align */
+.custom-card .card-body .card-title{
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+/* Description sits in the flexible middle track */
+.custom-card .card-body .small-text{
+  margin: 0;
+}
+
+/* Bottom row stays anchored at the bottom of the card */
+.custom-card .card-body .d-flex{
+  margin-top: 0;                             /* grid handles placement */
+}
+
+/* Bigger card "Book Now" buttons */
+.custom-card .btn.btn-success{
+  font-weight:600;
+  font-size:16px;
+  padding:10px 28px;
+  border-radius:9999px;
+}
+
+/* Keep price text from wrapping oddly */
+.custom-card .card-body span.fw-bold{
+  white-space:nowrap;
+}
+
+.custom-card .image-area img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+/* ===== Service Card Hover Animation (ADD ONLY) ===== */
+
+/* Smooth animations */
+.custom-card {
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  will-change: transform;
+  border: 1px solid transparent; /* gives us a border to “glow” without layout shift */
+}
+
+/* Lift + stronger shadow on hover/focus */
+.custom-card:hover,
+.custom-card:focus-within {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 28px rgba(0,0,0,.18), 0 10px 10px rgba(0,0,0,.12);
+  border-color: rgba(29,78,216,.25); /* soft blue outline */
+}
+
+/* Subtle image zoom on hover */
+.custom-card .image-area {
+  position: relative;
+  overflow: hidden; /* ensures zoom doesn’t spill */
+}
+
+.custom-card .image-area img {
+  transition: transform .35s ease;
+  will-change: transform;
+}
+
+.custom-card:hover .image-area img,
+.custom-card:focus-within .image-area img {
+  transform: scale(1.06);
+}
+
+/* Optional: gentle overlay fade on hover for a bit of depth */
+.custom-card .image-area::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 40%, rgba(0,0,0,.08));
+  opacity: 0;
+  transition: opacity .35s ease;
+  pointer-events: none;
+}
+.custom-card:hover .image-area::after,
+.custom-card:focus-within .image-area::after {
+  opacity: 1;
+}
+
+/* Slight bump on the button too */
+.custom-card .btn.btn-success {
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.custom-card .btn.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(16,185,129,.25);
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .custom-card,
+  .custom-card .image-area img,
+  .custom-card .image-area::after,
+  .custom-card .btn.btn-success {
+    transition: none !important;
+  }
+  .custom-card:hover,
+  .custom-card:focus-within,
+  .custom-card .btn.btn-success:hover {
+    transform: none !important;
+  }
+}

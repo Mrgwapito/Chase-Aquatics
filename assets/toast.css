@@ -1,0 +1,139 @@
+/* Namespaced so it won't clash with Bootstrap's .toast */
+#liab-toast-container{
+  position:fixed; right:18px; bottom:18px;
+  display:flex; flex-direction:column; gap:12px;
+  z-index:12000;           /* above your cart popup (9999) */
+  pointer-events:none;
+  font-family:'Montserrat',sans-serif;
+}
+
+.liab-toast{
+  pointer-events:auto;
+  display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:12px;
+  min-width:280px; max-width:380px; background:#fff; color:#111;
+  border:1px solid #e2eef4; border-left:6px solid #335A02;  /* default success */
+  box-shadow:0 12px 30px rgba(0,0,0,.18); border-radius:14px;
+  padding:12px 14px; transform:translateY(12px); opacity:1;  /* keep visible */
+  animation:liab-toast-in .22s ease-out forwards;
+}
+
+.liab-toast__icon{
+  width:28px;height:28px;display:grid;place-items:center;border-radius:999px;
+  background:#EAF4EA;color:#335A02;font-size:16px;line-height:0;
+}
+.liab-toast__title{font-weight:800;font-size:15px;color:#0f172a;margin:0;line-height:1.2;}
+.liab-toast__msg{font-size:13px;color:#334155;margin-top:2px;}
+
+.liab-toast__close{border:0;background:transparent;cursor:pointer;font-size:18px;color:#64748b;padding:4px;border-radius:8px;}
+.liab-toast__close:hover{background:#f1f5f9;}
+
+.liab-toast__progress{
+  grid-column:1 / -1;height:3px;border-radius:0 0 12px 12px;overflow:hidden;background:#f1f5f9;
+  margin:8px -14px -12px -14px;
+}
+.liab-toast__progress>i{
+  display:block;height:100%;width:100%;
+  background:linear-gradient(90deg,#335A02,#6096B4);
+  transform-origin:left center;animation:liab-toast-progress linear forwards;
+}
+
+/* Variants */
+.liab-toast--info  { border-left-color:#6096B4; }
+.liab-toast--error { border-left-color:#B91C1C; }
+.liab-toast--info  .liab-toast__icon{ background:#eaf3f8; color:#2563eb; }
+.liab-toast--error .liab-toast__icon{ background:#fde8e8; color:#B91C1C; }
+
+/* Animations */
+@keyframes liab-toast-in{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes liab-toast-out{to{transform:translateY(8px);opacity:0}}
+@keyframes liab-toast-progress{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+
+/* -------- Centered variant (for critical alerts) -------- */
+.liab-toast--center{
+  position: fixed;               /* ignore container flow */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 13000;                /* above everything else */
+  margin: 0;
+  max-width: 420px;              /* a little wider in center is ok */
+  width: calc(100vw - 48px);     /* responsive on narrow screens */
+}
+
+@media (max-width: 420px){
+  .liab-toast--center{
+    max-width: 92vw;             /* tighter on phones */
+  }
+}
+
+/* -------- Top-center variant (for auth / critical alerts) -------- */
+.liab-toast--top{
+  position: fixed;                 /* ignore container flow */
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  z-index: 13000;
+  margin: 0;
+  max-width: 420px;
+  width: calc(100vw - 48px);
+
+  /* IMPORTANT: override default animation (which also sets transform) */
+  animation: liab-toast-top-in .22s ease-out forwards !important;
+}
+
+/* --- Confirm toast variant (buttons) --- */
+.liab-toast--confirm {
+  position: fixed;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  z-index: 13000;
+  max-width: 460px;
+  width: calc(100vw - 48px);
+  animation: liab-toast-top-in .22s ease-out forwards !important;
+}
+
+.liab-toast__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.liab-btn {
+  border: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.liab-btn--ghost {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.liab-btn--danger {
+  background: #B91C1C;
+  color: #fff;
+}
+
+.liab-btn:focus { outline: 2px solid #94a3b8; outline-offset: 2px; }
+
+
+@keyframes liab-toast-top-in{
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes liab-toast-top-out{
+  from { opacity: 1; transform: translate(-50%, 0); }
+  to   { opacity: 0; transform: translate(-50%, -6px); }
+}
+
+@media (max-width: 420px){
+  .liab-toast--top{ max-width: 92vw; }
+}
+

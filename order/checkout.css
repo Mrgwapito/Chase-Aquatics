@@ -281,3 +281,113 @@ footer .border-top {
     font-size: 0.95rem;
   }
 }
+
+
+
+
+/* ========== Payment Method cards ========== */
+.payment-section .pay-option {
+  margin-bottom: .75rem;
+  position: relative;
+}
+
+/* Clickable card (the label) */
+.payment-section .pay-label {
+  display: block;
+  padding: 12px 14px;
+  border: 1.5px solid var(--bs-border-color, #dee2e6);
+  border-radius: .6rem;
+  font-weight: 600;
+  background: var(--bs-body-bg, #fff);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+/* Hover state */
+.payment-section .pay-label:hover {
+  border-color: var(--bs-primary, #0d6efd);
+}
+
+/* Focus ring when tabbing to the radio */
+.payment-section input[type="radio"]:focus + .pay-label {
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15); /* uses Bootstrap primary as fallback */
+}
+
+/* Selected state (checked) */
+.payment-section input[type="radio"]:checked + .pay-label {
+  border-color: var(--bs-primary, #0d6efd);
+  background: var(--bs-primary-bg-subtle, #e7f1ff);
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+}
+
+/* Note panel (hidden by default) */
+.payment-section .pay-note {
+  display: none;
+  padding: 10px 14px;
+  border-left: 4px solid var(--bs-border-color, #dee2e6);
+  background: var(--bs-light, #f8f9fa);
+  border-radius: 0 0 .6rem .6rem;
+}
+
+/* Show note only for the selected option */
+.payment-section input[type="radio"]:checked ~ .pay-note {
+  display: block;
+}
+
+/* Optional: space between stacked cards */
+.payment-section .pay-option + .pay-option {
+  margin-top: .5rem;
+}
+/* Fallback if Bootstrap’s .visually-hidden is not available */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+/* ========== Payment Method cards ========== */
+.payment-section .pay-option { margin-bottom: .75rem; position: relative; }
+
+/* Clickable card */
+.payment-section .pay-label {
+  display: block;
+  padding: 12px 14px;
+  border: 1.5px solid var(--bs-border-color, #dee2e6);
+  border-radius: .6rem;
+  font-weight: 600;
+  background: var(--bs-body-bg, #fff);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.payment-section .pay-label:hover { border-color: var(--bs-primary, #0d6efd); }
+
+/* Focus ring when tabbing to the radio */
+.payment-section input[type="radio"]:focus + .pay-label {
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+}
+
+/* Selected state */
+.payment-section input[type="radio"]:checked + .pay-label {
+  border-color: var(--bs-primary, #0d6efd);
+  background: var(--bs-primary-bg-subtle, #e7f1ff);
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+}
+
+/* Note panel (hidden by default) */
+.payment-section .pay-note {
+  display: none;
+  padding: 10px 14px;
+  border-left: 4px solid var(--bs-border-color, #dee2e6);
+  background: var(--bs-light, #f8f9fa);
+  border-radius: 0 0 .6rem .6rem;
+}
+
+/* Show note only for the selected option */
+.payment-section input[type="radio"]:checked ~ .pay-note { display: block; }
+
+/* Space between stacked cards */
+.payment-section .pay-option + .pay-option { margin-top: .5rem; }

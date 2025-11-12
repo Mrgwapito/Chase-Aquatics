@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Orders - Life in a Box</title>
+  <meta name="description" content="View and track your orders from Life in a Box." />
+
+  <!-- Icons + Fonts + Bootstrap -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../popups/login.css">
+  <link rel="stylesheet" href="../popups/cart.css">
+  <link rel="stylesheet" href="/assets/toast.css">
+  <link rel="stylesheet" href="/profile/trackorder.css">
+
+  <!-- Libs used elsewhere on page/app -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
+  <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+</head>
+<body>
+
+  <!-- ===== Navbar ===== -->
+  <nav class="navbar" role="navigation" aria-label="Primary">
+    <div class="logo">
+      <a href="/index.html" aria-label="Life in a Box — Home">
+        <img src="/logo.png" alt="Life in a Box logo" height="40" loading="lazy" decoding="async">
+      </a>
+    </div>
+
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="navlinks" id="navlinks">
+      <ul>
+        <li><a class="active" href="/index.html">Home</a></li>
+        <li><a class="active" href="/product.html">Products</a></li>
+        <li><a class="active" href="/service.html">Services</a></li>
+        <li><a class="active" href="/about.html">About Us</a></li>
+        <li><a class="active" href="/rus.html">Reach Us</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-icons">
+      <button id="cart-btn" class="cart" aria-label="Open cart">
+        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+      </button>
+      <button class="user" aria-label="Sign in / Profile">
+        <i class="fa-solid fa-user" id="loginTrigger" aria-hidden="true"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== Login / Register popups (existing) ===== -->
+  <div class="login-container" id="loginContainer" aria-hidden="true">
+    <div class="login-box" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <h2 id="loginTitle">Sign In</h2>
+      <input type="text" placeholder="Username" id="loginEmail" autocomplete="username">
+      <input type="password" placeholder="Password" id="password" autocomplete="current-password">
+      <div class="remember-me">
+        <input type="checkbox" id="remember">
+        <label for="remember">Remember Me</label>
+      </div>
+      <button class="btn" id="signInBtn">Sign In</button>
+      <p class="signup-text">Don't have an account? <span id="showRegister" role="button" tabindex="0">Sign Up</span></p>
+      <button class="close-x" id="closeLogin" aria-label="Close sign in">&times;</button>
+    </div>
+  </div>
+
+  <div class="register-container" id="registerContainer" aria-hidden="true">
+    <div class="register-box" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+      <h2 id="registerTitle">Register</h2>
+
+      <input type="text" placeholder="First Name" id="regFirstName" autocomplete="given-name">
+      <input type="text" placeholder="Last Name" id="regLastName" autocomplete="family-name">
+      <input type="hidden" id="regFullName">
+      <input type="email" placeholder="Email" id="regEmail" autocomplete="email">
+
+      <div class="otp-container">
+        <input type="text" placeholder="Enter OTP" id="emailOtp" disabled inputmode="numeric" pattern="[0-9]*">
+        <button id="sendOtpBtn" class="otp-btn" type="button">Send Code</button>
+        <button id="verifyOtpBtn" class="otp-btn" type="button" disabled>Verify</button>
+      </div>
+
+      <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8" autocomplete="new-password">
+      <input type="password" placeholder="Confirm Password" id="regConfirmPassword" autocomplete="new-password">
+      <button class="btn" id="registerBtn" type="button" disabled>Register</button>
+      <p class="back-to-login" id="backToLogin" role="button" tabindex="0">Back to Login</p>
+      <button class="close-x" id="closeRegister" aria-label="Close register">&times;</button>
+    </div>
+  </div>
+
+  <!-- Cart Popup -->
+  <div class="cart-popup" role="dialog" aria-modal="true" aria-labelledby="cartTitle" aria-hidden="true">
+    <h2 id="cartTitle">Cart</h2>
+    <div class="cart-items" aria-live="polite"></div>
+    <button class="review-btn" type="button">Review My Cart</button>
+  </div>
+
+  <!-- ===== Orders Content ===== -->
+  <main class="orders-shell" id="main" tabindex="-1">
+    <div class="orders-row">
+
+      <!-- Left: Filters -->
+      <aside class="orders-filter-card" aria-labelledby="filtersTitle">
+        <div class="orders-filter-header" id="filtersTitle">
+          <i class="fa-solid fa-filter" aria-hidden="true"></i>
+          <span>Filter Orders</span>
+        </div>
+
+        <ul class="orders-filter-list" role="tablist" aria-label="Order status filters">
+          <li>
+            <button class="orders-filter-btn active" data-status="all" type="button" role="tab" aria-selected="true" aria-controls="ordersList">
+              <div class="orders-filter-btn-left">
+                <div class="orders-filter-icon icon-all"><i class="fa-solid fa-table-list" aria-hidden="true"></i></div>
+                <span class="orders-filter-label">All Orders</span>
+              </div>
+              <span class="orders-filter-count" id="count-all" aria-live="polite">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="orders-filter-btn" data-status="to-pay" type="button" role="tab" aria-selected="false" aria-controls="ordersList">
+              <div class="orders-filter-btn-left">
+                <div class="orders-filter-icon icon-pay"><i class="fa-regular fa-clock" aria-hidden="true"></i></div>
+                <span class="orders-filter-label">To Pay</span>
+              </div>
+              <span class="orders-filter-count" id="count-to-pay" aria-live="polite">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="orders-filter-btn" data-status="processing" type="button" role="tab" aria-selected="false" aria-controls="ordersList">
+              <div class="orders-filter-btn-left">
+                <div class="orders-filter-icon icon-proc"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></div>
+                <span class="orders-filter-label">Processing</span>
+              </div>
+              <span class="orders-filter-count" id="count-processing" aria-live="polite">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="orders-filter-btn" data-status="completed" type="button" role="tab" aria-selected="false" aria-controls="ordersList">
+              <div class="orders-filter-btn-left">
+                <div class="orders-filter-icon icon-comp"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+                <span class="orders-filter-label">Completed</span>
+              </div>
+              <span class="orders-filter-count" id="count-completed" aria-live="polite">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="orders-filter-btn" data-status="cancelled" type="button" role="tab" aria-selected="false" aria-controls="ordersList">
+              <div class="orders-filter-btn-left">
+                <div class="orders-filter-icon icon-cancel"><i class="fa-solid fa-circle-xmark" aria-hidden="true"></i></div>
+                <span class="orders-filter-label">Cancelled</span>
+              </div>
+              <span class="orders-filter-count" id="count-cancelled" aria-live="polite">0</span>
+            </button>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- Right: Orders list -->
+      <section class="orders-main" aria-labelledby="ordersTitle">
+        <div class="orders-header">
+          <div class="orders-title-wrap">
+            <h1 class="orders-title" id="ordersTitle">My Orders</h1>
+            <p class="orders-subtitle">View and track your orders in one place.</p>
+          </div>
+
+          <label class="orders-search-wrap">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input id="orderSearch" type="search" placeholder="Search orders by code or item..." aria-label="Search orders by code or item">
+          </label>
+        </div>
+
+        <div id="ordersList" class="orders-list" aria-live="polite"></div>
+
+        <!-- Fixed: use solid style for the bag icon; hide by default -->
+        <div id="ordersEmpty" class="orders-empty" hidden>
+          <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>
+          <div class="orders-empty-title">No orders found</div>
+          <div class="orders-empty-text">Place an order to see it here and track its status easily.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Hidden EmailJS form (reuse if needed) -->
+  <form id="emailForm" style="display:none;">
+    <input type="hidden" name="to_email" id="hiddenEmail">
+    <input type="hidden" name="name" id="hiddenName">
+    <input type="hidden" name="otp_code" id="hiddenOtp">
+    <input type="hidden" name="time" id="hiddenTime">
+    <input type="hidden" name="message" id="hiddenMessage">
+  </form>
+
+
+  <!-- NEW: Order Details Modal -->
+<dialog id="orderDetails" class="od-dialog" aria-labelledby="odTitle">
+  <form method="dialog" class="od-box">
+    <header class="od-head">
+      <h3 id="odTitle" class="od-title">Order</h3>
+    </header>
+
+    <div id="odBody" class="od-body">
+      <!-- JS fills this with summary + items -->
+    </div>
+
+    <footer class="od-foot">
+      <button type="submit" class="od-btn">Close</button>
+    </footer>
+  </form>
+</dialog>
+
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script type="module" src="/assets/toast.js"></script>
+  <script src="/profile/userauth.js" defer></script>
+  <script src="/profile/trackorder.js" defer></script>
+
+  <!-- Tiny helpers: mobile nav + sticky -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navlinks  = document.getElementById('navlinks');
+      if (navToggle && navlinks) {
+        navToggle.addEventListener('click', () => {
+          const open = navlinks.classList.toggle('open');
+          navToggle.classList.toggle('active', open);
+          navToggle.setAttribute('aria-expanded', String(open));
+        });
+      }
+
+      // Sticky navbar
+      const navbar = document.querySelector('.navbar');
+      const threshold = 8;
+      const onScroll = () => {
+        const y = window.scrollY || window.pageYOffset || 0;
+        if (y > threshold) navbar.classList.add('fixed');
+        else navbar.classList.remove('fixed');
+      };
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+    });
+  </script>
+</body>
+</html>

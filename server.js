@@ -8,6 +8,12 @@ const jwt = require('jsonwebtoken');
 const https = require('https'); // for EmailJS requests
 const fs = require('fs');
 
+// Ensure fetch is available in Node (for EmailJS REST calls)
+if (typeof fetch === "undefined") {
+  global.fetch = (...args) =>
+    import("node-fetch").then(({ default: f }) => f(...args));
+}
+
 const Order = require('./models/orderModel');
 const Product = require('./models/productModel');
 const Cart = require('./models/cartModel');
@@ -22,6 +28,108 @@ const { logAdminAction } = require('./utils/logAdminAction'); // <- you said you
 const app = express();
 const port = 3000;
 const JWT_SECRET = "lifeinabox_secret_key";
+
+// ---------- ROBUST ASSETS DISCOVERY (handles mono-repo layouts) ----------
+const candidateAssets = [
+  path.join(__dirname, 'assets'),           // ./assets  (same folder as server.js)
+  path.join(__dirname, '..', 'assets'),     // ../assets (one level up)
+  path.join(__dirname, 'public', 'assets'), // ./public/assets
+];
+
+function firstExistingDir(paths) {
+  for (const p of paths) {
+    try { if (fs.existsSync(p) && fs.statSync(p).isDirectory()) return p; } catch {}
+  }
+  return null;
+}
+
+const ASSETS_DIR = firstExistingDir(candidateAssets);
+if (ASSETS_DIR) {
+  console.log('✅ Using assets dir:', ASSETS_DIR);
+} else {
+  console.warn('⚠️ No assets directory found among:', candidateAssets);
+}
+
+// Small utility to read JSON safely
+function tryReadJSON(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    const raw = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+// ---------- API: /api/ph-geo returns JSON if file exists ----------
+app.get('/api/ph-geo', (req, res) => {
+  if (!ASSETS_DIR) {
+    return res.status(404).json({ success: false, message: 'No assets directory found' });
+  }
+  const file = path.join(ASSETS_DIR, 'ph-geo.json');
+  const data = tryReadJSON(file);
+  if (!data) {
+    return res.status(404).json({ success: false, message: `ph-geo.json not found in ${ASSETS_DIR}` });
+  }
+  res.set('Cache-Control', 'no-store');
+  res.type('application/json').send(data);
+});
+
+// Optional: explicit built-in minimal fallback (same Cavite snippet as your client)
+app.get('/api/ph-geo/fallback', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.type('application/json').send({
+    regions:[{
+      code:"IV-A",
+      name:"Region IV-A (CALABARZON)",
+      provinces:[{
+        name:"Cavite",
+        cities:[
+          {name:"Carmona",zip:"4116",barangays:[
+            "Mabuhay","Maduya","Barangay 1 Poblacion","Barangay 2 Poblacion",
+            "Barangay 3 Poblacion","Barangay 4 Poblacion","Barangay 5 Poblacion",
+            "Barangay 6 Poblacion","Barangay 7 Poblacion","Barangay 8 Poblacion"
+          ]},
+          {name:"Silang",zip:"4118",barangays:[
+            "Puting Kahoy","Balite","Banaba","Biga","Bulihan","Hoyo","Iba",
+            "Kalubkob","Litlit","Malabag","Mataas na Burol","Pooc","Sabutan",
+            "San Miguel I","San Miguel II","San Vicente I","San Vicente II","Tartaria"
+          ]}
+        ]
+      }]}
+    ]
+  });
+});
+
+// ---------- DEBUG endpoints (use ASSETS_DIR if found) ----------
+app.get('/debug/assets', (req, res) => {
+  if (!ASSETS_DIR) return res.status(404).send('No assets directory discovered.');
+  const list = fs.readdirSync(ASSETS_DIR);
+  res.type('text/plain').send(['Listing assets:', ASSETS_DIR, ...list].join('\n'));
+});
+
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// ---------- Static mount for /assets if directory exists ----------
+if (ASSETS_DIR) {
+  app.use(
+    '/assets',
+    express.static(ASSETS_DIR, {
+      etag: false,
+      cacheControl: false,
+      setHeaders: (res, filePath) => {
+        res.set('Cache-Control', 'no-store');
+        if (filePath && filePath.endsWith('.json')) {
+          res.type('application/json');
+        }
+      }
+    })
+  );
+} else {
+  console.warn('⚠️ Skipping /assets static mount (no directory found).');
+}
+
+
 
 /* ---------------------------- FILE UPLOADS SETUP ---------------------------- */
 // Make sure the uploads directory exists
@@ -54,16 +162,67 @@ const upload = multer({
 app.use('/uploads', express.static(uploadsDir));
 /* --------------------------------------------------------------------------- */
 
+// ---- Valid ID uploads (images + PDF) ----
+const validIdDir = path.join(uploadsDir, 'valid-id');
+if (!fs.existsSync(validIdDir)) fs.mkdirSync(validIdDir, { recursive: true });
+
+const validIdFilter = (req, file, cb) => {
+  const ok = /image\/(png|jpe?g|gif|webp|bmp|svg\+xml)|application\/pdf/i.test(file.mimetype);
+  cb(null, ok);
+};
+
+const validIdStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, validIdDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, unique + ext);
+  }
+});
+
+const uploadValidId = multer({
+  storage: validIdStorage,
+  fileFilter: validIdFilter,
+  limits: { fileSize: 8 * 1024 * 1024 } // 8MB
+});
 
 
-// =============================== MIDDLEWARE =================================
-app.use(cors({
-  origin: ["http://127.0.0.1:5500", "http://localhost:5500"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
-app.use(express.json()); // fine; multer will handle multipart routes
+
+// =============================== MIDDLEWARE (Express 5 safe) ===============================
+const corsOptions = {
+  origin(origin, cb) {
+    // Allow curl/Postman (no Origin)
+    if (!origin) return cb(null, true);
+    try {
+      const { hostname } = new URL(origin);
+      // Allow any localhost or 127.* (covers 5500, 5501, 5502, etc.)
+      const ok = hostname === 'localhost' || hostname.startsWith('127.');
+      return cb(null, ok);
+    } catch {
+      return cb(null, false);
+    }
+  },
+  methods: ['GET','HEAD','PUT','PATCH','POST','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+  credentials: false,           // you’re using Bearer tokens, not cookies
+  optionsSuccessStatus: 204
+};
+
+// Apply CORS to all requests
+app.use(cors(corsOptions));
+
+// IMPORTANT: Preflight for any path (choose ONE of these; this one uses RegExp)
+app.options(/.*/, cors(corsOptions));      // ✅ works on Express 5
+
+// If you prefer the string form, use the correct pattern with (.*)
+// app.options('/:path(.*)', cors(corsOptions)); // ✅ also OK
+
+app.use(express.json());
 app.use(express.static(path.join(__dirname)));
+// =============================== END MIDDLEWARE ============================================
+
+
+
 
 // ================================================================
 // 🧩 MONGODB CONNECTION
@@ -75,67 +234,179 @@ mongoose.connect('mongodb://localhost:27017/Lifeinabox', {
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.log('❌ MongoDB connection error:', err));
 
+  // --- helper: stable public userId derived from Mongo _id ---
+function makeUserId(mongoId) {
+  // last 6 of ObjectId + uppercased, prefixed with USR (e.g., USR3FAE9C)
+  const hex = String(mongoId).slice(-6).toUpperCase();
+  return `USR${hex}`;
+}
+
+function getTokenPayload(req) {
+  try {
+    const hdr = req.headers.authorization || '';
+    const token = hdr.split(' ')[1];
+    if (!token) return null;
+    return jwt.verify(token, JWT_SECRET);
+  } catch { return null; }
+}
+
+function requireAuth(req, res, next) {
+  const payload = getTokenPayload(req);
+  if (!payload) return res.status(401).json({ success:false, message:'Unauthorized' });
+  req.user = payload;
+  next();
+}
+
+function requireAdmin(req, res, next) {
+  const payload = getTokenPayload(req);
+  if (!payload || payload.role !== 'admin') {
+    return res.status(403).json({ success:false, message:'Admin only' });
+  }
+  req.user = payload;
+  next();
+}
+
 // ================================================================
-// 📧 EMAILJS EMAIL SENDER FUNCTION
+// 📧 EMAILJS EMAIL SENDER FUNCTION (CORRECTED FOR YOUR TEMPLATE)
 // ================================================================
 async function sendEmailThroughEmailJS(toEmail, subject, htmlBody, otp = null) {
   const EMAILJS_SERVICE_ID = "service_2bfbogr";
   const EMAILJS_PUBLIC_KEY = "hhTpOoi07kd04LwsH";
+  const EMAILJS_TEMPLATE_ID = "template_bcfsv7i"; // ✅ Your correct template ID
 
-  const EMAILJS_TEMPLATE_ID = subject.includes("Password Reset")
-    ? "template_bcfsv7i"
-    : "template_bcfsv7i";
+  // Create template parameters that EXACTLY match your EmailJS template
+  const templateParams = {
+    // ✅ These match your template parameters:
+    to_name: toEmail.split('@')[0],
+    brand: "Life in a Box",
+    submitted_at: new Date().toLocaleString(),
+    otp: otp ? String(otp) : "",
+    otp_window_minutes: "10",
+    
+    // ✅ Your template also expects these:
+    logo_url: "", // Leave empty or add your logo URL
+    verify_url: "", // Leave empty or add your verification URL
+    
+    // ✅ Optional fallbacks (safe to include):
+    email: toEmail,
+    subject: subject,
+    message: htmlBody
+  };
 
-  console.log("📨 Sending email via EmailJS...");
-  console.log("🧾 To:", toEmail, "| Template:", EMAILJS_TEMPLATE_ID);
+  console.log("🚀 Sending EmailJS request to:", toEmail);
+  console.log("📧 Template ID:", EMAILJS_TEMPLATE_ID);
+  console.log("📋 Template Parameters:", templateParams);
 
   const payload = {
     service_id: EMAILJS_SERVICE_ID,
     template_id: EMAILJS_TEMPLATE_ID,
     user_id: EMAILJS_PUBLIC_KEY,
-    template_params: {
-      to_email: toEmail,
-      email: toEmail,
-      name: "Life in a Box",
-      title: subject,
-      time: new Date().toLocaleString(),
-      message: htmlBody,
-      message_html: htmlBody,
-      otp_code: otp ? String(otp) : ""
-    },
-  };
-
-  const headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    "Origin": "https://emailjs.com",
-    "Referer": "https://emailjs.com/",
+    template_params: templateParams
   };
 
   try {
     const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(payload),
-      agent: new https.Agent({ keepAlive: true }),
     });
 
-    const text = await response.text();
-    console.log("📬 EmailJS Raw Response:", text || "(empty)");
+    console.log("📡 EmailJS Response Status:", response.status);
 
-    if (!response.ok) {
-      console.error("❌ EmailJS send failed:", response.status, text);
-      throw new Error(`Failed to send email via EmailJS (${response.status})`);
+    const responseText = await response.text();
+    console.log("📡 EmailJS Response Body:", responseText);
+
+    if (response.ok) {
+      console.log("✅ Email sent successfully!");
+      return true;
+    } else {
+      console.error("❌ EmailJS failed with status:", response.status);
+      console.error("❌ Error details:", responseText);
+      return false;
     }
-
-    console.log(`📧 Email sent successfully to ${toEmail}`);
-    return true;
   } catch (err) {
-    console.error("🚨 EmailJS email send error:", err.message);
+    console.error("💥 Network/Fetch Error:", err.message);
     return false;
   }
 }
+
+// Simple test endpoint
+app.post('/api/test-emailjs', async (req, res) => {
+  const { email } = req.body;
+  
+  console.log('🧪 Testing EmailJS with email:', email);
+  
+  // Test with minimal parameters
+  const success = await sendEmailThroughEmailJS(
+    email,
+    "Test Email from Server",
+    "<p>This is a test email to verify EmailJS is working.</p>",
+    "123456"
+  );
+
+  if (success) {
+    res.json({ 
+      success: true, 
+      message: '✅ Test email sent successfully! Check your inbox.' 
+    });
+  } else {
+    res.json({ 
+      success: false, 
+      message: '❌ Failed to send test email. Check server logs for details.' 
+    });
+  }
+});
+
+// ================================================================
+// 📝 STORE OTP ENDPOINT (For client-side EmailJS)
+// ================================================================
+app.post("/api/store-otp", async (req, res) => {
+  try {
+    const rawEmail = req.body.email || "";
+    const email = rawEmail.trim().toLowerCase();
+    const otp = req.body.otp;
+
+    if (!email || !otp) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email and OTP are required" 
+      });
+    }
+
+    let user = await User.findOne({ email });
+
+    // If no user yet, create a lightweight pending record
+    if (!user) {
+      user = new User({
+        firstName: "",
+        lastName: "",
+        fullName: "Pending Verification",
+        email,
+        password: "TEMP",
+      });
+    }
+
+    user.registerOtp = otp;
+    user.otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+    await user.save();
+
+    console.log(`✅ OTP ${otp} stored for ${email}, user ID: ${user._id}`);
+    console.log(`📝 OTP stored for ${email}: ${otp}`);
+
+    res.json({
+      success: true,
+      message: "OTP stored successfully",
+    });
+  } catch (err) {
+    console.error("❌ Error storing OTP:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error storing OTP",
+    });
+  }
+});
 
 // ================================================================
 // 🟢 PRODUCT ROUTES (fixed version)
@@ -185,15 +456,29 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
       title,
       category,
       price,
-      stock,                       // 👈 now persisted
+      stock,
       description: description || '',
-      image: imagePath,            // 👈 public URL (e.g., /uploads/123.jpg) or provided URL
+      image: imagePath,
       additionalImages: [],
       alt: alt || '',
       price_unit: price_unit || ''
     });
 
     await doc.save();
+
+    /* 📝 LOG: product created (so it appears in Admin Logs)
+       Frontend now sends Authorization: Bearer <token>, so logAdminAction
+       can attribute which admin created the product. */
+    try {
+      await logAdminAction(req, {
+        category: 'inventory',
+        action: 'PRODUCT_CREATED',
+        target: { type: 'product', id: String(doc._id), name: doc.title },
+        meta: { price: doc.price, stock: doc.stock, category: doc.category }
+      });
+    } catch (e) {
+      console.warn('log fail (PRODUCT_CREATED):', e.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -208,18 +493,44 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
 
 
 
-// ✅ Get all products
+
+// ✅ Get products (paginated + optional category + q search)
+// GET /api/products?limit=10&page=1&category=Fish&q=beta
 app.get('/api/products', async (req, res) => {
   try {
-    const { category } = req.query;
-    const filter = category ? { category } : {};
-    const products = await Product.find(filter);
-    res.json(products);
+    const limit = Math.min(parseInt(req.query.limit || '10', 10), 100);
+    const page  = Math.max(parseInt(req.query.page  || '1', 10), 1);
+    const { category, q } = req.query;
+
+    const filter = {};
+    if (category) filter.category = category;
+    if (q) {
+      filter.$or = [
+        { title: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { category: { $regex: q, $options: 'i' } }
+      ];
+    }
+
+    const total = await Product.countDocuments(filter);
+    const products = await Product.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    res.json({
+      success: true,
+      page, limit, total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      products
+    });
   } catch (err) {
     console.error("❌ Error fetching products:", err.message);
-    res.status(500).send('Error fetching products: ' + err.message);
+    res.status(500).json({ success: false, message: 'Error fetching products: ' + err.message });
   }
 });
+
 
 // ✅ Get single product by ID (works for numeric or ObjectId)
 app.get('/api/product/:id', async (req, res) => {
@@ -284,29 +595,93 @@ app.get('/api/products/:id/related', async (req, res) => {
 
 
 // ================================================================
-// 🛒 CART ROUTE
+// 🛒 CART ROUTES (server-backed) — non-breaking additions
 // ================================================================
-app.post('/api/cart/add', async (req, res) => {
-  const { userId, productId, quantity } = req.body;
-  if (!userId || !productId || !quantity)
-    return res.status(400).json({ success: false, message: "Invalid input data" });
 
+// Get current user's cart
+app.get('/api/cart', async (req, res) => {
+  const userId = getUserIdFromAuth(req);
+  if (!userId) return res.status(401).json({ success:false, message:'Unauthorized' });
   try {
     let cart = await Cart.findOne({ userId });
     if (!cart) {
-      cart = new Cart({ userId, items: [{ productId, quantity }] });
-    } else {
-      const existingProduct = cart.items.find(item => item.productId.toString() === productId);
-      if (existingProduct) existingProduct.quantity += quantity;
-      else cart.items.push({ productId, quantity });
+      cart = new Cart({ userId, items: [] });
+      await cart.save();                 // ✅ persist empty cart so you see it in Compass
     }
-
-    await cart.save();
-    res.json({ success: true, message: "Product added to cart" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Error adding to cart", error: err.message });
+    res.json({ success:true, items: cart.items });
+  } catch (e) {
+    console.error('GET /api/cart error:', e); // helpful logs
+    res.status(500).json({ success:false, message:e.message });
   }
 });
+
+
+// Replace cart with provided items (idempotent save)
+app.put('/api/cart', async (req, res) => {
+  const userId = getUserIdFromAuth(req);
+  if (!userId) return res.status(401).json({ success:false, message:'Unauthorized' });
+
+  let items = Array.isArray(req.body.items) ? req.body.items : [];
+  // normalize + clamp
+  items = items
+    .filter(it => it && it.productId)
+    .map(it => ({
+      productId: it.productId,
+      quantity: Math.max(1, Math.min(parseInt(it.quantity || 1, 10), 99)),
+      // optional denormalized fields to speed up UI
+      title: it.title, price: it.price, image: it.image
+    }));
+
+  try {
+    const cart = await Cart.findOneAndUpdate(
+      { userId },
+      { $set: { items } },
+      { new: true, upsert: true }
+    );
+    res.json({ success:true, items: cart.items });
+  } catch (e) {
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+// Merge a local cart into server cart (used on first login per device)
+app.post('/api/cart/merge', async (req, res) => {
+  const userId = getUserIdFromAuth(req);
+  if (!userId) return res.status(401).json({ success:false, message:'Unauthorized' });
+
+  const incoming = Array.isArray(req.body.items) ? req.body.items : [];
+  try {
+    const cart = await Cart.findOne({ userId }) || new Cart({ userId, items: [] });
+
+    const map = new Map();
+    // current server items first
+    cart.items.forEach(it => {
+      map.set(String(it.productId), { ...it.toObject(), quantity: it.quantity });
+    });
+    // merge client items by summing quantities
+    incoming.forEach(it => {
+      if (!it || !it.productId) return;
+      const key = String(it.productId);
+      const qty = Math.max(1, Math.min(parseInt(it.quantity || 1, 10), 99));
+      if (map.has(key)) {
+        map.get(key).quantity = Math.max(1, Math.min(map.get(key).quantity + qty, 99));
+      } else {
+        map.set(key, {
+          productId: it.productId,
+          quantity: qty,
+          title: it.title, price: it.price, image: it.image
+        });
+      }
+    });
+
+    cart.items = Array.from(map.values());
+    await cart.save();
+    res.json({ success:true, items: cart.items });
+  } catch (e) {
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
 
 // ================================================================
 // 🔐 AUTHENTICATION SYSTEM (UPDATED for firstName + lastName)
@@ -329,8 +704,16 @@ app.post('/register', async (req, res) => {
       password: hashedPassword,
     });
 
-    await newUser.save();
-    res.status(201).json({ success: true, message: 'User registered successfully' });
+  await newUser.save();
+
+// ensure stable public userId
+if (!newUser.userId) {
+  newUser.userId = makeUserId(newUser._id);
+  await newUser.save();
+}
+
+res.status(201).json({ success: true, message: 'User registered successfully' });
+
   } catch (err) {
     console.error('❌ Error in register route:', err);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -418,21 +801,29 @@ app.post('/register-fix', async (req, res) => {
       otpExpires: null,
     });
 
-    await newUser.save();
+await newUser.save();
 
-    console.log(`✅ User created successfully: ${email} (${firstName} ${lastName})`);
+// ensure stable public userId
+if (!newUser.userId) {
+  newUser.userId = makeUserId(newUser._id);
+  await newUser.save();
+}
 
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully!",
-      user: {
-        id: newUser._id,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        fullName: newUser.fullName,
-        email: newUser.email,
-      },
-    });
+console.log(`✅ User created successfully: ${email} (${firstName} ${lastName})`);
+
+res.status(201).json({
+  success: true,
+  message: "User registered successfully!",
+  user: {
+    id: newUser._id,
+    firstName: newUser.firstName,
+    lastName: newUser.lastName,
+    fullName: newUser.fullName,
+    email: newUser.email,
+    userId: newUser.userId, // optional: return this too
+  },
+});
+
   } catch (err) {
     console.error("❌ Registration Server Error:", err);
 
@@ -512,32 +903,51 @@ app.get('/api/profile', async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
 
     // ✅ Ensure firstName / lastName always exist
-    if ((!user.firstName || !user.lastName) && user.fullName) {
-      const parts = user.fullName.trim().split(" ");
-      user.firstName = user.firstName || parts[0] || "";
-      user.lastName = user.lastName || parts.slice(1).join(" ") || "";
-      await user.save(); // 🔄 auto-update old records
-      console.log(`🧩 Auto-filled name fields for user: ${user.email}`);
-    }
+// ✅ Ensure firstName / lastName always exist
+if ((!user.firstName || !user.lastName) && user.fullName) {
+  const parts = user.fullName.trim().split(" ");
+  user.firstName = user.firstName || parts[0] || "";
+  user.lastName = user.lastName || parts.slice(1).join(" ") || "";
+  await user.save();
+  console.log(`🧩 Auto-filled name fields for user: ${user.email}`);
+}
 
-    // ✅ Return updated user safely
-    res.json({
-      success: true,
-      user: {
-        id: user._id,
-        email: user.email,
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        fullName: user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-        phone: user.phone || "",
-        address: user.address || "",
-        gender: user.gender || "",
-        birthday: user.birthday || "",
-        role: user.role || "user",
-        userId: user.userId || "",
-        profileImage: user.profileImage || "images/default-user.png"
-      }
-    });
+// ✅ Ensure stable public userId exists (migration for old accounts)
+if (!user.userId) {
+  user.userId = makeUserId(user._id);
+  await user.save();
+}
+
+// ✅ Return updated user safely
+res.json({
+  success: true,
+  user: {
+    id: user._id,
+    email: user.email,
+    firstName: user.firstName || "",
+    lastName: user.lastName || "",
+    fullName: user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+
+    phone: user.phone || "",
+
+    // 👇 Structured address back to the client (so your UI remembers selections)
+    addressLine1: user.addressLine1 || "",
+    region:       user.region || "",
+    province:     user.province || "",
+    city:         user.city || "",
+    barangay:     user.barangay || "",
+    postalCode:   user.postalCode || "",
+    address:      user.address || "", // legacy string for display
+
+    gender: user.gender || "",
+    birthday: user.birthday || "",
+    role: user.role || "user",
+    userId: user.userId,
+    profileImage: user.profileImage || "images/default-user.png"
+  }
+});
+
+
   } catch (err) {
     console.error('❌ Profile fetch error:', err.message);
     res.status(500).json({ success: false, message: 'Server error fetching profile' });
@@ -560,15 +970,50 @@ app.put('/api/update-profile', async (req, res) => {
     if (!user)
       return res.status(404).json({ success: false, message: 'User not found' });
 
-    const { firstName, lastName, phone, address, gender, birthday } = req.body;
+    const {
+      firstName, lastName, phone,
+      addressLine1, region, province, city, barangay, postalCode,
+      address, // legacy flat string (only used if structured not provided)
+      gender, birthday
+    } = req.body;
 
+    // names
     if (firstName !== undefined) user.firstName = firstName;
-    if (lastName !== undefined) user.lastName = lastName;
+    if (lastName  !== undefined) user.lastName  = lastName;
     user.fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
 
+    // phone
     if (phone !== undefined) user.phone = phone;
-    if (address !== undefined) user.address = address;
-    if (gender !== undefined) user.gender = gender;
+
+    // structured address (prefer these if provided)
+    const hasStructured =
+      [addressLine1, region, province, city, barangay, postalCode].some(v => v !== undefined);
+
+    if (hasStructured) {
+      if (addressLine1 !== undefined) user.addressLine1 = String(addressLine1 || "");
+      if (region       !== undefined) user.region       = String(region || "");
+      if (province     !== undefined) user.province     = String(province || "");
+      if (city         !== undefined) user.city         = String(city || "");
+      if (barangay     !== undefined) user.barangay     = String(barangay || "");
+      if (postalCode   !== undefined) user.postalCode   = String(postalCode || "");
+
+      // keep legacy address in sync for emails/printing
+      const parts = [
+        user.addressLine1,
+        user.barangay,
+        user.city,
+        user.province,
+        user.region,
+        user.postalCode ? `PH ${user.postalCode}` : ""
+      ].filter(Boolean);
+      user.address = parts.join(", ");
+    } else if (address !== undefined) {
+      // legacy only
+      user.address = String(address || "");
+    }
+
+    // other fields
+    if (gender   !== undefined) user.gender   = gender;
     if (birthday !== undefined) user.birthday = birthday;
 
     await user.save();
@@ -579,11 +1024,19 @@ app.put('/api/update-profile', async (req, res) => {
       user: {
         id: user._id,
         firstName: user.firstName,
-        lastName: user.lastName,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        address: user.address,
+        lastName:  user.lastName,
+        fullName:  user.fullName,
+        email:     user.email,
+        phone:     user.phone,
+
+        addressLine1: user.addressLine1 || "",
+        region:       user.region || "",
+        province:     user.province || "",
+        city:         user.city || "",
+        barangay:     user.barangay || "",
+        postalCode:   user.postalCode || "",
+        address:      user.address || "",
+
         gender: user.gender,
         birthday: user.birthday,
       },
@@ -591,6 +1044,141 @@ app.put('/api/update-profile', async (req, res) => {
   } catch (err) {
     console.error('❌ Error updating profile:', err.message);
     res.status(500).json({ success: false, message: 'Server error updating profile' });
+  }
+});
+
+
+// POST /api/profile/valid-id  (Auth: user) — field: validId (file)
+app.post('/api/profile/valid-id', requireAuth, uploadValidId.single('validId'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success:false, message:'No file uploaded' });
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success:false, message:'User not found' });
+
+    user.validId = {
+      path: `/uploads/valid-id/${req.file.filename}`,
+      status: 'pending',
+      note: '',
+      submittedAt: new Date(),
+      reviewedAt: null
+    };
+    await user.save();
+
+    try {
+      await logAdminAction(req, {
+        category: 'users',
+        action: 'VALID_ID_SUBMITTED',
+        target: { type: 'user', id: String(user._id), name: user.fullName },
+        meta: { path: user.validId.path }
+      });
+    } catch {}
+
+    res.json({ success:true, message:'Valid ID submitted', file: user.validId.path });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+// GET /id-verifications?status=pending|approved|declined|all&q=&page=1&limit=10
+app.get('/id-verifications', requireAdmin, async (req, res) => {
+  try {
+    const page  = Math.max(parseInt(req.query.page || '1', 10), 1);
+    const limit = Math.min(parseInt(req.query.limit || '10', 10), 100);
+    const status = (req.query.status || 'pending').toLowerCase();
+    const q = (req.query.q || '').trim().toLowerCase();
+
+    const matchStatus = (u) => {
+      const s = (u.validId?.status || 'none').toLowerCase();
+      if (status === 'all') return s !== 'none';
+      if (status === 'declined') return s === 'rejected' || s === 'declined';
+      if (status === 'approved') return s === 'approved';
+      return s === 'pending';
+    };
+
+    const users = await User.find({}, 'firstName lastName fullName email userId profileImage validId createdAt').lean();
+
+    const filtered = users.filter(u => {
+      if (!matchStatus(u)) return false;
+      if (!q) return true;
+      const key = [u.fullName, u.firstName, u.lastName, u.email, u.userId]
+        .filter(Boolean).join(' ').toLowerCase();
+      return key.includes(q);
+    });
+
+    const total = filtered.length;
+    const start = (page - 1) * limit;
+    const items = filtered.slice(start, start + limit).map(u => ({
+      id: String(u._id),
+      userId: u.userId,
+      userName: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim(),
+      userEmail: u.email,
+      avatarUrl: u.profileImage || '/images/default-user.png',
+      submittedAt: u.validId?.submittedAt || null,
+      status: (u.validId?.status || 'none'),
+      fileUrl: u.validId?.path || '',
+      fileMime: (u.validId?.path || '').toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/*'
+    }));
+
+    res.json({ success:true, items, total, page, limit });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+app.post('/id-verifications/:id/approve', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user || !user.validId?.path) {
+      return res.status(404).json({ success:false, message:'Submission not found' });
+    }
+    user.validId.status = 'approved';
+    user.validId.reviewedAt = new Date();
+    await user.save();
+
+    try {
+      await logAdminAction(req, {
+        category: 'users',
+        action: 'VALID_ID_APPROVED',
+        target: { type: 'user', id: String(user._id), name: user.fullName },
+        meta: { path: user.validId.path }
+      });
+    } catch {}
+
+    res.json({ success:true, message:'Approved' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+app.post('/id-verifications/:id/decline', requireAdmin, async (req, res) => {
+  try {
+    const note = (req.body?.note || '').slice(0, 300);
+    const user = await User.findById(req.params.id);
+    if (!user || !user.validId?.path) {
+      return res.status(404).json({ success:false, message:'Submission not found' });
+    }
+    user.validId.status = 'rejected';
+    user.validId.note = note;
+    user.validId.reviewedAt = new Date();
+    await user.save();
+
+    try {
+      await logAdminAction(req, {
+        category: 'users',
+        action: 'VALID_ID_DECLINED',
+        target: { type: 'user', id: String(user._id), name: user.fullName },
+        meta: { path: user.validId.path, note }
+      });
+    } catch {}
+
+    res.json({ success:true, message:'Declined' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success:false, message:e.message });
   }
 });
 
@@ -643,121 +1231,579 @@ app.put('/api/change-password', async (req, res) => {
 
 
 // ================================================================
-// 🧾 CREATE ORDER (and Save to MongoDB with Debug Logging)
+// 🧾 CREATE ORDER — accepts JSON or multipart (with payReceipt)
 // ================================================================
-app.post("/api/orders", async (req, res) => {
+app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
   try {
-    console.log("📥 Incoming Order Data:", req.body);
+    const isMultipart = req.is("multipart/form-data");
+    const raw = req.body || {};
 
-    const { userId, name, email, phone, address, cart } = req.body;
+    // cart may arrive as a JSON string when multipart
+    let cart = [];
+    if (isMultipart) {
+      try { cart = JSON.parse(raw.cart || "[]"); } catch { cart = []; }
+    } else {
+      cart = Array.isArray(raw.cart) ? raw.cart : (raw.cart || []);
+    }
+
+    const userId        = raw.userId;
+    const name          = raw.name;
+    const email         = raw.email;
+    const phone         = raw.phone;
+    const address       = raw.address;
+
+    const paymentMethod = (raw.paymentMethod || "COD").trim();         // "COD" | "GCash" | "Bank"
+    const codLandmark   = (raw.codLandmark || "").trim();
+    const fulfillment   = (raw.fulfillment || "Delivery").trim();      // "Delivery" | "Pickup"
+    const amountSent    = Number(raw.payAmount || 0) || 0;
+
+    const receiptUrl    = req.file ? `/uploads/${req.file.filename}` : null;
 
     if (!userId) {
-      console.error("❌ Missing userId");
-      return res.status(400).json({ success: false, message: "Missing userId" });
+      return res.status(400).json({ success:false, message:"Missing userId" });
+    }
+    if (!Array.isArray(cart) || cart.length === 0) {
+      return res.status(400).json({ success:false, message:"Invalid cart data" });
     }
 
-    if (!cart || !Array.isArray(cart) || cart.length === 0) {
-      console.error("❌ Empty or invalid cart");
-      return res.status(400).json({ success: false, message: "Invalid cart data" });
-    }
+    // totals
+    const shipping   = 100;
+    const subtotal   = cart.reduce((sum, it) =>
+      sum + (Number(it.price) || 0) * (Number(it.quantity) || 1), 0);
+    const totalAmount = subtotal + shipping;
 
-    const totalAmount = cart.reduce((sum, item) => {
-      const price = Number(item.price) || 0;
-      const qty = Number(item.quantity) || 1;
-      return sum + price * qty;
-    }, 0) + 100;
-
-    const newOrder = new Order({
-      userId,
-      name,
-      email,
-      phone,
-      address,
+    const order = await Order.create({
+      userId, name, email, phone, address,
       cart,
-      totalAmount,
+      subtotal, shipping, totalAmount,
+      paymentMethod,
+      codLandmark,
+      fulfillment,
+      status: "Pending",
+      paymentMeta: {
+        amountSent,
+        receiptUrl
+      }
     });
 
-    await newOrder.save();
-    console.log("✅ Order Saved Successfully:", newOrder);
-
-    res.json({
-      success: true,
-      message: "Order placed successfully!",
-      order: newOrder,
-    });
+    return res.json({ success:true, message:"Order placed successfully!", order });
   } catch (err) {
-    console.error("❌ Detailed Order Error:", err);
-    res.status(500).json({
-      success: false,
-      message: "Server error creating order",
-      error: err.message,
-    });
+    console.error("POST /api/orders error:", err);
+    res.status(500).json({ success:false, message:"Server error creating order", error: err.message });
   }
 });
 
-// ================================================================
-// 🧾 GET ALL ORDERS (Admin only)
-// ================================================================
+
+// --- auth helper: extracts userId from JWT if present ---
+function getUserIdFromAuth(req) {
+  try {
+    const hdr = req.headers.authorization || '';
+    const token = hdr.split(' ')[1];
+    if (!token) return null;
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return decoded?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+
+// 🧾 GET /api/orders?limit=10&page=1&status=Pending&payment=COD|GCash|Bank|wallet
 app.get("/api/orders", async (req, res) => {
   try {
-    const orders = await Order.find()
-      .sort({ createdAt: -1 }) // newest first
-      .populate("userId", "fullName email"); // optional for linked user info
+    const limit = Math.min(parseInt(req.query.limit || "10", 10), 100);
+    const page  = Math.max(parseInt(req.query.page  || "1", 10), 1);
+    const { status, payment } = req.query;
+
+    const filter = {};
+    if (status) filter.status = status;
+    if (payment) {
+      if (payment.toLowerCase() === "wallet") {
+        filter.paymentMethod = { $in: ["GCash", "Bank"] };
+      } else {
+        filter.paymentMethod = payment;
+      }
+    }
+
+    const total = await Order.countDocuments(filter);
+    const orders = await Order.find(filter)
+      .select("orderId name paymentMethod totalAmount status fulfillment codLandmark paymentMeta cart createdAt")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
 
     res.json({
       success: true,
-      count: orders.length,
+      page, limit, total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
       orders,
     });
   } catch (err) {
-    console.error("❌ Error fetching orders:", err.message);
+    console.error("❌ Error fetching orders:", err);
     res.status(500).json({ success: false, message: "Server error fetching orders" });
   }
 });
 
+// 🧾 CLIENT: Fetch orders for the logged-in user only
+// GET /api/my-orders?limit=50&page=1
+app.get("/api/my-orders", requireAuth, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || "50", 10), 100);
+    const page  = Math.max(parseInt(req.query.page  || "1", 10), 1);
+
+    const meId = String(req.user.id || "");
+
+    // Detect how Order.userId is defined in the schema at runtime
+    const userIdPath = Order.schema.path('userId');
+    const userIdInstance = userIdPath ? (userIdPath.instance || '') : '';
+    const isObjIdUserId  = userIdInstance === 'ObjectId' || userIdInstance === 'ObjectID';
+    const isStringyUserId = userIdInstance === 'String' || userIdInstance === 'Mixed';
+
+    const or = [];
+
+    // If your schema has a separate 'user' ObjectId field, include it
+    or.push({ user: meId });
+
+    if (isObjIdUserId) {
+      // userId expects ObjectId — DO NOT pass USR… strings here
+      or.push({ userId: meId });
+    } else if (isStringyUserId) {
+      // userId is string/mixed — allow either the raw mongo id string or the public USR code
+      const mePublic = makeUserId(meId); // e.g., USR0A1189
+      or.push({ userId: { $in: [meId, mePublic] } });
+    } else {
+      // Unknown config — safest minimal filter (still works for most setups)
+      or.push({ userId: meId });
+    }
+
+    const filter = { $or: or };
+
+    const total = await Order.countDocuments(filter);
+    const docs  = await Order.find(filter)
+      .select("orderId name paymentMethod totalAmount status fulfillment codLandmark paymentMeta cart createdAt")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    // Build a compact, UI-friendly payload
+    const toItemsText = (cart = []) => {
+      const items = cart.slice(0, 3).map(it => `${it.title || 'Item'} ×${it.quantity || 1}`).join(", ");
+      return items + (cart.length > 3 ? ` (+${cart.length - 3} more)` : "");
+    };
+
+    const mapUIStatus = (s) => {
+      s = String(s || "").toLowerCase();
+      if (["cancelled", "canceled"].includes(s)) return "cancelled";
+      if (["completed", "delivered"].includes(s)) return "completed";
+      if (["on delivery", "on-delivery", "shipping", "out for delivery", "out-for-delivery"].includes(s)) return "on-delivery";
+      if (["paid", "confirmed", "processing", "packed", "preparing"].includes(s)) return "processing";
+      return "to-pay"; // default for brand new "Pending" orders
+    };
+
+    const orders = docs.map(o => ({
+      id: String(o._id),
+      code: o.orderId || String(o._id),
+      items: toItemsText(o.cart || []),
+      total: Number(o.totalAmount || 0),
+      dateISO: o.createdAt ? new Date(o.createdAt).toISOString() : null,
+      rawStatus: o.status || "Pending",
+      status: mapUIStatus(o.status),
+      paymentMethod: o.paymentMethod || "COD",
+      fulfillment: o.fulfillment || "Delivery"
+    }));
+
+    res.json({
+      success: true,
+      page, limit, total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      orders
+    });
+  } catch (err) {
+    console.error("❌ /api/my-orders error:", err);
+    res.status(500).json({ success: false, message: "Server error fetching my orders" });
+  }
+});
+
+// 🧾 CLIENT: Fetch a single order the user owns
+// GET /api/my-orders/:id
+app.get("/api/my-orders/:id", requireAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id) return res.status(400).json({ success:false, message:"Missing id" });
+
+    // find by _id first, fallback to orderId
+    let order = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id).lean();
+    }
+    if (!order) {
+      order = await Order.findOne({ orderId: id }).lean();
+    }
+    if (!order) {
+      return res.status(404).json({ success:false, message:"Order not found" });
+    }
+
+    // ensure it belongs to the current user
+    const meId = String(req.user.id);
+    const allowedUserIds = [meId, makeUserId(meId)];
+    const belongs = (allowedUserIds.includes(String(order.userId))) || (String(order.user) === meId);
+    if (!belongs) {
+      return res.status(403).json({ success:false, message:"Not authorized for this order" });
+    }
+
+    // sanitize
+    const safe = {
+      id: String(order._id),
+      code: order.orderId || String(order._id),
+      name: order.name,
+      email: order.email,
+      phone: order.phone,
+      address: order.address,
+      paymentMethod: order.paymentMethod,
+      fulfillment: order.fulfillment || "Delivery",
+      subtotal: Number(order.subtotal || 0),
+      shipping: Number(order.shipping || 0),
+      totalAmount: Number(order.totalAmount || 0),
+      status: order.status || "Pending",
+      codLandmark: order.codLandmark || "",
+      paymentMeta: {
+        amountSent: order?.paymentMeta?.amountSent || null,
+        receiptUrl: order?.paymentMeta?.receiptUrl || null
+      },
+      cart: order.cart || [],
+      createdAt: order.createdAt
+    };
+
+    res.json({ success:true, order: safe });
+  } catch (e) {
+    console.error("❌ /api/my-orders/:id error:", e);
+    res.status(500).json({ success:false, message:"Server error" });
+  }
+});
 
 
 // ================================================================
-// ✉️ EMAIL OTP ROUTE (Registration)
+// ✉️ EMAIL OTP ROUTE (Registration) - UPDATED
 // ================================================================
 app.post("/api/send-otp", async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email)
-      return res.status(400).json({ success: false, message: "Email is required" });
+    const rawEmail = req.body.email || "";
+    const email = rawEmail.trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
     console.log(`📩 OTP generated for ${email}: ${otp}`);
+    console.log(`🔓 DEVELOPMENT: You can use OTP ${otp} to test`);
 
     let user = await User.findOne({ email });
+
+    // If no user yet, create a lightweight pending record
     if (!user) {
       user = new User({
+        firstName: "",
+        lastName: "",
         fullName: "Pending Verification",
         email,
-        password: "TEMP"
+        password: "TEMP",
       });
     }
 
     user.registerOtp = otp;
-    user.otpExpires = Date.now() + 5 * 60 * 1000;
+    user.otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
     await user.save();
 
+    console.log(`📧 Attempting to send OTP email to ${email}...`);
+    
     const ok = await sendEmailThroughEmailJS(
       email,
       "Your Life in a Box Verification Code",
-      `Your verification code is <b>${otp}</b>. This code will expire in 5 minutes.`,
+      `
+        <h2>Email Verification</h2>
+        <p>Your verification code is: <strong>${otp}</strong></p>
+        <p>This code will expire in 5 minutes.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+      `,
       otp
     );
 
-    if (!ok)
-      return res.status(502).json({ success: false, message: "OTP generated but email failed to send" });
+    if (!ok) {
+      console.log(`🛠️ DEVELOPMENT: Email failed but OTP is ${otp}`);
+      
+      // In development, return the OTP so you can test
+      if (process.env.NODE_ENV !== 'production') {
+        return res.json({
+          success: true,
+          message: `OTP generated but email failed. Use code: ${otp} for testing.`,
+          development_otp: otp
+        });
+      } else {
+        return res.status(502).json({
+          success: false,
+          message: "OTP generated but email service is currently unavailable. Please try again later.",
+        });
+      }
+    }
 
-    res.json({ success: true, otp, message: "OTP generated and email sent" });
+    res.json({
+      success: true,
+      message: "Verification code sent to your email.",
+    });
+
   } catch (err) {
-    console.error("❌ Error generating OTP:", err);
-    res.status(500).json({ success: false, message: "Server error generating OTP" });
+    console.error("❌ Error in /api/send-otp:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error generating OTP",
+      error: err.message
+    });
   }
 });
+
+// ================================================================
+// ✅ VERIFY OTP + AUTO-LOGIN (DEBUG VERSION)
+// ================================================================
+app.post("/api/verify-otp", async (req, res) => {
+  try {
+    const rawEmail = req.body.email || "";
+    const email = rawEmail.trim().toLowerCase();
+    const otpInput = String(req.body.otp || "").trim();
+    const registrationData = req.body.registrationData || {};
+
+    console.log('📥 Received OTP verification request:', {
+      email: email,
+      otp: otpInput,
+      hasRegistrationData: !!registrationData,
+      registrationData: registrationData
+    });
+
+    if (!email || !otpInput) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required",
+      });
+    }
+
+    const user = await User.findOne({ email });
+    console.log(`📋 User found in database:`, user ? {
+      email: user.email,
+      passwordIsTemp: user.password === "TEMP",
+      hasOtp: !!user.registerOtp,
+      otp: user.registerOtp,
+      firstName: user.firstName,
+      lastName: user.lastName
+    } : 'No user found');
+
+    if (!user || user.registerOtp == null || !user.otpExpires) {
+      return res.status(400).json({
+        success: false,
+        message: "No OTP found for this email. Please request a new code.",
+      });
+    }
+
+    const now = Date.now();
+    const expiresAt = new Date(user.otpExpires).getTime();
+
+    if (now > expiresAt) {
+      user.registerOtp = null;
+      user.otpExpires = null;
+      await user.save();
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new code.",
+      });
+    }
+
+    if (String(user.registerOtp) !== otpInput) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP. Please double-check and try again.",
+      });
+    }
+
+    console.log(`✅ OTP verified for: ${email}`);
+
+    // ✅ Complete the user registration (convert from temporary to real user)
+    if (user.password === "TEMP") {
+      const { firstName, lastName, password } = registrationData;
+      
+      console.log(`🔄 Attempting to convert temp user with data:`, {
+        firstName, lastName, hasPassword: !!password
+      });
+      
+      if (firstName && lastName && password) {
+        console.log(`🔄 Converting temp user to real user: ${email}`);
+        
+        user.firstName = firstName;
+        user.lastName = lastName;
+        user.fullName = `${firstName} ${lastName}`.trim();
+        user.password = await bcrypt.hash(password, 10);
+        user.role = "user";
+        
+        // Ensure stable public userId
+        if (!user.userId) {
+          user.userId = makeUserId(user._id);
+        }
+        
+        console.log(`✅ User registration completed: ${email} (${user.fullName})`);
+      } else {
+        console.log(`❌ Missing registration data for conversion:`, {
+          firstName: !!firstName,
+          lastName: !!lastName, 
+          password: !!password
+        });
+        return res.status(400).json({
+          success: false,
+          message: "Missing registration data. Please try registering again.",
+        });
+      }
+    } else {
+      console.log(`ℹ️ User is not a temporary user, skipping conversion`);
+    }
+
+    // Clear OTP and mark verified
+    user.registerOtp = null;
+    user.otpExpires = null;
+    user.emailVerified = true;
+    await user.save();
+
+    console.log(`💾 User saved to database:`, {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      fullName: user.fullName,
+      passwordIsTemp: user.password === "TEMP"
+    });
+
+    // Generate JWT token for immediate login
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        role: user.role,
+      },
+      JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    console.log(`🔑 Token generated for: ${email}`);
+
+    res.json({
+      success: true,
+      message: "Registration completed successfully!",
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        role: user.role || "user",
+      },
+    });
+
+  } catch (err) {
+    console.error("❌ Error verifying OTP:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error verifying OTP",
+    });
+  }
+});
+
+// ================================================================
+// ✅ COMPLETE REGISTRATION AFTER OTP VERIFICATION
+// ================================================================
+app.post("/api/complete-registration", async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    // Check if temporary user exists
+    let user = await User.findOne({ email });
+    if (!user || user.password !== "TEMP") {
+      return res.status(400).json({
+        success: false,
+        message: "No pending registration found or already completed.",
+      });
+    }
+
+    // Verify that email was verified
+    if (!user.emailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email not verified. Please complete OTP verification first.",
+      });
+    }
+
+    // Update user with real data
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.fullName = `${firstName} ${lastName}`.trim();
+    user.password = await bcrypt.hash(password, 10);
+    user.role = "user";
+    
+    // Ensure stable public userId
+    if (!user.userId) {
+      user.userId = makeUserId(user._id);
+    }
+
+    await user.save();
+
+    console.log(`✅ Registration completed for: ${email} (${user.fullName})`);
+
+    // Generate JWT token for immediate login
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        role: user.role,
+      },
+      JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.json({
+      success: true,
+      message: "Registration completed successfully!",
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        role: user.role || "user",
+      },
+    });
+
+  } catch (err) {
+    console.error("❌ Error completing registration:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error completing registration",
+    });
+  }
+});
+
 
 // ================================================================
 // 🔁 FORGOT PASSWORD OTP ROUTE
@@ -895,7 +1941,7 @@ function to24h(hhmmMaybeAmPm) {
   return s; // as-is (won't break, but better to be strict above)
 }
 
-// ✅ Get taken times for a specific date (used by frontend) — KEEP FIRST
+// ✅ Get taken times for a specific date (ignore cancelled)
 app.get("/api/bookings/availability", async (req, res) => {
   try {
     const { date } = req.query;
@@ -906,8 +1952,10 @@ app.get("/api/bookings/availability", async (req, res) => {
       });
     }
 
-    const bookings = await Booking.find({ date }).select("time -_id");
-    // normalize everything we return
+    const bookings = await Booking
+      .find({ date, status: { $ne: "Cancelled" } })
+      .select("time -_id");
+
     const taken = bookings.map(b => to24h(b.time));
     res.json({ success: true, taken });
   } catch (err) {
@@ -919,10 +1967,12 @@ app.get("/api/bookings/availability", async (req, res) => {
   }
 });
 
+
 // ✅ Create a new booking
+// ✅ Create a new booking (stores service, ignores cancelled in conflict check)
 app.post("/api/bookings", async (req, res) => {
   try {
-    const { name, email, guests, date, time, notes, topics } = req.body;
+    const { name, email, guests, date, time, notes, topics, service } = req.body; // +service
 
     if (!name || !email || !date || !time || !topics?.length) {
       return res.status(400).json({
@@ -932,11 +1982,14 @@ app.post("/api/bookings", async (req, res) => {
       });
     }
 
-    // normalize incoming time to HH:mm (e.g., "09:00")
     const time24 = to24h(time);
 
-    // 🛑 Prevent duplicate booking for that normalized slot
-    const existingBooking = await Booking.findOne({ date, time: time24 });
+    // prevent duplicate booking on normalized slot (ignore cancelled)
+    const existingBooking = await Booking.findOne({
+      date,
+      time: time24,
+      status: { $ne: "Cancelled" },
+    });
     if (existingBooking) {
       return res.status(400).json({
         success: false,
@@ -944,7 +1997,6 @@ app.post("/api/bookings", async (req, res) => {
       });
     }
 
-    // ✅ Create and Save Booking (always store HH:mm)
     const newBooking = new Booking({
       name,
       email,
@@ -957,12 +2009,14 @@ app.post("/api/bookings", async (req, res) => {
       time: time24,
       notes,
       topics,
+      service: (service || "General Consultation").trim(),
+      status: "Pending",
     });
 
     await newBooking.save();
-    console.log(`✅ Booking saved: ${name} @ ${date} ${time24}`);
+    console.log(`✅ Booking saved: ${name} @ ${date} ${time24} (${newBooking.service})`);
 
-    // ✉️ SEND EMAIL CONFIRMATION (Customer)
+    // ✉️ Customer email — include Service
     try {
       await sendEmailThroughEmailJS(
         email,
@@ -971,6 +2025,7 @@ app.post("/api/bookings", async (req, res) => {
           <h2>Hi ${name},</h2>
           <p>Thank you for scheduling an appointment with <strong>Chase Aquatics</strong>! 🌊</p>
           <p>
+            <b>Service:</b> ${newBooking.service}<br>
             <b>Date:</b> ${date}<br>
             <b>Time:</b> ${time24}<br>
             <b>Topics:</b> ${topics.join(", ")}
@@ -981,12 +2036,11 @@ app.post("/api/bookings", async (req, res) => {
           <p>See you soon! 🐠<br><br>— The Chase Aquatics Team</p>
         `
       );
-      console.log(`📨 Confirmation email sent to ${email}`);
     } catch (err) {
       console.error("⚠️ Failed to send booking confirmation:", err.message);
     }
 
-    // ✉️ ADMIN ALERT
+    // ✉️ Admin email — include Service
     try {
       await sendEmailThroughEmailJS(
         "chaseaquatics@gmail.com",
@@ -995,6 +2049,7 @@ app.post("/api/bookings", async (req, res) => {
           <h2>📅 New Appointment Booked!</h2>
           <p><b>Name:</b> ${name}<br>
           <b>Email:</b> ${email}<br>
+          <b>Service:</b> ${newBooking.service}<br>
           <b>Date:</b> ${date}<br>
           <b>Time:</b> ${time24}<br>
           <b>Topics:</b> ${topics.join(", ")}<br>
@@ -1007,7 +2062,6 @@ app.post("/api/bookings", async (req, res) => {
           <br><i>Check MongoDB for details.</i>
         `
       );
-      console.log("📧 Admin notified of new booking.");
     } catch (err) {
       console.error("⚠️ Failed to send admin alert:", err.message);
     }
@@ -1028,19 +2082,38 @@ app.post("/api/bookings", async (req, res) => {
   }
 });
 
-// ✅ Fetch all bookings (Admin View)
+
+
+// ✅ Fetch bookings (Admin View) — paginated & optional filter
+// GET /api/bookings?limit=10&page=1&status=Pending|Confirmed|Cancelled|Rescheduled
 app.get("/api/bookings", async (req, res) => {
   try {
-    const bookings = await Booking.find().sort({ createdAt: -1 });
-    res.json({ success: true, count: bookings.length, bookings });
+    const limit = Math.min(parseInt(req.query.limit || "10", 10), 100);
+    const page  = Math.max(parseInt(req.query.page  || "1", 10), 1);
+    const { status } = req.query;
+
+    const filter = {};
+    if (status) filter.status = status;
+
+    const total = await Booking.countDocuments(filter);
+    const bookings = await Booking.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    res.json({
+      success: true,
+      page, limit, total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      bookings
+    });
   } catch (err) {
     console.error("❌ Error fetching bookings:", err);
-    res.status(500).json({
-      success: false,
-      message: "Server error fetching bookings",
-    });
+    res.status(500).json({ success: false, message: "Server error fetching bookings" });
   }
 });
+
 
 // ✅ Get single booking (keep AFTER /availability)
 app.get("/api/bookings/:id", async (req, res) => {
@@ -1079,12 +2152,30 @@ app.delete("/api/bookings/:id", async (req, res) => {
 });
 
 // /////////////////////////////////////////////////////////////////
-// 🔎 Admin Logs (list + single)
+// 🔎 Admin Logs (paginated list + single)
+// GET /api/admin-logs?limit=10&page=1&category=orders|inventory|appointments|...
 app.get('/api/admin-logs', async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit || '50', 10), 200);
-    const logs = await AdminLog.find().sort({ createdAt: -1 }).limit(limit).lean();
-    res.json({ success: true, logs });
+    const limit = Math.min(parseInt(req.query.limit || '10', 10), 200);
+    const page  = Math.max(parseInt(req.query.page  || '1', 10), 1);
+    const { category } = req.query;
+
+    const filter = {};
+    if (category) filter.category = category;
+
+    const total = await AdminLog.countDocuments(filter);
+    const logs = await AdminLog.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    res.json({
+      success: true,
+      page, limit, total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      logs
+    });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -1100,6 +2191,7 @@ app.get('/api/admin-logs/:id', async (req, res) => {
   }
 });
 // /////////////////////////////////////////////////////////////////
+
 
 
 // ✅ Update a product (price/stock/title/category/desc/image) + log changes
@@ -1191,10 +2283,7 @@ app.put('/api/orders/:id/status', async (req, res) => {
 });
 
 
-// ✅ Update appointment status or reschedule + log
-//    Call with either:
-//      PUT /api/bookings/:id/status   { status: "Confirmed" | "Cancelled" }
-//      PUT /api/bookings/:id/status   { newDate: "YYYY-MM-DD", newTime: "HH:mm" }  // reschedule
+// ✅ Update appointment status or reschedule + log (conflict check + normalized time)
 app.put('/api/bookings/:id/status', async (req, res) => {
   try {
     const id = req.params.id;
@@ -1205,11 +2294,28 @@ app.put('/api/bookings/:id/status', async (req, res) => {
 
     const before = { date: booking.date, time: booking.time, status: booking.status || 'Pending' };
 
-    // reschedule flow
+    // 🔁 reschedule flow
     if (newDate || newTime) {
-      if (newDate) booking.date = newDate;
-      if (newTime) booking.time = newTime;
-      booking.status = 'Pending'; // or keep existing status if you prefer
+      if (!newDate || !newTime) {
+        return res.status(400).json({ success: false, message: "Both newDate and newTime are required to reschedule." });
+      }
+
+      const normalizedTime = to24h(newTime);
+
+      // prevent conflict on target slot (ignore cancelled; skip self)
+      const conflict = await Booking.findOne({
+        _id: { $ne: booking._id },
+        date: newDate,
+        time: normalizedTime,
+        status: { $ne: "Cancelled" },
+      });
+      if (conflict) {
+        return res.status(409).json({ success: false, message: "Target slot already taken." });
+      }
+
+      booking.date = newDate;
+      booking.time = normalizedTime;
+      booking.status = 'Rescheduled';
       await booking.save();
 
       try {
@@ -1224,27 +2330,30 @@ app.put('/api/bookings/:id/status', async (req, res) => {
       return res.json({ success: true, message: 'Appointment rescheduled', booking });
     }
 
-    // plain status update
-    let action = null;
+    // 🏷️ plain status update
     if (status) {
       booking.status = status;
+      await booking.save();
+
+      let action = null;
       if (status === 'Confirmed') action = 'APPT_CONFIRMED';
       if (status === 'Cancelled') action = 'APPT_CANCELLED';
-    }
-    await booking.save();
 
-    if (action) {
-      try {
-        await logAdminAction(req, {
-          category: 'appointments',
-          action,
-          target: { type: 'appointment', id: booking._id.toString(), name: booking.name },
-          meta: { previousStatus: before.status, newStatus: booking.status }
-        });
-      } catch (e) { console.warn('log fail (appt status):', e.message); }
+      if (action) {
+        try {
+          await logAdminAction(req, {
+            category: 'appointments',
+            action,
+            target: { type: 'appointment', id: booking._id.toString(), name: booking.name },
+            meta: { previousStatus: before.status, newStatus: booking.status }
+          });
+        } catch (e) { console.warn('log fail (appt status):', e.message); }
+      }
+
+      return res.json({ success: true, message: 'Appointment updated', booking });
     }
 
-    res.json({ success: true, message: 'Appointment updated', booking });
+    return res.status(400).json({ success: false, message: "No valid update payload." });
   } catch (err) {
     console.error('❌ Appointment update error:', err);
     res.status(500).json({ success: false, message: 'Server error updating appointment' });
@@ -1255,29 +2364,11 @@ app.put('/api/bookings/:id/status', async (req, res) => {
 
 
 
+
 // ================================================================
 // 🌐 LANDING PAGE
 // ================================================================
-// 🔎 Admin Logs (list + single)
-app.get('/api/admin-logs', async (req, res) => {
-  try {
-    const limit = Math.min(parseInt(req.query.limit || '50', 10), 200);
-    const logs = await AdminLog.find().sort({ createdAt: -1 }).limit(limit).lean();
-    res.json({ success: true, logs });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
 
-app.get('/api/admin-logs/:id', async (req, res) => {
-  try {
-    const log = await AdminLog.findById(req.params.id).lean();
-    if (!log) return res.status(404).json({ success: false, message: 'Not found' });
-    res.json({ success: true, log });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
 
 // 🌐 LANDING PAGE (keep only this one)
 app.get('/', (req, res) => {

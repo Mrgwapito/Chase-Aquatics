@@ -49,30 +49,120 @@
 
       <div class="row">
         <!-- 🧍 CUSTOMER FORM -->
-        <div class="col-lg-6">
-          <h5 class="mb-3" style="color:#335A02;">Customer Information</h5>
-          <form id="checkout-form">
-            <div class="mb-3">
-              <label class="form-label">Full Name</label>
-              <input type="text" id="custName" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Email</label>
-              <input type="email" id="custEmail" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Contact Number</label>
-              <input type="text" id="custPhone" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Complete Address</label>
-              <textarea id="custAddress" class="form-control" rows="3" required></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary w-100 mt-3">
-              <i class="fa-solid fa-paper-plane"></i> Place Order
-            </button>
-          </form>
-        </div>
+<div class="col-lg-6">
+  <h5 class="mb-3" style="color:#335A02;">Customer Information</h5>
+  <form id="checkout-form">
+    <div class="mb-3">
+      <label class="form-label">Full Name</label>
+      <input type="text" id="custName" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input type="email" id="custEmail" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Contact Number</label>
+      <input type="text" id="custPhone" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Complete Address</label>
+      <textarea id="custAddress" class="form-control" rows="3" required></textarea>
+    </div>
+
+    <!-- Payment Method (inserted here) -->
+<!-- Payment Method -->
+<fieldset class="payment-section">
+  <legend class="form-label mb-2">Payment Method</legend>
+
+  <!-- COD -->
+  <div class="pay-option">
+    <input type="radio" class="visually-hidden" name="paymentMethod" id="payCOD" value="COD" required>
+    <label for="payCOD" class="pay-label">
+      <span class="pay-title">Cash on Delivery (COD)</span>
+    </label>
+    <div class="pay-note"><light>Pay in cash upon delivery.</light></div>
+  </div>
+
+  <!-- GCash -->
+  <div class="pay-option">
+    <input type="radio" class="visually-hidden" name="paymentMethod" id="payGCash" value="GCash" required>
+    <label for="payGCash" class="pay-label">
+      <span class="pay-title">GCash</span>
+    </label>
+    <div class="pay-note"><light>Scan the QR or send to the number below, then upload your receipt and fill out the form</light></div>
+  </div>
+
+  <!-- Bank -->
+  <div class="pay-option">
+    <input type="radio" class="visually-hidden" name="paymentMethod" id="payBank" value="Bank">
+    <label for="payBank" class="pay-label">
+      <span class="pay-title">Bank Transfer</span>
+    </label>
+    <div class="pay-note"><light>Scan the QR or Transfer to the bank below, then upload your receipt and fill out the form</lig></div>
+  </div>
+</fieldset>
+
+
+
+<!-- Dynamic Fields -->
+<div id="paymentExtras">
+
+  <!-- COD: notes/landmark -->
+  <div id="codFields" class="hide">
+    <label for="codLandmark" style="display:block;font-weight:600;margin-bottom:6px">Landmark / Notes</label>
+    <textarea id="codLandmark" name="codLandmark" placeholder="Nearest landmark, gate color, guard name, etc."
+              rows="3" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px"></textarea>
+  </div>
+
+  <!-- GCash/Bank: amount + receipt + (embedded) fulfillment -->
+ <div id="paymentQRWrap" class="hide" style="margin-top:10px">
+  <img id="paymentQRImgGCash" src="../images/gcash-sampleqr.jpg" alt="GCash QR"
+       style="max-width:220px;height:auto;border:1px solid #ddd;border-radius:10px;display:none">
+  <img id="paymentQRImgBank"  src="../images/bank-sampleqr.jpg"  alt="Bank QR"
+       style="max-width:220px;height:auto;border:1px solid #ddd;border-radius:10px;display:none">
+  <div id="paymentQRLabel" style="font-size:0.9rem;color:#444;margin-top:6px;font-weight:600"></div>
+</div>
+
+
+  <div id="transferFields" class="hide">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:720px">
+      <div>
+        <label for="payAmount" style="display:block;font-weight:600;margin-bottom:6px">Amount Sent (₱)</label>
+        <input id="payAmount" name="payAmount" type="number" step="0.01" min="0"
+               placeholder="e.g., 499.00"
+               style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px">
+      </div>
+      <div>
+        <label for="payReceipt" style="display:block;font-weight:600;margin-bottom:6px">Upload Receipt</label>
+        <input id="payReceipt" name="payReceipt" type="file" accept="image/*"
+               style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;background:#fff">
+      </div>
+    </div>
+    <p style="font-size:0.9rem;color:#666;margin-top:8px">
+      Tip: Clear photo or screenshot showing reference number, date, and amount.
+    </p>
+
+    <!-- Fulfillment (only for GCash/Bank) -->
+    <fieldset class="fulfillment-section" style="border:0;padding:0;margin-top:14px">
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <label><input type="radio" name="fulfillment" value="Delivery" id="fulfillDelivery"> Deliver</label>
+        <label><input type="radio" name="fulfillment" value="Pickup" id="fulfillPickup"> Pick up</label>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+    <!-- /Payment Method -->
+
+    <button type="submit" class="btn btn-primary w-100 mt-3">
+      <i class="fa-solid fa-paper-plane"></i> Place Order
+    </button>
+  </form>
+</div>
+
 
         <!-- 🛒 ORDER REVIEW -->
         <div class="col-lg-6">

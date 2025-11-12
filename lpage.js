@@ -188,6 +188,52 @@ if (boxes.length && nextBtn && prevBtn) {
   })();
 
 
+(() => {
+  const modal   = document.getElementById('prodModal');
+  const imgEl   = document.getElementById('pmImg');
+  const titleEl = document.getElementById('pmTitle');
+  const catEl   = document.getElementById('pmCat');
+  const priceEl = document.getElementById('pmPrice');
+  const descEl  = document.getElementById('pmDesc');
+  const viewA   = document.getElementById('pmViewMore');
 
+  const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
+  // open + populate from featured cards
+  document.querySelectorAll('.prod-trigger').forEach(a => {
+    a.addEventListener('click', (e) => {
+      // 👉 MOBILE: follow the link (no modal)
+      if (isMobile()) {
+        // Huwag mag-preventDefault, hayaan mag-navigate sa a.href
+        return;
+      }
+
+      // 👉 DESKTOP/TABLET: open modal
+      e.preventDefault();
+
+      const d = a.dataset;
+      titleEl.textContent = d.name || 'Product';
+      catEl.textContent   = 'Category: ' + (d.category || '—');
+      priceEl.textContent = 'Price: ' + (d.price || '—');
+      descEl.textContent  = d.desc || '';
+      imgEl.src           = d.img || a.querySelector('img')?.src || '';
+      imgEl.alt           = d.name || 'Product image';
+      viewA.href          = a.getAttribute('href') || '#';
+
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden','false');
+    });
+  });
+
+  // close helpers
+  function closeModal(){
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden','true');
+  }
+  modal.addEventListener('click', (e)=>{
+    if (e.target.hasAttribute('data-close-modal')) closeModal();
+  });
+  modal.querySelector('.pm-close')?.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+})();
 

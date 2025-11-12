@@ -4,10 +4,14 @@
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("📦 Admin Order Management Loaded");
 
+  const API = "http://localhost:3000";
+  const PAGE_SIZE = 10;
+
   const ordersBody = document.getElementById("ordersBody");
   const statSales = document.getElementById("statSales");
   const statOrders = document.getElementById("statOrders");
   const statPending = document.getElementById("statPending");
+  const pager = document.getElementById("ordersPagination"); // <— add this in HTML
 
   const modal = document.getElementById("orderModal");
   const closeModal = modal.querySelector(".close");
@@ -19,31 +23,124 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btnPaid = document.getElementById("modalPaid");
   const btnDone = document.getElementById("modalDone");
 
+/* ==== GLOBAL toast helpers (usable everywhere) ==== */
+(function () {
+  const show = (type, title, message = '', position = 'top') =>
+    window.Toast?.showToast?.({ title, message, type, position });
+
+  window.tOK   = window.tOK   || ((title, message = '', position = 'top') => show('success', title, message, position));
+  window.tInfo = window.tInfo || ((title, message = '', position = 'top') => show('info',    title, message, position));
+  window.tErr  = window.tErr  || ((title, message = '', position = 'top') => show('error',   title, message, position));
+  window.tAsk  = window.tAsk  || ((title, message = '', ok = 'OK', cancel = 'Cancel') =>
+    window.Toast?.confirmToast
+      ? window.Toast.confirmToast({ title, message, okText: ok, cancelText: cancel })
+      : Promise.resolve(confirm(`${title}\n\n${message}`))
+  );
+})();
+
+
+
+  // client state
   let orders = [];
+  let currentPage = 1;
+  let currentPaymentFilter = ""; // "", "COD", "wallet"
+  let currentStatusFilter = "";  // optional future use
+
+  
+
+
+
+/* ================================================================
+   🌐 GLOBAL HELPERS (one set only)
+   ================================================================ */
+window.API = 'http://localhost:3000';
+
+/** Build a simple pager into containerEl */
+window.buildPager = function buildPager(containerEl, totalPages, currentPage, onGo) {
+  if (!containerEl) return;
+  if (!totalPages || totalPages <= 1) {
+    containerEl.innerHTML = "";
+    return;
+  }
+  containerEl.innerHTML = "";
+
+  const mk = (label, target, disabled=false, active=false) => {
+    const b = document.createElement("button");
+    b.className = `pg-btn${active ? " active" : ""}`;
+    b.textContent = label;
+    b.disabled = disabled;
+    if (!disabled) b.addEventListener("click", () => onGo(target));
+    return b;
+  };
+
+  containerEl.appendChild(mk("‹", Math.max(1, currentPage - 1), currentPage === 1));
+  const windowSize = 5;
+  let start = Math.max(1, currentPage - Math.floor(windowSize/2));
+  let end   = Math.min(totalPages, start + windowSize - 1);
+  if (end - start + 1 < windowSize) start = Math.max(1, end - windowSize + 1);
+
+  for (let p = start; p <= end; p++) {
+    containerEl.appendChild(mk(String(p), p, false, p === currentPage));
+  }
+  containerEl.appendChild(mk("›", Math.min(totalPages, currentPage + 1), currentPage === totalPages));
+};
+
+/** JSON fetch with readable console logs + error surfacing */
+window.fetchJSON = async function fetchJSON(url, options = {}) {
+  console.log("🌐 fetchJSON →", url, options);
+  const res = await fetch(url, options);
+  const raw = await res.text();
+  console.log("📥 fetchJSON status:", res.status, res.ok ? "OK" : "ERR", "→ raw:", raw);
+
+  let data = {};
+  try { data = raw ? JSON.parse(raw) : {}; }
+  catch (e) { throw new Error(`Non-JSON response (HTTP ${res.status})`); }
+
+  if (!res.ok || data?.success === false) {
+    throw new Error(data?.message || `HTTP ${res.status}`);
+  }
+  return data;
+};
+
+
 
   // =======================================================
-  // 🟩 Fetch All Orders
+  // 🟩 Fetch Orders (paged)
   // =======================================================
-  async function fetchOrders() {
+  async function fetchOrders(page = 1) {
     try {
-      const res = await fetch("http://localhost:3000/api/orders");
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        page: String(page),
+      });
+      if (currentPaymentFilter) params.set("payment", currentPaymentFilter);
+      if (currentStatusFilter)  params.set("status", currentStatusFilter);
+
+      const res = await fetch(`${API}/api/orders?${params.toString()}`);
       const data = await res.json();
 
-      if (!data.success) throw new Error(data.message || "Failed to load orders.");
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || `HTTP ${res.status}`);
+      }
 
       orders = data.orders || [];
+      currentPage = data.page || 1;
       renderOrders(orders);
-      updateStats(orders);
+      renderPagination(data.totalPages || 1, currentPage);
+      updateStats(orders); // note: stats reflect current page/filter
 
-      console.log(`✅ Loaded ${orders.length} orders.`);
+      console.log(`✅ Page ${currentPage}: ${orders.length} orders of ${PAGE_SIZE}`);
     } catch (err) {
-      console.error("❌ Error loading orders:", err);
-      ordersBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">⚠️ Failed to load orders</td></tr>`;
+console.error("❌ Error loading orders:", err);
+ordersBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">⚠️ Failed to load orders</td></tr>`;
+if (pager) pager.innerHTML = "";
+tErr('Orders', 'Failed to load orders.');
+
     }
   }
 
   // =======================================================
-  // 🟩 Render Orders into Table
+  // 🟩 Render Orders
   // =======================================================
   function renderOrders(orderList) {
     ordersBody.innerHTML = "";
@@ -61,7 +158,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td>${order.name || "Unknown"}</td>
         <td>${order.paymentMethod || "N/A"}</td>
         <td>₱${(order.totalAmount || 0).toFixed(2)}</td>
-        <td><span class="status ${order.status.toLowerCase()}">${order.status}</span></td>
+        <td><span class="status ${String(order.status || "").toLowerCase()}">${order.status || ""}</span></td>
         <td>
           <button class="btn btn-sm btn-outline-primary view-btn" data-id="${order._id}">
             <i class="fa-solid fa-eye"></i> View
@@ -71,14 +168,52 @@ document.addEventListener("DOMContentLoaded", async () => {
       ordersBody.appendChild(row);
     });
 
-    // Attach view button events
+    // attach view button events
     document.querySelectorAll(".view-btn").forEach((btn) => {
       btn.addEventListener("click", () => openModal(btn.dataset.id));
     });
   }
 
   // =======================================================
-  // 🟩 Update Dashboard Stats
+  // 🟩 Pagination UI
+  // =======================================================
+  function renderPagination(totalPages, page) {
+    if (!pager) return;
+    if (totalPages <= 1) {
+      pager.innerHTML = "";
+      return;
+    }
+
+    const makeBtn = (label, targetPage, disabled = false, active = false) => {
+      const b = document.createElement("button");
+      b.className = `pg-btn${active ? " active" : ""}`;
+      b.textContent = label;
+      b.disabled = disabled;
+      b.addEventListener("click", () => {
+        if (!disabled && targetPage !== currentPage) fetchOrders(targetPage);
+      });
+      return b;
+    };
+
+    pager.innerHTML = "";
+
+    // Prev
+    pager.appendChild(makeBtn("‹", Math.max(1, page - 1), page === 1));
+
+    // Numbers (simple window)
+    const windowSize = 5;
+    const start = Math.max(1, page - Math.floor(windowSize / 2));
+    const end = Math.min(totalPages, start + windowSize - 1);
+    for (let p = start; p <= end; p++) {
+      pager.appendChild(makeBtn(String(p), p, false, p === page));
+    }
+
+    // Next
+    pager.appendChild(makeBtn("›", Math.min(totalPages, page + 1), page === totalPages));
+  }
+
+  // =======================================================
+  // 🟩 Stats for current page view
   // =======================================================
   function updateStats(orderList) {
     const totalSales = orderList.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
@@ -90,102 +225,170 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // =======================================================
-  // 🟩 Modal Functions (Orders)
+  // 🟩 Modal Functions (Orders) — unchanged logic
   // =======================================================
   function openModal(orderId) {
-    const order = orders.find((o) => o._id === orderId);
-    if (!order) return;
+  const order = orders.find((o) => o._id === orderId);
+  if (!order) return;
 
-    mOrderId.textContent = order.orderId;
-    mCustomer.textContent = order.name;
-    mPayment.textContent = order.paymentMethod || "N/A";
-    mTotal.textContent = `₱${order.totalAmount.toFixed(2)}`;
-    mStatus.textContent = order.status;
+  mOrderId.textContent = order.orderId;
+  mCustomer.textContent = order.name;
+  mPayment.textContent = order.paymentMethod || "N/A";
+  mTotal.textContent = `₱${Number(order.totalAmount || 0).toFixed(2)}`;
 
-    modal.style.display = "block";
+  // 👉 Show status as plain word only (no badge styling)
+  mStatus.textContent = order.status || "";
+  mStatus.className = ""; // strip any badge classes just in case
 
-    btnPaid.onclick = () => updateOrderStatus(order._id, "Paid");
-    btnDone.onclick = () => updateOrderStatus(order._id, "Completed");
+  const elFulfillment = document.getElementById("mFulfillment");
+  const elCod         = document.getElementById("mCod");
+  const elAmt         = document.getElementById("mAmt");
+  const elReceipt     = document.getElementById("mReceipt");
+
+  if (elFulfillment) elFulfillment.textContent = order.fulfillment || "—";
+  if (elCod)         elCod.textContent         = order.codLandmark || "—";
+  if (elAmt) {
+    const amt = order?.paymentMeta?.amountSent;
+    elAmt.textContent = (typeof amt === "number")
+      ? `₱${Number(amt).toFixed(2)}`
+      : "—";
+  }
+  if (elReceipt) {
+    const url = order?.paymentMeta?.receiptUrl;
+    elReceipt.innerHTML = url
+      ? `<a href="${url}" target="_blank" rel="noopener">View receipt</a>`
+      : "—";
   }
 
-  closeModal.onclick = () => (modal.style.display = "none");
-  window.onclick = (e) => {
-    if (e.target === modal) modal.style.display = "none";
-  };
-
-  // =======================================================
-  // 🟩 Update Order Status
-  // =======================================================
-async function updateOrderStatus(orderId, newStatus) {
-  try {
-    const res = await fetch(`http://localhost:3000/api/orders/${orderId}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
+  const ul = document.getElementById("mItemsList");
+  if (ul) {
+    ul.innerHTML = "";
+    (order.cart || []).forEach(it => {
+      const li = document.createElement("li");
+      const price = Number(it.price) || 0;
+      const qty   = Number(it.quantity) || 1;
+      li.textContent = `${it.title} — ₱${price.toFixed(2)} × ${qty}`;
+      ul.appendChild(li);
     });
-
-    // handle non-JSON responses (e.g., HTML 404)
-    const text = await res.text();
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} – ${text.slice(0, 200)}`);
-    }
-    let data;
-    try { data = JSON.parse(text); } catch {
-      throw new Error("Server did not return JSON.");
-    }
-    if (!data.success) throw new Error(data.message || "Update failed");
-
-    alert(`✅ Order marked as ${newStatus}`);
-    modal.style.display = "none";
-    fetchOrders(); // refresh
-  } catch (err) {
-    console.error("❌ Failed to update order:", err);
-    alert(`⚠️ Could not update order status. ${err.message}`);
   }
+
+  // ✅ Center + show (clear any inline display first)
+  modal.style.removeProperty('display');
+  modal.classList.add("show");
+
+  btnPaid.onclick = () => updateOrderStatus(order._id, "Paid");
+  btnDone.onclick = () => updateOrderStatus(order._id, "Completed");
 }
 
+// Close (never set inline display; just remove the class)
+const hideOrderModal = () => {
+  modal.classList.remove("show");
+  modal.style.removeProperty('display'); // ensure no leftover inline styles
+};
+
+closeModal.onclick = hideOrderModal;
+window.addEventListener("click", (e) => { if (e.target === modal) hideOrderModal(); });
+
+
+  async function updateOrderStatus(orderId, newStatus) {
+    try {
+      const res = await fetch(`${API}/api/orders/${orderId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const text = await res.text();
+      if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0, 200)}`);
+
+      let data;
+      try { data = JSON.parse(text); } catch { throw new Error("Server did not return JSON."); }
+      if (!data.success) throw new Error(data.message || "Update failed");
+
+tOK(`Order ${newStatus}`, `Order status updated successfully.`);
+modal.classList.remove("show");
+fetchOrders(currentPage);
+    } catch (err) {
+console.error("❌ Failed to update order:", err);
+tErr('Could not update order', brief(err.message));
+
+    }
+  }
 
   // =======================================================
-  // 🟩 Filter Tabs
+  // 🟩 Filter Tabs (server-side filter) — reset to page 1
   // =======================================================
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
 
-      const filter = tab.dataset.filter;
-      if (filter === "all") renderOrders(orders);
-      else renderOrders(orders.filter((o) => (o.paymentMethod || "").toLowerCase() === filter));
+      const filter = tab.dataset.filter; // "all" | "wallet" | "cod"
+      if (filter === "all")    currentPaymentFilter = "";
+      if (filter === "cod")    currentPaymentFilter = "COD";
+      if (filter === "wallet") currentPaymentFilter = "wallet";
+
+      fetchOrders(1); // reset to first page on filter change
     });
   });
 
   // =======================================================
   // 🚀 Load Orders Initially
   // =======================================================
-  fetchOrders();
+  fetchOrders(1);
 });
 
 // ================================================================
-// 🧩 ADMIN DROPDOWN + LOGOUT HANDLER
+// 🧩 ADMIN DROPDOWN + LOGOUT HANDLER (match profile.js UX)
 // ================================================================
 document.addEventListener("DOMContentLoaded", () => {
-  const menuBtn = document.getElementById("adminMenuBtn");
-  const menu = document.getElementById("adminMenu");
+  const menuBtn   = document.getElementById("adminMenuBtn");
+  const menu      = document.getElementById("adminMenu");
   const logoutBtn = document.getElementById("adminLogoutBtn");
 
-  menuBtn.addEventListener("click", (e) => {
+  // Keep the same dropdown behavior
+  menuBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
     menu.style.display = menu.style.display === "block" ? "none" : "block";
   });
 
   document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
+    if (menu && !menu.contains(e.target) && !menuBtn.contains(e.target)) {
       menu.style.display = "none";
     }
   });
 
-  logoutBtn.addEventListener("click", () => {
-    const confirmLogout = confirm("Are you sure you want to log out?");
+  // Small notify helper (same feel as profile.js)
+  const notify = ({
+    title = "Notice",
+    message = "",
+    type = "info",
+    duration = 2200,
+    position = "top"
+  } = {}) => {
+    if (window.Toast?.showToast) {
+      window.Toast.showToast({ title, message, type, duration, position });
+    } else {
+      alert(`${title}\n${message}`);
+    }
+  };
+
+  // 🔐 Logout (same UX as profile.js)
+  logoutBtn?.addEventListener("click", async () => {
+    let confirmLogout;
+
+    if (window.Toast?.confirmToast) {
+      confirmLogout = await window.Toast.confirmToast({
+        title: "Log out?",
+        message: "Are you sure you want to log out?",
+        okText: "Log out",
+        cancelText: "Stay signed in",
+        type: "error"
+      });
+    } else {
+      confirmLogout = confirm("Are you sure you want to log out?");
+    }
+
     if (!confirmLogout) return;
 
     localStorage.removeItem("token");
@@ -193,21 +396,31 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.removeItem("isLoggedIn");
     sessionStorage.clear();
 
-    alert("👋 Admin has been logged out successfully.");
+    notify({
+      title: "Logged out",
+      message: "See you next time 👋",
+      type: "info",
+      duration: 2200,
+      position: "br"
+    });
+
     window.location.href = "../index.html";
   });
 });
+
 
 // ================================================================
 // 🧩 ADMIN NAVIGATION HANDLER (Sections)
 // ================================================================
 document.addEventListener("DOMContentLoaded", () => {
-  const sectionMap = {
-    orders: "admin-orders",
-    appointments: "section-appointments",
-    inventory: "section-inventory",
-    logs: "section-logs",
-  };
+const sectionMap = {
+  orders: "admin-orders",
+  appointments: "section-appointments",
+  inventory: "section-inventory",
+  "id-verify": "section-id-verify",  // <-- add this
+  logs: "section-logs",
+};
+
 
   const btns = Array.from(document.querySelectorAll(".section-btn"));
   const panels = Array.from(document.querySelectorAll(".admin-section"));
@@ -221,31 +434,38 @@ document.addEventListener("DOMContentLoaded", () => {
       p.classList.toggle("active", p.id === targetId);
     });
 
-    // 🔄 REMOVED CALL: do not auto-fetch products when opening Inventory
-    // if (key === "inventory") {
-    //   try { refreshInventoryFromServer && refreshInventoryFromServer(); } catch (e) {}
-    // }
+    // ✅ Refresh Inventory when shown
+    if (key === "inventory") {
+      try { loadProductsIntoTable(); } catch (e) { console.warn('Inventory refresh error:', e); }
+    }
+
+    // ✅ Optional: refresh Appointments when shown
+    if (key === "appointments") {
+      try {
+        typeof window._fetchAppointments === 'function' && window._fetchAppointments();
+      } catch (e) { console.warn('Appointments refresh error:', e); }
+    }
 
     history.replaceState(null, "", `#${key}`);
-    try {
-      localStorage.setItem("admin_last_section", key);
-    } catch (e) {}
+    try { localStorage.setItem("admin_last_section", key); } catch (e) {}
   };
 
   btns.forEach((b) => b.addEventListener("click", () => show(b.dataset.section)));
 
   const fromHash = (location.hash || "").replace("#", "");
   const fromStore = (() => {
-    try {
-      return localStorage.getItem("admin_last_section");
-    } catch (e) {
-      return null;
-    }
+    try { return localStorage.getItem("admin_last_section"); } catch (e) { return null; }
   })();
-  const startKey =
-    sectionMap[fromHash] ? fromHash : sectionMap[fromStore] ? fromStore : "orders";
+  const startKey = sectionMap[fromHash] ? fromHash : sectionMap[fromStore] ? fromStore : "orders";
   show(startKey);
+
+  // ✅ If we landed on Inventory initially, load it immediately (startKey is in scope here)
+  if (startKey === 'inventory') {
+    try { loadProductsIntoTable(); } catch (e) { console.warn('Initial inventory load failed:', e); }
+  }
 });
+
+
 
 // ================================================================
 // 📅 ADMIN — FETCH & MANAGE APPOINTMENTS (Guests/Notes hidden in table)
@@ -258,11 +478,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // modal fields
   const aName = document.getElementById("aName");
   const aEmail = document.getElementById("aEmail");
+  const aService = document.getElementById("aService"); // NEW
   const aGuests = document.getElementById("aGuests");
   const aNotes = document.getElementById("aNotes");
   const aDate = document.getElementById("aDate");
   const aTime = document.getElementById("aTime");
   const aStatus = document.getElementById("aStatus");
+
 
   // buttons
   const btnConfirm = document.getElementById("btnConfirmAppt");
@@ -282,22 +504,36 @@ document.addEventListener("DOMContentLoaded", () => {
   // =======================================================
   // 🔁 Fetch All Appointments
   // =======================================================
-  async function fetchAppointments() {
-    try {
-      const res = await fetch("http://localhost:3000/api/bookings");
-      const data = await res.json();
+const APPT_PAGE_SIZE = 10;
+let apptPage = 1;
 
-      if (!data.success) throw new Error(data.message || "Failed to load appointments.");
+async function fetchAppointments(page = 1) {
+  try {
+    const params = new URLSearchParams({ limit: String(APPT_PAGE_SIZE), page: String(page) });
+    const url = `${API}/api/bookings?${params.toString()}`;
+    const data = await fetchJSON(url);
 
-      appointments = data.bookings || [];
-      renderAppointments(appointments);
+    if (!data.success) throw new Error(data.message || "Failed to load appointments");
 
-      console.log(`✅ Loaded ${appointments.length} appointments.`);
-    } catch (err) {
-      console.error("❌ Error loading appointments:", err);
-      apptBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">⚠️ Failed to load appointments</td></tr>`;
-    }
+    appointments = data.bookings || [];
+    apptPage = data.page || 1;
+
+    renderAppointments(appointments);
+
+    const apptPager = document.getElementById("appointmentsPagination");
+    buildPager(apptPager, data.totalPages || 1, apptPage, (go) => fetchAppointments(go));
+
+    console.log(`✅ Appointments page ${apptPage}: ${appointments.length}`);
+  } catch (err) {
+    console.error("❌ Error loading appointments:", err);
+    apptBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">⚠️ Failed to load appointments<br>${err.message}</td></tr>`;
+    const apptPager = document.getElementById("appointmentsPagination");
+    if (apptPager) apptPager.innerHTML = "";
   }
+}
+window._fetchAppointments = fetchAppointments;
+
+
 
   // =======================================================
   // 🧾 Render Appointments Table (Guests/Notes hidden)
@@ -317,15 +553,17 @@ document.addEventListener("DOMContentLoaded", () => {
       tr.dataset.status = b.status || "Pending";
 
       tr.innerHTML = `
-        <td>${b.name}</td>
-        <td>${b.email}</td>
-        <td>${b.date}</td>
-        <td>${b.time}</td>
-        <td class="status">${b.status || "Pending"}</td>
-        <td>
-          <button class="editAppt btn btn-sm btn-outline-primary" data-id="${b._id}">Edit</button>
-        </td>
-      `;
+  <td>${b.name}</td>
+  <td>${b.email}</td>
+  <td>${b.service || "General Consultation"}</td>
+  <td>${b.date}</td>
+  <td>${b.time}</td>
+  <td class="status">${b.status || "Pending"}</td>
+  <td>
+    <button class="editAppt btn btn-sm btn-outline-primary" data-id="${b._id}">Edit</button>
+  </td>
+`;
+
       apptBody.appendChild(tr);
     });
 
@@ -343,18 +581,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     currentAppt = appt;
 
-    aName.textContent = appt.name;
-    aEmail.textContent = appt.email;
-    aGuests.textContent =
-      appt.guests && appt.guests.length
-        ? Array.isArray(appt.guests)
-          ? appt.guests.join(", ")
-          : appt.guests
-        : "—";
-    aNotes.textContent = appt.notes || "—";
-    aDate.textContent = appt.date;
-    aTime.textContent = appt.time;
-    aStatus.textContent = appt.status || "Pending";
+aName.textContent = appt.name;
+aEmail.textContent = appt.email;
+aService.textContent = appt.service || "General Consultation"; // NEW
+aGuests.textContent = appt.guests && appt.guests.length
+  ? (Array.isArray(appt.guests) ? appt.guests.join(", ") : appt.guests)
+  : "—";
+aNotes.textContent = appt.notes || "—";
+aDate.textContent = appt.date;
+aTime.textContent = appt.time;
+aStatus.textContent = appt.status || "Pending";
+
 
     reschedFields.hidden = true;
     newDate.value = "";
@@ -400,12 +637,13 @@ async function updateAppointmentStatus(status) {
 
     if (!data.success) throw new Error(data.message || "Update failed");
 
-    alert(`✅ Appointment marked as ${status}`);
-    closeApptModal();
-    fetchAppointments();                                // refresh table
+tOK(`Appointment ${status}`, 'Status updated successfully.');
+closeApptModal();
+fetchAppointments();
   } catch (err) {
-    console.error("❌ Failed to update appointment:", err);
-    alert("⚠️ Could not update appointment status.");
+console.error("❌ Failed to update appointment:", err);
+tErr('Appointments', 'Could not update status.');
+
   }
 }
 
@@ -436,12 +674,14 @@ async function rescheduleAppointment(newD, newT) {
 
     if (!data.success) throw new Error(data.message || "Reschedule failed");
 
-    alert("✅ Appointment rescheduled successfully.");
-    closeApptModal();
-    fetchAppointments();
+tOK('Appointment rescheduled', 'New date/time saved.');
+closeApptModal();
+fetchAppointments();
+
   } catch (err) {
-    console.error("❌ Failed to reschedule:", err);
-    alert("⚠️ Could not reschedule appointment.");
+console.error("❌ Failed to reschedule:", err);
+tErr('Appointments', 'Could not reschedule.');
+
   }
 }
 
@@ -548,43 +788,57 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === addModal) closeModal();
   });
 
-  // Save (Add or Edit)
+
+// Save (Add or Edit)
 addForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  let created = null;
+  const name  = pName.value.trim();
+  const price = parseFloat(pPrice.value || '0');
+  const cat   = pCategory.value.trim();
+  const stock = parseInt(pStock.value || '0', 10);
+  const desc  = pDesc.value.trim();
 
-  // 1) Try to save to the backend using FormData
-  try {
-    const fd = new FormData();
-    // IMPORTANT: schema uses "title", not "name"
-    fd.append('title', pName.value.trim());
-    fd.append('price', pPrice.value || '0');
-    fd.append('stock', pStock.value || '0');
-    fd.append('category', pCategory.value.trim());
-    fd.append('description', pDesc.value.trim() || '');
-    // If you want to upload an image later, this will be picked by multer.none() as text unless you add file upload middleware
-    // inside addForm submit handler
-if (pImage.files && pImage.files[0]) fd.append('image', pImage.files[0]);
-
-    created = await apiCreateProductFD(fd); // POST /api/products
-  } catch (apiErr) {
-    console.warn('⚠️ API save failed, but continuing with local row:', apiErr);
+  if (!name || isNaN(price)) {
+    alert('Please complete the required fields.');
+    return;
   }
 
-  // 2) Always proceed with your original local DOM logic (unchanged UX)
-  const name = pName.value.trim();
-  const price = parseFloat(pPrice.value || '0');
-  const cat = pCategory.value.trim();
-  const stock = parseInt(pStock.value || '0', 10);
-  const desc = pDesc.value.trim();
-  if (!name || isNaN(price)) { alert('Please complete the required fields.'); return; }
+  try {
+    const fd = new FormData();
+    fd.append('title', name);
+    fd.append('price', String(price));
+    fd.append('stock', String(stock));
+    fd.append('category', cat);
+    fd.append('description', desc);
+    if (pImage.files && pImage.files[0]) fd.append('image', pImage.files[0]);
 
+    if (mode === 'add') {
+      await apiCreateProductFD(fd);                    // 🔵 CREATE (logs PRODUCT_CREATED)
+    } else {
+      const id = pId.value || editRow?.dataset.id;
+      if (!id) throw new Error('Missing product id for update');
+      await apiUpdateProductFD(id, fd);                // 🟢 UPDATE (already logs PRODUCT_UPDATED)
+    }
+
+await loadProductsIntoTable();
+tOK(mode === 'add' ? 'Product added' : 'Product updated',
+    mode === 'add' ? 'Item was added to inventory.' : 'Changes saved.');
+closeModal();
+addForm.reset();
+return;
+
+  } catch (apiErr) {
+console.warn('⚠️ API save failed; falling back to local row:', apiErr);
+tErr('Save failed', 'Using local fallback row (not persisted).');
+
+  }
+
+  // Fallback only if API failed (keeps UX responsive)
   if (mode === 'add') {
     const tr = document.createElement('tr');
     tr.dataset.status = stock === 0 ? 'OOS' : (stock <= 5 ? 'LOW' : 'OK');
     tr.dataset.desc = desc;
-    if (created && created._id) tr.dataset.id = created._id; // keep reference to DB id
     tr.innerHTML = `
       <td>${name}</td>
       <td>₱${price.toFixed(2)}</td>
@@ -592,7 +846,9 @@ if (pImage.files && pImage.files[0]) fd.append('image', pImage.files[0]);
       <td class="stock">${stock}</td>
       <td><button class="invEdit">Edit</button></td>
     `;
-    invBody.prepend(tr);
+invBody.prepend(tr);
+tInfo('Local preview only', 'Row added locally. Sync later.');
+
   } else if (editRow) {
     editRow.children[0].textContent = name;
     editRow.children[1].textContent = `₱${price.toFixed(2)}`;
@@ -600,7 +856,6 @@ if (pImage.files && pImage.files[0]) fd.append('image', pImage.files[0]);
     editRow.querySelector('.stock').textContent = stock;
     editRow.dataset.desc = desc;
     editRow.dataset.status = stock === 0 ? 'OOS' : (stock <= 5 ? 'LOW' : 'OK');
-    // (Optional) PUT to backend later
   }
 
   closeModal();
@@ -608,14 +863,19 @@ if (pImage.files && pImage.files[0]) fd.append('image', pImage.files[0]);
 });
 
 
+
   // Delete (with confirm)
   btnDelete.addEventListener('click', () => {
     if (!editRow) return;
     const name = editRow.children[0].textContent.trim();
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-    editRow.remove();
-    // TODO: DELETE to backend using pId.value when you want to wire it
-    closeModal();
+tAsk('Delete product?', `Remove "${name}" permanently?`, 'Delete', 'Cancel').then((ok) => {
+  if (!ok) return;
+  // TODO: call backend DELETE here when wired; for now remove locally:
+  editRow.remove();
+  tOK('Product deleted', `"${name}" removed from table.`);
+  closeModal();
+});
+
   });
 
   // 🔄 REMOVED: initial DB fetch on page load (you asked not to include DB items yet)
@@ -623,15 +883,35 @@ if (pImage.files && pImage.files[0]) fd.append('image', pImage.files[0]);
 });
 
 // === Inventory API helpers (ADD + LIST) ===
-// 🔗 central API base
 const API_BASE = 'http://localhost:3000';
 
+function authHeader() {
+  const t = localStorage.getItem('token');
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
 async function apiCreateProductFD(formData) {
-  const res = await fetch(`${API_BASE}/api/products`, { method: 'POST', body: formData });
+  const res = await fetch(`${API_BASE}/api/products`, {
+    method: 'POST',
+    headers: { ...authHeader() }, // 👈 add token so logs can attribute the admin
+    body: formData
+  });
   const json = await res.json();
   if (!res.ok || !json.success) throw new Error(json.message || 'Save failed');
   return json.product; // created product document
 }
+
+async function apiUpdateProductFD(id, formData) {
+  const res = await fetch(`${API_BASE}/api/products/${id}`, {
+    method: 'PUT',
+    headers: { ...authHeader() }, // 👈 token for logging
+    body: formData                // keep multipart for optional image change
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error(json.message || 'Update failed');
+  return json.product;
+}
+
 
 // These helpers are kept for later use but NOT called right now.
 async function apiListProducts() {
@@ -650,7 +930,7 @@ function renderInvFromServer(products) {
   invBody.innerHTML = products.map(p => `
     <tr data-id="${p._id}" data-desc="${(p.description||'').replace(/"/g,'&quot;')}"
         data-status="${(p.stock||0)===0 ? 'OOS' : ((p.stock||0)<=5 ? 'LOW' : 'OK')}">
-      <td>${p.name ?? '-'}</td>
+      <td>${p.title ?? '-'}</td>               <!-- ✅ correct key -->
       <td>₱${Number(p.price||0).toFixed(2)}</td>
       <td>${p.category ?? '-'}</td>
       <td class="stock">${p.stock ?? 0}</td>
@@ -658,6 +938,7 @@ function renderInvFromServer(products) {
     </tr>
   `).join('');
 }
+
 
 async function refreshInventoryFromServer() {
   try {
@@ -689,18 +970,30 @@ async function refreshInventoryFromServer() {
   };
   const esc = (s = '') => s.replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-  async function fetchLogs() {
-    try {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-muted">Loading…</td></tr>`;
-      const res = await fetch('/api/admin-logs?limit=100');
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Failed');
-      render(data.logs || []);
-    } catch (e) {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Failed to load logs</td></tr>`;
-      console.error(e);
-    }
+const LOGS_PAGE_SIZE = 10;
+let logsPage = 1;
+
+async function fetchLogs(page = 1) {
+  try {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-muted">Loading…</td></tr>`;
+    const params = new URLSearchParams({ limit: String(LOGS_PAGE_SIZE), page: String(page) });
+    const res = await fetch(`${API}/api/admin-logs?${params.toString()}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Failed');
+
+    render(data.logs || []);
+
+    const pager = document.getElementById('logsPagination'); // 👈 add in HTML
+    logsPage = data.page || 1;
+    buildPager(pager, data.totalPages || 1, logsPage, (go) => fetchLogs(go));
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Failed to load logs</td></tr>`;
+    console.error(e);
+    const pager = document.getElementById('logsPagination');
+    if (pager) pager.innerHTML = "";
   }
+}
+
 
   function render(list) {
     if (!list.length) {
@@ -731,14 +1024,23 @@ async function refreshInventoryFromServer() {
     const tgt = [log.target?.type, log.target?.id, log.target?.name].filter(Boolean).join(' • ');
     mMeta.textContent = `${date} • ${time}${who ? ' • ' + who : ''}${tgt ? ' • ' + tgt : ''}`;
 
-    // Pretty print meta + message
     mMsg.textContent = log.message + (log.meta ? `\n\nDetails:\n${JSON.stringify(log.meta, null, 2)}` : '');
-    modal.style.display = 'block';
+
+    // ✅ center via flex
+    modal.style.removeProperty('display');
+    modal.classList.add('show');
+    document.body.classList.add('modal-open'); // optional (prevents page scroll)
   }
 
-  function closeModal() { modal.style.display = 'none'; }
+  function closeModal() {
+    modal.classList.remove('show');
+    modal.style.removeProperty('display'); // clean up any inline
+    document.body.classList.remove('modal-open');
+  }
+
   mClose.addEventListener('click', closeModal);
   window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
 
   // Load when switching to Logs tab
   document.querySelectorAll('.section-btn').forEach((b) => {
@@ -752,25 +1054,40 @@ async function refreshInventoryFromServer() {
   const last = (() => { try { return localStorage.getItem('admin_last_section'); } catch { return null; } })();
   if (hash === 'logs' || last === 'logs') fetchLogs();
 })();
-async function loadProductsIntoTable() {
+
+const PROD_PAGE_SIZE = 10;
+let prodPage = 1;
+
+async function loadProductsIntoTable(page = 1) {
   const tbody = document.getElementById('inventoryBody');
+  const pager = document.getElementById('inventoryPagination');
   if (!tbody) return;
+
   tbody.innerHTML = `<tr><td colspan="5" class="text-muted">Loading...</td></tr>`;
 
   try {
-    const res = await fetch('http://localhost:3000/api/products');
-    const products = await res.json();
+    const params = new URLSearchParams({ limit: String(PROD_PAGE_SIZE), page: String(page) });
+    const url = `${API}/api/products?${params.toString()}`;
+    const data = await fetchJSON(url);
 
-    if (!Array.isArray(products) || !products.length) {
+    const products = Array.isArray(data.products) ? data.products
+                     : (Array.isArray(data) ? data : []);
+    const totalPages = data.totalPages || 1;
+    prodPage = data.page || 1;
+
+    if (!products.length) {
       tbody.innerHTML = `<tr><td colspan="5" class="text-muted">No products yet</td></tr>`;
+      if (pager) pager.innerHTML = "";
       return;
     }
 
     tbody.innerHTML = '';
     products.forEach(p => {
       const tr = document.createElement('tr');
+      tr.dataset.id = p._id;
+      tr.dataset.desc = p.description || '';
       tr.innerHTML = `
-        <td>${p.title}</td>
+        <td>${p.title ?? '-'}</td>
         <td>₱${Number(p.price || 0).toFixed(2)}</td>
         <td>${p.category || ''}</td>
         <td class="stock">${Number(p.stock || 0)}</td>
@@ -778,11 +1095,274 @@ async function loadProductsIntoTable() {
       `;
       tbody.appendChild(tr);
     });
+
+    buildPager(pager, totalPages, prodPage, (go) => loadProductsIntoTable(go));
   } catch (err) {
-    console.error('❌ loadProducts error:', err);
-    tbody.innerHTML = `<tr><td colspan="5" class="text-danger">Failed to load products</td></tr>`;
+console.error('❌ loadProducts error:', err);
+tbody.innerHTML = `<tr><td colspan="5" class="text-danger">Failed to load products<br>${err.message}</td></tr>`;
+if (pager) pager.innerHTML = "";
+tErr('Inventory', 'Failed to load products.');
+
   }
 }
 
+
 // call this when the Inventory tab is activated
 // and optionally at page init if Inventory is active by default
+
+
+
+
+
+
+
+// /js/admin-calendar.js
+document.addEventListener('DOMContentLoaded', () => {
+  const calEl = document.getElementById('adminCalendar');
+  if (!calEl) return;
+
+  // --------- Simple persistence (swap with your API later) ---------
+  const STORAGE_KEY = 'admin_unavailable_events_v1';
+  const load = () => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  };
+  const save = (events) => localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+  const snapshot = () => calendar.getEvents().map(e => ({
+    id: e.id,
+    title: e.title,
+    start: e.startStr,
+    end: e.endStr,
+    allDay: e.allDay,
+    note: e.extendedProps?.note || ''
+  }));
+
+  // --------- Modal controls ---------
+  const dlg = document.getElementById('availabilityModal');
+  const blockAllDay = document.getElementById('blockAllDay');
+  const selectedDate = document.getElementById('selectedDate');
+  const eventId = document.getElementById('eventId');
+  const availStart = document.getElementById('availStart');
+  const availEnd = document.getElementById('availEnd');
+  const availNote = document.getElementById('availNote');
+  const timeRow = document.querySelector('[data-time-range]');
+  const btnSave = document.getElementById('saveBlock');
+  const btnDelete = document.getElementById('deleteBlock');
+  
+  const toggleTimeRow = () => {
+    timeRow.style.display = blockAllDay.checked ? 'none' : '';
+  };
+  blockAllDay.addEventListener('change', toggleTimeRow);
+
+  // Helpers
+  const toISODate = (d) => d.toISOString().slice(0,10); // YYYY-MM-DD
+  const addDays = (dateStr, n) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return toISODate(d);
+  };
+// Local YYYY-MM-DD (no UTC conversion)
+const toLocalYMD = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+// Add days to a YYYY-MM-DD string in local time
+const addDaysYMD = (ymd, n) => {
+  const [y, m, d] = ymd.split('-').map(Number);
+  const dt = new Date(y, m - 1, d + n); // local
+  return toLocalYMD(dt);
+};
+
+  let currentSelection = null; // FullCalendar selection for new blocks
+  let editingEvent = null;     // FullCalendar EventApi for edit/delete
+
+  const calendar = new FullCalendar.Calendar(calEl, {
+  timeZone: 'local',
+  initialView: 'dayGridMonth',
+  headerToolbar: false,          // we use external Prev/Today/Next buttons
+  firstDay: 0,                   // Sunday
+  height: 'auto',
+  fixedWeekCount: false,
+  selectable: true,
+  selectMirror: true,
+  editable: true,                // allow drag/resize
+
+  // Make timed events render as pills and use your red
+  eventDisplay: 'block',
+  eventColor: '#ef4444',         // pill background
+  eventTextColor: '#ffffff',     // pill text
+
+  // Show both an all-day block and a timed block on the same date
+  dayMaxEventRows: 2,
+  // Prefer showing timed blocks before all-day when both exist
+  eventOrder: '-allDay,start,title',
+
+  // Hide FC’s automatic leading time (“8a …”) — we’ll render our own label
+  displayEventTime: false,
+
+  // Render chip text:
+  // - for TIMED blocks → "8 am to 10 am"
+  // - for ALL-DAY blocks → use the event title (e.g., "Not Available")
+  eventContent(arg) {
+    const e = arg.event;
+    if (!e.allDay && e.start && e.end) {
+      const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
+      const s = fmt.format(e.start).toLowerCase().replace(' ', '');
+      const t = fmt.format(e.end).toLowerCase().replace(' ', '');
+      const el = document.createElement('div');
+      el.textContent = `${s} to ${t}`;
+      return { domNodes: [el] };
+    }
+    // fallback: just show the title (for all-day)
+    return { html: e.title || '' };
+  },
+
+  // Replace the overflow label
+  moreLinkContent(arg) {
+    const hidden = arg.hiddenSegs || [];
+    if (hidden.length === 1) {
+      const t = hidden[0]?.eventRange?.def?.title || arg.text;
+      return { text: t };                 // shows the hidden event’s actual title
+    }
+    return { text: arg.text };            // keep default “+N more”
+  },
+  // Keep the link clickable (opens FullCalendar popover)
+  moreLinkClick: 'popover',
+
+  events: load(),    
+
+    // Create NEW block (open modal)
+    select: (info) => {
+      currentSelection = info;
+      editingEvent = null;
+
+      // Default: in month view we block full day(s)
+      blockAllDay.checked = (calendar.view.type === 'dayGridMonth') || info.allDay;
+      toggleTimeRow();
+
+      // Prefill date/time
+      selectedDate.value = toLocalYMD(info.start);
+      availStart.value = '08:00';
+      availEnd.value   = '16:00';
+      availNote.value  = '';
+      eventId.value    = '';
+
+      dlg.showModal();
+    },
+
+    // Edit existing block (open modal prefilled)
+    eventClick: (clickInfo) => {
+      currentSelection = null;
+      editingEvent = clickInfo.event;
+
+      blockAllDay.checked = editingEvent.allDay;
+      toggleTimeRow();
+
+      selectedDate.value = toLocalYMD(editingEvent.start);
+      eventId.value = editingEvent.id || '';
+      availNote.value = editingEvent.extendedProps?.note || '';
+
+      if (!editingEvent.allDay) {
+        const fmt = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+        availStart.value = fmt(editingEvent.start);
+        // if end missing, fall back to +1 hour
+        const end = editingEvent.end || new Date(editingEvent.start.getTime() + 60*60*1000);
+        availEnd.value = fmt(end);
+      }
+
+      dlg.showModal();
+    },
+
+    // Persist when dragging/resizing
+    eventDrop: () => save(snapshot()),
+    eventResize: () => save(snapshot())
+  });
+
+  calendar.render();
+
+  // --------- External toolbar wiring ---------
+  document.querySelector('[data-cal-prev]')?.addEventListener('click', () => calendar.prev());
+  document.querySelector('[data-cal-next]')?.addEventListener('click', () => calendar.next());
+  document.querySelector('[data-cal-today]')?.addEventListener('click', () => calendar.today());
+
+  // Optional: dynamic title if you included [data-cal-title]
+  const titleEl = document.querySelector('[data-cal-title]');
+  const updateTitle = () => { if (titleEl) titleEl.textContent = calendar.view.title; };
+  calendar.on('datesSet', updateTitle);
+  updateTitle();
+
+  // --------- Modal buttons ---------
+btnSave?.addEventListener('click', () => {
+  const dateStr = selectedDate.value;     // local YYYY-MM-DD
+  const note = availNote.value.trim();
+
+  if (blockAllDay.checked) {
+    // ✅ ALL-DAY (use local helpers; end is exclusive)
+    const startYMD = dateStr;
+    const ev = {
+      id: eventId.value || crypto.randomUUID(),
+      title: 'Not Available',
+      start: startYMD,                      // local date, no UTC shift
+      end: addDaysYMD(startYMD, 1),         // next local day (exclusive)
+      allDay: true,
+      backgroundColor: '#ef4444',
+      note
+    };
+
+    if (editingEvent) editingEvent.remove();
+    calendar.addEvent(ev);
+save(snapshot());
+tOK('Block added', 'Marked as Not Available (all day).');
+dlg.close();
+calendar.unselect();
+return;
+
+  }
+
+  // ⏱️ TIMED RANGE (still local because we build YYYY-MM-DDTHH:mm)
+  const startT = availStart.value || '08:00';
+  const endT   = availEnd.value   || '16:00';
+  if (endT <= startT) {
+    alert('End time must be after start time.');
+    return;
+  }
+
+  const ev = {
+    id: eventId.value || crypto.randomUUID(),
+    title: 'Not Available',
+    start: `${dateStr}T${startT}`,
+    end:   `${dateStr}T${endT}`,
+    allDay: false,
+    backgroundColor: '#ef4444',
+    note
+  };
+
+  if (editingEvent) editingEvent.remove();
+  calendar.addEvent(ev);
+save(snapshot());
+tOK('Block added', 'Marked as Not Available (time range).');
+dlg.close();
+calendar.unselect();
+
+});
+
+
+  btnDelete?.addEventListener('click', () => {
+if (!editingEvent) { dlg.close(); return; }
+tAsk('Remove block?', 'Delete this Not Available block?', 'Remove', 'Cancel').then((ok) => {
+  if (!ok) return;
+  editingEvent.remove();
+  save(snapshot());
+  tOK('Block removed', 'Availability restored.');
+  dlg.close();
+});
+  });
+
+  dlg?.addEventListener('close', () => {
+    currentSelection = null;
+    editingEvent = null;
+  });
+});

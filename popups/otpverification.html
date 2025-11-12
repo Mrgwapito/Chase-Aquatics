@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email Verification</title>
+
+  <!-- Fonts & icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Toast (your existing) -->
+  <link rel="stylesheet" href="/assets/toast.css">
+
+  <!-- OTP styles — keep LAST so it can win the cascade -->
+  <link rel="stylesheet" href="./otpverification.css">
+</head>
+<body>
+  <main class="otp-wrap">
+    <section class="otp-card" id="otpCard">
+      <h1 class="otp-title">Email Verification</h1>
+      <p class="otp-sub">Enter the 6-digit code we sent to your email</p>
+
+      <div class="otp-inputs" id="otpInputs">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+      </div>
+
+      <button class="otp-submit" id="verifyBtn" disabled>Verify Email</button>
+
+      <div class="otp-timer" id="otpTimer">Resend code in 3:00</div>
+      <button class="otp-resend" id="resendBtn" disabled>Resend Code</button>
+
+      <a href="/index.html" class="otp-back">Back to Registration</a>
+    </section>
+  </main>
+
+  <!-- Toast logic -->
+  <script type="module" src="/assets/toast.js"></script>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <!-- OTP logic -->
+  <script src="./otpverification.js"></script>
+</body>
+</html>

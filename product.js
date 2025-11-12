@@ -1,12 +1,19 @@
+// product.js  (FINAL — no add-to-cart logic here)
+import { showToast, queueFlashToast } from '/assets/toast.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
   const productGrid = document.getElementById('product-grid');
-  console.log("🧩 Product Links Generated:", 
-  [...document.querySelectorAll('.view-details')].map(a => a.href)
-);
-
   const categoryLinks = document.querySelectorAll('#category-list a[data-category]');
   const toggleBtn = document.querySelector('.nav-toggle');
   const navlinks = document.getElementById('navlinks');
+
+  // Helper: ensure image paths work for /uploads/...
+  const fixImg = (src) => {
+    if (!src) return '';
+    if (src.startsWith('http://') || src.startsWith('https://')) return src;
+    // your server serves /uploads at http://localhost:3000/uploads/...
+    return `http://localhost:3000${src.startsWith('/') ? '' : '/'}${src}`;
+  };
 
   // ✅ Navbar toggle (mobile)
   if (toggleBtn && navlinks) {
@@ -18,20 +25,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ✅ Load products dynamically
   try {
-    const res = await fetch('http://localhost:3000/api/products');
-    const products = await res.json();
+    // ask for ALL products (server treats limit=0 as "no limit" per our route)
+    const res = await fetch('http://localhost:3000/api/products?limit=0');
+    const payload = await res.json();
 
-    console.log("🧩 Loaded products:", products);
+    // Server returns an object; extract the array robustly
+    const products = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload.products)
+        ? payload.products
+        : [];
 
     if (!Array.isArray(products) || products.length === 0) {
       productGrid.innerHTML = `<p class="text-center text-muted py-5">No products found.</p>`;
       return;
     }
 
-    // Render all products
+    // Render all products — SAME MARKUP / STYLES AS BEFORE
     productGrid.innerHTML = products.map(p => `
       <div class="product-card" data-id="${p._id}" data-category="${p.category}">
-        <img src="${p.image}" alt="${p.alt || p.title}">
+        <img src="${fixImg(p.image)}" alt="${p.alt || p.title}">
         <div class="product-info">
           <h3>${p.title}</h3>
           <div class="card-buttons">
@@ -47,41 +60,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `).join('');
 
-    initializeCartButtons();
+    // Let cart.js own the add-to-cart click via event delegation
+    makeCardsClickable();
     initializeCategoryFilter();
   } catch (err) {
     console.error('❌ Failed to load products:', err);
     productGrid.innerHTML = `<p class="text-center text-danger py-5">Error loading products.</p>`;
   }
 
-  // 🛒 CART HANDLER
-  function initializeCartButtons() {
-    const addToCartButtons = document.querySelectorAll('.add-to-cart');
-    addToCartButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const card = button.closest('.product-card');
-        const id = Number(card.dataset.id);
-        const title = card.querySelector('h3').textContent.trim();
-        const priceText = card.querySelector('p').textContent.trim();
-        const price = parseFloat(priceText.replace(/[₱,/a-z\s]/gi, "")) || 0;
-        const image = card.querySelector('img').src;
+  // 🔗 Card-level navigation (click anywhere except the buttons)
+  function makeCardsClickable() {
+    productGrid.addEventListener('click', (e) => {
+      const card = e.target.closest('.product-card');
+      if (!card) return;
 
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        const existing = cart.find(item => item._id === id);
+      // Don’t steal clicks from the cart button or the eye link
+      if (e.target.closest('.add-to-cart') || e.target.closest('.view-details')) return;
 
-        if (existing) {
-          existing.quantity += 1;
-        } else {
-          cart.push({ _id: id, title, price, image, quantity: 1 });
-        }
+      const id = card.dataset.id;
+      window.location.href = `product_shop.html?id=${encodeURIComponent(id)}`;
+    });
 
-        localStorage.setItem('cart', JSON.stringify(cart));
-        alert(`${title} added to cart!`);
-      });
+    // Optional: keyboard support
+    productGrid.addEventListener('keydown', (e) => {
+      const card = e.target.closest('.product-card');
+      if (!card) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const id = card.dataset.id;
+        window.location.href = `product_shop.html?id=${encodeURIComponent(id)}`;
+      }
     });
   }
 
-  // 🧩 CATEGORY FILTER
+  // 🧩 CATEGORY FILTER (unchanged)
   function initializeCategoryFilter() {
     const productCards = document.querySelectorAll('.product-card');
     categoryLinks.forEach(link => {
