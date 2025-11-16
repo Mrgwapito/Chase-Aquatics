@@ -5,24 +5,41 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-     "build:ph": "node assets/build-ph-geo.js"
+    "build:ph": "node assets/build-ph-geo.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^3.0.2",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.2.1",
+    "file-type": "^21.1.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.14.2",
+    "mongoose": "^8.19.3",
     "multer": "^1.4.5-lts.2",
     "node-fetch": "^3.3.2",
-    "nodemailer": "^7.0.9"
+    "nodemailer": "^7.0.9",
+    "xss": "^1.0.15",
+    "xss-clean": "^0.1.4"
   },
-  "description": "",
   "devDependencies": {
     "nodemon": "^3.1.10"
-  }
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mrgwapito/Chase-Aquatics.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mrgwapito/Chase-Aquatics/issues"
+  },
+  "homepage": "https://github.com/Mrgwapito/Chase-Aquatics#readme",
+  "description": ""
 }

@@ -1,29 +1,9 @@
-// ================================================================
-// 📦 ADMIN DASHBOARD — ORDERS, APPOINTMENTS, LOGOUT, NAV
-// ================================================================
-document.addEventListener("DOMContentLoaded", async () => {
-  console.log("📦 Admin Order Management Loaded");
+/* ================================================================
+   🌐 GLOBAL HELPERS (define these FIRST, before any DOMContentLoaded)
+   ================================================================ */
+window.API = 'http://localhost:3000';
 
-  const API = "http://localhost:3000";
-  const PAGE_SIZE = 10;
-
-  const ordersBody = document.getElementById("ordersBody");
-  const statSales = document.getElementById("statSales");
-  const statOrders = document.getElementById("statOrders");
-  const statPending = document.getElementById("statPending");
-  const pager = document.getElementById("ordersPagination"); // <— add this in HTML
-
-  const modal = document.getElementById("orderModal");
-  const closeModal = modal.querySelector(".close");
-  const mOrderId = document.getElementById("mOrderId");
-  const mCustomer = document.getElementById("mCustomer");
-  const mPayment = document.getElementById("mPayment");
-  const mTotal = document.getElementById("mTotal");
-  const mStatus = document.getElementById("mStatus");
-  const btnPaid = document.getElementById("modalPaid");
-  const btnDone = document.getElementById("modalDone");
-
-/* ==== GLOBAL toast helpers (usable everywhere) ==== */
+/* ==== GLOBAL toast helpers ==== */
 (function () {
   const show = (type, title, message = '', position = 'top') =>
     window.Toast?.showToast?.({ title, message, type, position });
@@ -38,24 +18,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   );
 })();
 
+/* ==== GLOBAL auth helper ==== */
+window.authHeader = window.authHeader || function () {
+  const t = localStorage.getItem('token');
+  return t ? { Authorization: `Bearer ${t}` } : {};
+};
 
+/* Shorten error strings */
+window.brief = window.brief || function (s = '') {
+  const t = String(s || '');
+  return t.length > 160 ? t.slice(0, 157) + '…' : t;
+};
 
-  // client state
-  let orders = [];
-  let currentPage = 1;
-  let currentPaymentFilter = ""; // "", "COD", "wallet"
-  let currentStatusFilter = "";  // optional future use
-
-  
-
-
-
-/* ================================================================
-   🌐 GLOBAL HELPERS (one set only)
-   ================================================================ */
-window.API = 'http://localhost:3000';
-
-/** Build a simple pager into containerEl */
+/** Build pager */
 window.buildPager = function buildPager(containerEl, totalPages, currentPage, onGo) {
   if (!containerEl) return;
   if (!totalPages || totalPages <= 1) {
@@ -85,7 +60,7 @@ window.buildPager = function buildPager(containerEl, totalPages, currentPage, on
   containerEl.appendChild(mk("›", Math.min(totalPages, currentPage + 1), currentPage === totalPages));
 };
 
-/** JSON fetch with readable console logs + error surfacing */
+/** JSON fetch helper */
 window.fetchJSON = async function fetchJSON(url, options = {}) {
   console.log("🌐 fetchJSON →", url, options);
   const res = await fetch(url, options);
@@ -102,7 +77,38 @@ window.fetchJSON = async function fetchJSON(url, options = {}) {
   return data;
 };
 
+// ================================================================
+// 📦 ADMIN DASHBOARD — ORDERS, APPOINTMENTS, LOGOUT, NAV
+// ================================================================
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("📦 Admin Order Management Loaded");
 
+  const API = window.API; // Use the global API
+  const PAGE_SIZE = 10;
+
+  const ordersBody = document.getElementById("ordersBody");
+  const statSales = document.getElementById("statSales");
+  const statOrders = document.getElementById("statOrders");
+  const statPending = document.getElementById("statPending");
+  const pager = document.getElementById("ordersPagination");
+
+  const modal = document.getElementById("orderModal");
+  const closeModal = modal.querySelector(".close");
+  const mOrderId = document.getElementById("mOrderId");
+  const mCustomer = document.getElementById("mCustomer");
+  const mPayment = document.getElementById("mPayment");
+  const mTotal = document.getElementById("mTotal");
+  const mStatus = document.getElementById("mStatus");
+  const btnPaid = document.getElementById("modalPaid");
+  const btnDone = document.getElementById("modalDone");
+
+  // Remove the duplicate global helpers that were here
+
+  // client state
+  let orders = [];
+  let currentPage = 1;
+  let currentPaymentFilter = ""; // "", "COD", "wallet"
+  let currentStatusFilter = "";  // optional future use
 
   // =======================================================
   // 🟩 Fetch Orders (paged)
@@ -131,11 +137,10 @@ window.fetchJSON = async function fetchJSON(url, options = {}) {
 
       console.log(`✅ Page ${currentPage}: ${orders.length} orders of ${PAGE_SIZE}`);
     } catch (err) {
-console.error("❌ Error loading orders:", err);
-ordersBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">⚠️ Failed to load orders</td></tr>`;
-if (pager) pager.innerHTML = "";
-tErr('Orders', 'Failed to load orders.');
-
+      console.error("❌ Error loading orders:", err);
+      ordersBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">⚠️ Failed to load orders</td></tr>`;
+      if (pager) pager.innerHTML = "";
+      tErr('Orders', 'Failed to load orders.');
     }
   }
 
@@ -228,67 +233,66 @@ tErr('Orders', 'Failed to load orders.');
   // 🟩 Modal Functions (Orders) — unchanged logic
   // =======================================================
   function openModal(orderId) {
-  const order = orders.find((o) => o._id === orderId);
-  if (!order) return;
+    const order = orders.find((o) => o._id === orderId);
+    if (!order) return;
 
-  mOrderId.textContent = order.orderId;
-  mCustomer.textContent = order.name;
-  mPayment.textContent = order.paymentMethod || "N/A";
-  mTotal.textContent = `₱${Number(order.totalAmount || 0).toFixed(2)}`;
+    mOrderId.textContent = order.orderId;
+    mCustomer.textContent = order.name;
+    mPayment.textContent = order.paymentMethod || "N/A";
+    mTotal.textContent = `₱${Number(order.totalAmount || 0).toFixed(2)}`;
 
-  // 👉 Show status as plain word only (no badge styling)
-  mStatus.textContent = order.status || "";
-  mStatus.className = ""; // strip any badge classes just in case
+    // 👉 Show status as plain word only (no badge styling)
+    mStatus.textContent = order.status || "";
+    mStatus.className = ""; // strip any badge classes just in case
 
-  const elFulfillment = document.getElementById("mFulfillment");
-  const elCod         = document.getElementById("mCod");
-  const elAmt         = document.getElementById("mAmt");
-  const elReceipt     = document.getElementById("mReceipt");
+    const elFulfillment = document.getElementById("mFulfillment");
+    const elCod         = document.getElementById("mCod");
+    const elAmt         = document.getElementById("mAmt");
+    const elReceipt     = document.getElementById("mReceipt");
 
-  if (elFulfillment) elFulfillment.textContent = order.fulfillment || "—";
-  if (elCod)         elCod.textContent         = order.codLandmark || "—";
-  if (elAmt) {
-    const amt = order?.paymentMeta?.amountSent;
-    elAmt.textContent = (typeof amt === "number")
-      ? `₱${Number(amt).toFixed(2)}`
-      : "—";
+    if (elFulfillment) elFulfillment.textContent = order.fulfillment || "—";
+    if (elCod)         elCod.textContent         = order.codLandmark || "—";
+    if (elAmt) {
+      const amt = order?.paymentMeta?.amountSent;
+      elAmt.textContent = (typeof amt === "number")
+        ? `₱${Number(amt).toFixed(2)}`
+        : "—";
+    }
+    if (elReceipt) {
+      const url = order?.paymentMeta?.receiptUrl;
+      elReceipt.innerHTML = url
+        ? `<a href="${url}" target="_blank" rel="noopener">View receipt</a>`
+        : "—";
+    }
+
+    const ul = document.getElementById("mItemsList");
+    if (ul) {
+      ul.innerHTML = "";
+      (order.cart || []).forEach(it => {
+        const li = document.createElement("li");
+        const price = Number(it.price) || 0;
+        const qty   = Number(it.quantity) || 1;
+        li.textContent = `${it.title} — ₱${price.toFixed(2)} × ${qty}`;
+        ul.appendChild(li);
+      });
+    }
+
+    // ✅ Center + show (clear any inline display first)
+    modal.style.removeProperty('display');
+    modal.classList.add("show");
+
+    btnPaid.onclick = () => updateOrderStatus(order._id, "Paid");
+    btnDone.onclick = () => updateOrderStatus(order._id, "Completed");
   }
-  if (elReceipt) {
-    const url = order?.paymentMeta?.receiptUrl;
-    elReceipt.innerHTML = url
-      ? `<a href="${url}" target="_blank" rel="noopener">View receipt</a>`
-      : "—";
-  }
 
-  const ul = document.getElementById("mItemsList");
-  if (ul) {
-    ul.innerHTML = "";
-    (order.cart || []).forEach(it => {
-      const li = document.createElement("li");
-      const price = Number(it.price) || 0;
-      const qty   = Number(it.quantity) || 1;
-      li.textContent = `${it.title} — ₱${price.toFixed(2)} × ${qty}`;
-      ul.appendChild(li);
-    });
-  }
+  // Close (never set inline display; just remove the class)
+  const hideOrderModal = () => {
+    modal.classList.remove("show");
+    modal.style.removeProperty('display'); // ensure no leftover inline styles
+  };
 
-  // ✅ Center + show (clear any inline display first)
-  modal.style.removeProperty('display');
-  modal.classList.add("show");
-
-  btnPaid.onclick = () => updateOrderStatus(order._id, "Paid");
-  btnDone.onclick = () => updateOrderStatus(order._id, "Completed");
-}
-
-// Close (never set inline display; just remove the class)
-const hideOrderModal = () => {
-  modal.classList.remove("show");
-  modal.style.removeProperty('display'); // ensure no leftover inline styles
-};
-
-closeModal.onclick = hideOrderModal;
-window.addEventListener("click", (e) => { if (e.target === modal) hideOrderModal(); });
-
+  closeModal.onclick = hideOrderModal;
+  window.addEventListener("click", (e) => { if (e.target === modal) hideOrderModal(); });
 
   async function updateOrderStatus(orderId, newStatus) {
     try {
@@ -305,13 +309,12 @@ window.addEventListener("click", (e) => { if (e.target === modal) hideOrderModal
       try { data = JSON.parse(text); } catch { throw new Error("Server did not return JSON."); }
       if (!data.success) throw new Error(data.message || "Update failed");
 
-tOK(`Order ${newStatus}`, `Order status updated successfully.`);
-modal.classList.remove("show");
-fetchOrders(currentPage);
+      tOK(`Order ${newStatus}`, `Order status updated successfully.`);
+      modal.classList.remove("show");
+      fetchOrders(currentPage);
     } catch (err) {
-console.error("❌ Failed to update order:", err);
-tErr('Could not update order', brief(err.message));
-
+      console.error("❌ Failed to update order:", err);
+      tErr('Could not update order', brief(err.message));
     }
   }
 
@@ -408,19 +411,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-
 // ================================================================
 // 🧩 ADMIN NAVIGATION HANDLER (Sections)
 // ================================================================
 document.addEventListener("DOMContentLoaded", () => {
-const sectionMap = {
-  orders: "admin-orders",
-  appointments: "section-appointments",
-  inventory: "section-inventory",
-  "id-verify": "section-id-verify",  // <-- add this
-  logs: "section-logs",
-};
-
+  const sectionMap = {
+    orders: "admin-orders",
+    appointments: "section-appointments",
+    inventory: "section-inventory",
+    "id-verify": "section-id-verify",
+    logs: "section-logs",
+  };
 
   const btns = Array.from(document.querySelectorAll(".section-btn"));
   const panels = Array.from(document.querySelectorAll(".admin-section"));
@@ -465,12 +466,11 @@ const sectionMap = {
   }
 });
 
-
-
 // ================================================================
 // 📅 ADMIN — FETCH & MANAGE APPOINTMENTS (Guests/Notes hidden in table)
 // ================================================================
 document.addEventListener("DOMContentLoaded", () => {
+  const API = window.API; // Use global API
   const apptBody = document.getElementById("appointmentsBody");
   const apptModal = document.getElementById("apptModal");
   const apptClose = document.getElementById("apptClose");
@@ -478,13 +478,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // modal fields
   const aName = document.getElementById("aName");
   const aEmail = document.getElementById("aEmail");
-  const aService = document.getElementById("aService"); // NEW
+  const aService = document.getElementById("aService");
   const aGuests = document.getElementById("aGuests");
   const aNotes = document.getElementById("aNotes");
   const aDate = document.getElementById("aDate");
   const aTime = document.getElementById("aTime");
   const aStatus = document.getElementById("aStatus");
-
 
   // buttons
   const btnConfirm = document.getElementById("btnConfirmAppt");
@@ -504,36 +503,34 @@ document.addEventListener("DOMContentLoaded", () => {
   // =======================================================
   // 🔁 Fetch All Appointments
   // =======================================================
-const APPT_PAGE_SIZE = 10;
-let apptPage = 1;
+  const APPT_PAGE_SIZE = 10;
+  let apptPage = 1;
 
-async function fetchAppointments(page = 1) {
-  try {
-    const params = new URLSearchParams({ limit: String(APPT_PAGE_SIZE), page: String(page) });
-    const url = `${API}/api/bookings?${params.toString()}`;
-    const data = await fetchJSON(url);
+  async function fetchAppointments(page = 1) {
+    try {
+      const params = new URLSearchParams({ limit: String(APPT_PAGE_SIZE), page: String(page) });
+      const url = `${API}/api/bookings?${params.toString()}`;
+      const data = await fetchJSON(url);
 
-    if (!data.success) throw new Error(data.message || "Failed to load appointments");
+      if (!data.success) throw new Error(data.message || "Failed to load appointments");
 
-    appointments = data.bookings || [];
-    apptPage = data.page || 1;
+      appointments = data.bookings || [];
+      apptPage = data.page || 1;
 
-    renderAppointments(appointments);
+      renderAppointments(appointments);
 
-    const apptPager = document.getElementById("appointmentsPagination");
-    buildPager(apptPager, data.totalPages || 1, apptPage, (go) => fetchAppointments(go));
+      const apptPager = document.getElementById("appointmentsPagination");
+      buildPager(apptPager, data.totalPages || 1, apptPage, (go) => fetchAppointments(go));
 
-    console.log(`✅ Appointments page ${apptPage}: ${appointments.length}`);
-  } catch (err) {
-    console.error("❌ Error loading appointments:", err);
-    apptBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">⚠️ Failed to load appointments<br>${err.message}</td></tr>`;
-    const apptPager = document.getElementById("appointmentsPagination");
-    if (apptPager) apptPager.innerHTML = "";
+      console.log(`✅ Appointments page ${apptPage}: ${appointments.length}`);
+    } catch (err) {
+      console.error("❌ Error loading appointments:", err);
+      apptBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">⚠️ Failed to load appointments<br>${err.message}</td></tr>`;
+      const apptPager = document.getElementById("appointmentsPagination");
+      if (apptPager) apptPager.innerHTML = "";
+    }
   }
-}
-window._fetchAppointments = fetchAppointments;
-
-
+  window._fetchAppointments = fetchAppointments;
 
   // =======================================================
   // 🧾 Render Appointments Table (Guests/Notes hidden)
@@ -553,16 +550,16 @@ window._fetchAppointments = fetchAppointments;
       tr.dataset.status = b.status || "Pending";
 
       tr.innerHTML = `
-  <td>${b.name}</td>
-  <td>${b.email}</td>
-  <td>${b.service || "General Consultation"}</td>
-  <td>${b.date}</td>
-  <td>${b.time}</td>
-  <td class="status">${b.status || "Pending"}</td>
-  <td>
-    <button class="editAppt btn btn-sm btn-outline-primary" data-id="${b._id}">Edit</button>
-  </td>
-`;
+        <td>${b.name}</td>
+        <td>${b.email}</td>
+        <td>${b.service || "General Consultation"}</td>
+        <td>${b.date}</td>
+        <td>${b.time}</td>
+        <td class="status">${b.status || "Pending"}</td>
+        <td>
+          <button class="editAppt btn btn-sm btn-outline-primary" data-id="${b._id}">Edit</button>
+        </td>
+      `;
 
       apptBody.appendChild(tr);
     });
@@ -581,17 +578,16 @@ window._fetchAppointments = fetchAppointments;
 
     currentAppt = appt;
 
-aName.textContent = appt.name;
-aEmail.textContent = appt.email;
-aService.textContent = appt.service || "General Consultation"; // NEW
-aGuests.textContent = appt.guests && appt.guests.length
-  ? (Array.isArray(appt.guests) ? appt.guests.join(", ") : appt.guests)
-  : "—";
-aNotes.textContent = appt.notes || "—";
-aDate.textContent = appt.date;
-aTime.textContent = appt.time;
-aStatus.textContent = appt.status || "Pending";
-
+    aName.textContent = appt.name;
+    aEmail.textContent = appt.email;
+    aService.textContent = appt.service || "General Consultation";
+    aGuests.textContent = appt.guests && appt.guests.length
+      ? (Array.isArray(appt.guests) ? appt.guests.join(", ") : appt.guests)
+      : "—";
+    aNotes.textContent = appt.notes || "—";
+    aDate.textContent = appt.date;
+    aTime.textContent = appt.time;
+    aStatus.textContent = appt.status || "Pending";
 
     reschedFields.hidden = true;
     newDate.value = "";
@@ -612,81 +608,71 @@ aStatus.textContent = appt.status || "Pending";
     if (e.target === apptModal) closeApptModal();
   });
 
-// =======================================================
-// ✅ Update Appointment Status
-// =======================================================
-// ✅ Update Appointment Status (hits /status and guards non-JSON errors)
-async function updateAppointmentStatus(status) {
-  if (!currentAppt) return;
-  try {
-    const res = await fetch(
-      `http://localhost:3000/api/bookings/${currentAppt._id}/status`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status })
-      }
-    );
+  // =======================================================
+  // ✅ Update Appointment Status
+  // =======================================================
+  async function updateAppointmentStatus(status) {
+    if (!currentAppt) return;
+    try {
+      const res = await fetch(
+        `${API}/api/bookings/${currentAppt._id}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status })
+        }
+      );
 
-    const text = await res.text();                      // handle HTML error pages
-    if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0,200)}`);
+      const text = await res.text();
+      if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0,200)}`);
 
-    let data;
-    try { data = JSON.parse(text); }                    // server should return JSON
-    catch { throw new Error("Server did not return JSON."); }
+      let data;
+      try { data = JSON.parse(text); }
+      catch { throw new Error("Server did not return JSON."); }
 
-    if (!data.success) throw new Error(data.message || "Update failed");
+      if (!data.success) throw new Error(data.message || "Update failed");
 
-tOK(`Appointment ${status}`, 'Status updated successfully.');
-closeApptModal();
-fetchAppointments();
-  } catch (err) {
-console.error("❌ Failed to update appointment:", err);
-tErr('Appointments', 'Could not update status.');
-
+      tOK(`Appointment ${status}`, 'Status updated successfully.');
+      closeApptModal();
+      fetchAppointments();
+    } catch (err) {
+      console.error("❌ Failed to update appointment:", err);
+      tErr('Appointments', 'Could not update status.');
+    }
   }
-}
 
+  // =======================================================
+  // 🔁 Reschedule Appointment
+  // =======================================================
+  async function rescheduleAppointment(newD, newT) {
+    if (!currentAppt) return;
+    try {
+      const res = await fetch(
+        `${API}/api/bookings/${currentAppt._id}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newDate: newD, newTime: newT })
+        }
+      );
 
+      const text = await res.text();
+      if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0,200)}`);
 
-// =======================================================
-// 🔁 Reschedule Appointment
-// =======================================================
-// 🔁 Reschedule Appointment
-async function rescheduleAppointment(newD, newT) {
-  if (!currentAppt) return;
-  try {
-    const res = await fetch(
-      `http://localhost:3000/api/bookings/${currentAppt._id}/status`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newDate: newD, newTime: newT })   // ✅ correct payload
-      }
-    );
+      let data;
+      try { data = JSON.parse(text); }
+      catch { throw new Error("Server did not return JSON."); }
 
-    const text = await res.text();
-    if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0,200)}`);
+      if (!data.success) throw new Error(data.message || "Reschedule failed");
 
-    let data;
-    try { data = JSON.parse(text); }
-    catch { throw new Error("Server did not return JSON."); }
-
-    if (!data.success) throw new Error(data.message || "Reschedule failed");
-
-tOK('Appointment rescheduled', 'New date/time saved.');
-closeApptModal();
-fetchAppointments();
-
-  } catch (err) {
-console.error("❌ Failed to reschedule:", err);
-tErr('Appointments', 'Could not reschedule.');
-
+      tOK('Appointment rescheduled', 'New date/time saved.');
+      closeApptModal();
+      fetchAppointments();
+    } catch (err) {
+      console.error("❌ Failed to reschedule:", err);
+      tErr('Appointments', 'Could not reschedule.');
+    }
   }
-}
-
-
-
 
   // =======================================================
   // 🎛️ Button Actions
@@ -710,9 +696,11 @@ tErr('Appointments', 'Could not reschedule.');
   fetchAppointments();
 });
 
-
-
+// ================================================================
+// 📦 INVENTORY MANAGEMENT
+// ================================================================
 document.addEventListener('DOMContentLoaded', () => {
+  const API = window.API; // Use global API
   const invTable   = document.getElementById('inventoryTable');
   const invBody    = document.getElementById('inventoryBody');
 
@@ -788,168 +776,152 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === addModal) closeModal();
   });
 
+  // Save (Add or Edit)
+  addForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-// Save (Add or Edit)
-addForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
+    const name  = pName.value.trim();
+    const price = parseFloat(pPrice.value || '0');
+    const cat   = pCategory.value.trim();
+    const stock = parseInt(pStock.value || '0', 10);
+    const desc  = pDesc.value.trim();
 
-  const name  = pName.value.trim();
-  const price = parseFloat(pPrice.value || '0');
-  const cat   = pCategory.value.trim();
-  const stock = parseInt(pStock.value || '0', 10);
-  const desc  = pDesc.value.trim();
-
-  if (!name || isNaN(price)) {
-    alert('Please complete the required fields.');
-    return;
-  }
-
-  try {
-    const fd = new FormData();
-    fd.append('title', name);
-    fd.append('price', String(price));
-    fd.append('stock', String(stock));
-    fd.append('category', cat);
-    fd.append('description', desc);
-    if (pImage.files && pImage.files[0]) fd.append('image', pImage.files[0]);
-
-    if (mode === 'add') {
-      await apiCreateProductFD(fd);                    // 🔵 CREATE (logs PRODUCT_CREATED)
-    } else {
-      const id = pId.value || editRow?.dataset.id;
-      if (!id) throw new Error('Missing product id for update');
-      await apiUpdateProductFD(id, fd);                // 🟢 UPDATE (already logs PRODUCT_UPDATED)
+    if (!name || isNaN(price)) {
+      alert('Please complete the required fields.');
+      return;
     }
 
-await loadProductsIntoTable();
-tOK(mode === 'add' ? 'Product added' : 'Product updated',
-    mode === 'add' ? 'Item was added to inventory.' : 'Changes saved.');
-closeModal();
-addForm.reset();
-return;
+    try {
+      const fd = new FormData();
+      fd.append('title', name);
+      fd.append('price', String(price));
+      fd.append('stock', String(stock));
+      fd.append('category', cat);
+      fd.append('description', desc);
+      if (pImage.files && pImage.files[0]) fd.append('image', pImage.files[0]);
 
-  } catch (apiErr) {
-console.warn('⚠️ API save failed; falling back to local row:', apiErr);
-tErr('Save failed', 'Using local fallback row (not persisted).');
+      if (mode === 'add') {
+        await apiCreateProductFD(fd);
+      } else {
+        const id = pId.value || editRow?.dataset.id;
+        if (!id) throw new Error('Missing product id for update');
+        await apiUpdateProductFD(id, fd);
+      }
 
-  }
+      await loadProductsIntoTable();
+      tOK(mode === 'add' ? 'Product added' : 'Product updated',
+          mode === 'add' ? 'Item was added to inventory.' : 'Changes saved.');
+      closeModal();
+      addForm.reset();
+      return;
 
-  // Fallback only if API failed (keeps UX responsive)
-  if (mode === 'add') {
-    const tr = document.createElement('tr');
-    tr.dataset.status = stock === 0 ? 'OOS' : (stock <= 5 ? 'LOW' : 'OK');
-    tr.dataset.desc = desc;
-    tr.innerHTML = `
-      <td>${name}</td>
-      <td>₱${price.toFixed(2)}</td>
-      <td>${cat}</td>
-      <td class="stock">${stock}</td>
-      <td><button class="invEdit">Edit</button></td>
-    `;
-invBody.prepend(tr);
-tInfo('Local preview only', 'Row added locally. Sync later.');
+    } catch (apiErr) {
+      console.warn('⚠️ API save failed; falling back to local row:', apiErr);
+      tErr('Save failed', 'Using local fallback row (not persisted).');
+    }
 
-  } else if (editRow) {
-    editRow.children[0].textContent = name;
-    editRow.children[1].textContent = `₱${price.toFixed(2)}`;
-    editRow.children[2].textContent = cat;
-    editRow.querySelector('.stock').textContent = stock;
-    editRow.dataset.desc = desc;
-    editRow.dataset.status = stock === 0 ? 'OOS' : (stock <= 5 ? 'LOW' : 'OK');
-  }
+    // Fallback only if API failed (keeps UX responsive)
+    if (mode === 'add') {
+      const tr = document.createElement('tr');
+      tr.dataset.status = stock === 0 ? 'OOS' : (stock <= 5 ? 'LOW' : 'OK');
+      tr.dataset.desc = desc;
+      tr.innerHTML = `
+        <td>${name}</td>
+        <td>₱${price.toFixed(2)}</td>
+        <td>${cat}</td>
+        <td class="stock">${stock}</td>
+        <td><button class="invEdit">Edit</button></td>
+      `;
+      invBody.prepend(tr);
+      tInfo('Local preview only', 'Row added locally. Sync later.');
 
-  closeModal();
-  addForm.reset();
-});
+    } else if (editRow) {
+      editRow.children[0].textContent = name;
+      editRow.children[1].textContent = `₱${price.toFixed(2)}`;
+      editRow.children[2].textContent = cat;
+      editRow.querySelector('.stock').textContent = stock;
+      editRow.dataset.desc = desc;
+      editRow.dataset.status = stock === 0 ? 'OOS' : (stock <= 5 ? 'LOW' : 'OK');
+    }
 
-
+    closeModal();
+    addForm.reset();
+  });
 
   // Delete (with confirm)
   btnDelete.addEventListener('click', () => {
     if (!editRow) return;
     const name = editRow.children[0].textContent.trim();
-tAsk('Delete product?', `Remove "${name}" permanently?`, 'Delete', 'Cancel').then((ok) => {
-  if (!ok) return;
-  // TODO: call backend DELETE here when wired; for now remove locally:
-  editRow.remove();
-  tOK('Product deleted', `"${name}" removed from table.`);
-  closeModal();
+    tAsk('Delete product?', `Remove "${name}" permanently?`, 'Delete', 'Cancel').then((ok) => {
+      if (!ok) return;
+      // TODO: call backend DELETE here when wired; for now remove locally:
+      editRow.remove();
+      tOK('Product deleted', `"${name}" removed from table.`);
+      closeModal();
+    });
+  });
+
+  // === Inventory API helpers (ADD + LIST) ===
+  async function apiCreateProductFD(formData) {
+    const res = await fetch(`${API}/api/products`, {
+      method: 'POST',
+      headers: { ...window.authHeader() }, // Use window.authHeader directly
+      body: formData
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Save failed');
+    return json.product;
+  }
+
+  async function apiUpdateProductFD(id, formData) {
+    const res = await fetch(`${API}/api/products/${id}`, {
+      method: 'PUT',
+      headers: { ...window.authHeader() }, // Use window.authHeader directly
+      body: formData
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Update failed');
+    return json.product;
+  }
+
+  async function apiListProducts() {
+    const res = await fetch(`${API}/api/products`);
+    if (!res.ok) throw new Error('Failed to fetch products');
+    return res.json();
+  }
+
+  function renderInvFromServer(products) {
+    const invBody = document.getElementById('inventoryBody');
+    if (!invBody) return;
+    if (!products.length) {
+      invBody.innerHTML = `<tr><td colspan="5" class="text-muted">No products yet</td></tr>`;
+      return;
+    }
+    invBody.innerHTML = products.map(p => `
+      <tr data-id="${p._id}" data-desc="${(p.description||'').replace(/"/g,'&quot;')}"
+          data-status="${(p.stock||0)===0 ? 'OOS' : ((p.stock||0)<=5 ? 'LOW' : 'OK')}">
+        <td>${p.title ?? '-'}</td>
+        <td>₱${Number(p.price||0).toFixed(2)}</td>
+        <td>${p.category ?? '-'}</td>
+        <td class="stock">${p.stock ?? 0}</td>
+        <td><button class="invEdit">Edit</button></td>
+      </tr>
+    `).join('');
+  }
+
+  async function refreshInventoryFromServer() {
+    try {
+      const list = await apiListProducts();
+      renderInvFromServer(list);
+    } catch (e) {
+      console.error('Inventory load error:', e);
+    }
+  }
 });
 
-  });
-
-  // 🔄 REMOVED: initial DB fetch on page load (you asked not to include DB items yet)
-  // try { refreshInventoryFromServer && refreshInventoryFromServer(); } catch (e) {}
-});
-
-// === Inventory API helpers (ADD + LIST) ===
-const API_BASE = 'http://localhost:3000';
-
-function authHeader() {
-  const t = localStorage.getItem('token');
-  return t ? { Authorization: `Bearer ${t}` } : {};
-}
-
-async function apiCreateProductFD(formData) {
-  const res = await fetch(`${API_BASE}/api/products`, {
-    method: 'POST',
-    headers: { ...authHeader() }, // 👈 add token so logs can attribute the admin
-    body: formData
-  });
-  const json = await res.json();
-  if (!res.ok || !json.success) throw new Error(json.message || 'Save failed');
-  return json.product; // created product document
-}
-
-async function apiUpdateProductFD(id, formData) {
-  const res = await fetch(`${API_BASE}/api/products/${id}`, {
-    method: 'PUT',
-    headers: { ...authHeader() }, // 👈 token for logging
-    body: formData                // keep multipart for optional image change
-  });
-  const json = await res.json();
-  if (!res.ok || !json.success) throw new Error(json.message || 'Update failed');
-  return json.product;
-}
-
-
-// These helpers are kept for later use but NOT called right now.
-async function apiListProducts() {
-  const res = await fetch(`${API_BASE}/api/products`);
-  if (!res.ok) throw new Error('Failed to fetch products');
-  return res.json();
-}
-
-function renderInvFromServer(products) {
-  const invBody = document.getElementById('inventoryBody');
-  if (!invBody) return;
-  if (!products.length) {
-    invBody.innerHTML = `<tr><td colspan="5" class="text-muted">No products yet</td></tr>`;
-    return;
-  }
-  invBody.innerHTML = products.map(p => `
-    <tr data-id="${p._id}" data-desc="${(p.description||'').replace(/"/g,'&quot;')}"
-        data-status="${(p.stock||0)===0 ? 'OOS' : ((p.stock||0)<=5 ? 'LOW' : 'OK')}">
-      <td>${p.title ?? '-'}</td>               <!-- ✅ correct key -->
-      <td>₱${Number(p.price||0).toFixed(2)}</td>
-      <td>${p.category ?? '-'}</td>
-      <td class="stock">${p.stock ?? 0}</td>
-      <td><button class="invEdit">Edit</button></td>
-    </tr>
-  `).join('');
-}
-
-
-async function refreshInventoryFromServer() {
-  try {
-    const list = await apiListProducts();
-    renderInvFromServer(list);
-  } catch (e) {
-    console.error('Inventory load error:', e);
-  }
-}
 // ========= Admin Logs (client) =========
 (function () {
+  const API = window.API; // Use global API
   const tbody = document.getElementById('logsBody');
   const modal = document.getElementById('logModal');
   const mClose = document.getElementById('logClose');
@@ -970,30 +942,29 @@ async function refreshInventoryFromServer() {
   };
   const esc = (s = '') => s.replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-const LOGS_PAGE_SIZE = 10;
-let logsPage = 1;
+  const LOGS_PAGE_SIZE = 10;
+  let logsPage = 1;
 
-async function fetchLogs(page = 1) {
-  try {
-    tbody.innerHTML = `<tr><td colspan="4" class="text-muted">Loading…</td></tr>`;
-    const params = new URLSearchParams({ limit: String(LOGS_PAGE_SIZE), page: String(page) });
-    const res = await fetch(`${API}/api/admin-logs?${params.toString()}`);
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message || 'Failed');
+  async function fetchLogs(page = 1) {
+    try {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-muted">Loading…</td></tr>`;
+      const params = new URLSearchParams({ limit: String(LOGS_PAGE_SIZE), page: String(page) });
+      const res = await fetch(`${API}/api/admin-logs?${params.toString()}`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Failed');
 
-    render(data.logs || []);
+      render(data.logs || []);
 
-    const pager = document.getElementById('logsPagination'); // 👈 add in HTML
-    logsPage = data.page || 1;
-    buildPager(pager, data.totalPages || 1, logsPage, (go) => fetchLogs(go));
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Failed to load logs</td></tr>`;
-    console.error(e);
-    const pager = document.getElementById('logsPagination');
-    if (pager) pager.innerHTML = "";
+      const pager = document.getElementById('logsPagination');
+      logsPage = data.page || 1;
+      buildPager(pager, data.totalPages || 1, logsPage, (go) => fetchLogs(go));
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Failed to load logs</td></tr>`;
+      console.error(e);
+      const pager = document.getElementById('logsPagination');
+      if (pager) pager.innerHTML = "";
+    }
   }
-}
-
 
   function render(list) {
     if (!list.length) {
@@ -1029,18 +1000,17 @@ async function fetchLogs(page = 1) {
     // ✅ center via flex
     modal.style.removeProperty('display');
     modal.classList.add('show');
-    document.body.classList.add('modal-open'); // optional (prevents page scroll)
+    document.body.classList.add('modal-open');
   }
 
   function closeModal() {
     modal.classList.remove('show');
-    modal.style.removeProperty('display'); // clean up any inline
+    modal.style.removeProperty('display');
     document.body.classList.remove('modal-open');
   }
 
   mClose.addEventListener('click', closeModal);
   window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-
 
   // Load when switching to Logs tab
   document.querySelectorAll('.section-btn').forEach((b) => {
@@ -1055,10 +1025,14 @@ async function fetchLogs(page = 1) {
   if (hash === 'logs' || last === 'logs') fetchLogs();
 })();
 
+// ================================================================
+// 📦 PRODUCTS TABLE LOADING
+// ================================================================
 const PROD_PAGE_SIZE = 10;
 let prodPage = 1;
 
 async function loadProductsIntoTable(page = 1) {
+  const API = window.API; // Use global API
   const tbody = document.getElementById('inventoryBody');
   const pager = document.getElementById('inventoryPagination');
   if (!tbody) return;
@@ -1098,271 +1072,379 @@ async function loadProductsIntoTable(page = 1) {
 
     buildPager(pager, totalPages, prodPage, (go) => loadProductsIntoTable(go));
   } catch (err) {
-console.error('❌ loadProducts error:', err);
-tbody.innerHTML = `<tr><td colspan="5" class="text-danger">Failed to load products<br>${err.message}</td></tr>`;
-if (pager) pager.innerHTML = "";
-tErr('Inventory', 'Failed to load products.');
-
+    console.error('❌ loadProducts error:', err);
+    tbody.innerHTML = `<tr><td colspan="5" class="text-danger">Failed to load products<br>${err.message}</td></tr>`;
+    if (pager) pager.innerHTML = "";
+    tErr('Inventory', 'Failed to load products.');
   }
 }
 
-
-// call this when the Inventory tab is activated
-// and optionally at page init if Inventory is active by default
-
-
-
-
-
-
-
-// /js/admin-calendar.js
+// ================================================================
+// 📅 ADMIN CALENDAR MANAGEMENT
+// ================================================================
 document.addEventListener('DOMContentLoaded', () => {
+  const API = window.API; // Use global API
   const calEl = document.getElementById('adminCalendar');
   if (!calEl) return;
 
-  // --------- Simple persistence (swap with your API later) ---------
-  const STORAGE_KEY = 'admin_unavailable_events_v1';
-  const load = () => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    catch { return []; }
+  // ---------- Helpers ----------
+  const toLocalYMD = (d) => {
+    const dt = (d instanceof Date) ? d : new Date(d);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   };
-  const save = (events) => localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-  const snapshot = () => calendar.getEvents().map(e => ({
-    id: e.id,
-    title: e.title,
-    start: e.startStr,
-    end: e.endStr,
-    allDay: e.allDay,
-    note: e.extendedProps?.note || ''
-  }));
 
-  // --------- Modal controls ---------
-  const dlg = document.getElementById('availabilityModal');
-  const blockAllDay = document.getElementById('blockAllDay');
-  const selectedDate = document.getElementById('selectedDate');
-  const eventId = document.getElementById('eventId');
-  const availStart = document.getElementById('availStart');
-  const availEnd = document.getElementById('availEnd');
-  const availNote = document.getElementById('availNote');
-  const timeRow = document.querySelector('[data-time-range]');
-  const btnSave = document.getElementById('saveBlock');
-  const btnDelete = document.getElementById('deleteBlock');
-  
-  const toggleTimeRow = () => {
-    timeRow.style.display = blockAllDay.checked ? 'none' : '';
+  const addDaysYMD = (ymd, n) => {
+    const [y, m, d] = ymd.split('-').map(Number);
+    const dt = new Date(y, m - 1, d + n);
+    return toLocalYMD(dt);
   };
+
+  const to24h = (s) => {
+    s = String(s || '').trim().toLowerCase();
+    if (/^\d{2}:\d{2}$/.test(s)) return s;
+    if (/^\d{1}:\d{2}$/.test(s)) {
+      const [h, m] = s.split(':').map(Number);
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    }
+    const m = s.match(/^(\d{1,2}):(\d{2})\s*(a|p)m$/i);
+    if (m) {
+      let h = parseInt(m[1],10), mm = m[2], ap = m[3];
+      if (ap === 'p' && h !== 12) h += 12;
+      if (ap === 'a' && h === 12) h = 0;
+      return `${String(h).padStart(2,'0')}:${mm}`;
+    }
+    if (/^\d{1,2}$/.test(s)) return `${String(parseInt(s,10)).padStart(2,'0')}:00`;
+    return s;
+  };
+
+  const hhmmPlus = (hhmm, minutes = 60) => {
+    const [h, m] = hhmm.split(':').map(Number);
+    const d = new Date(2000,0,1,h,m,0,0);
+    d.setMinutes(d.getMinutes() + minutes);
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  };
+
+  // ---------- API ----------
+  async function apiListBlocks(startYMD, endYMD) {
+    const qs = new URLSearchParams();
+    if (startYMD) qs.set('start', startYMD);
+    if (endYMD)   qs.set('end',   endYMD);
+    const res = await fetch(`${API}/api/blocks?` + qs.toString(), { 
+      headers: { ...window.authHeader() } // Use window.authHeader directly
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Load failed');
+    return json.blocks || [];
+  }
+
+  async function apiListBookings(startYMD, endYMD) {
+    const qs = new URLSearchParams();
+    if (startYMD) qs.set('start', startYMD);
+    if (endYMD)   qs.set('end',   endYMD);
+    const res = await fetch(`${API}/api/bookings?` + qs.toString(), { 
+      headers: { ...window.authHeader() } // Use window.authHeader directly
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Load failed');
+    return json.bookings || [];
+  }
+
+  // ---------- Modal refs ----------
+  const dlg         = document.getElementById('availabilityModal');
+  const blockAllDay = document.getElementById('blockAllDay');
+  const selectedDate= document.getElementById('selectedDate');
+  const eventId     = document.getElementById('eventId');
+  const availStart  = document.getElementById('availStart');
+  const availEnd    = document.getElementById('availEnd');
+  const availNote   = document.getElementById('availNote');
+  const timeRow     = document.querySelector('[data-time-range]');
+  const btnSave     = document.getElementById('saveBlock');
+  const btnDelete   = document.getElementById('deleteBlock');
+
+  const toggleTimeRow = () => { timeRow.style.display = blockAllDay.checked ? 'none' : ''; };
   blockAllDay.addEventListener('change', toggleTimeRow);
 
-  // Helpers
-  const toISODate = (d) => d.toISOString().slice(0,10); // YYYY-MM-DD
-  const addDays = (dateStr, n) => {
-    const d = new Date(dateStr + 'T00:00:00');
-    d.setDate(d.getDate() + n);
-    return toISODate(d);
-  };
-// Local YYYY-MM-DD (no UTC conversion)
-const toLocalYMD = (d) => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
-
-// Add days to a YYYY-MM-DD string in local time
-const addDaysYMD = (ymd, n) => {
-  const [y, m, d] = ymd.split('-').map(Number);
-  const dt = new Date(y, m - 1, d + n); // local
-  return toLocalYMD(dt);
-};
-
-  let currentSelection = null; // FullCalendar selection for new blocks
-  let editingEvent = null;     // FullCalendar EventApi for edit/delete
+  let editingEvent = null;
 
   const calendar = new FullCalendar.Calendar(calEl, {
-  timeZone: 'local',
-  initialView: 'dayGridMonth',
-  headerToolbar: false,          // we use external Prev/Today/Next buttons
-  firstDay: 0,                   // Sunday
-  height: 'auto',
-  fixedWeekCount: false,
-  selectable: true,
-  selectMirror: true,
-  editable: true,                // allow drag/resize
+    timeZone: 'local',
+    initialView: 'dayGridMonth',
+    headerToolbar: false,
+    firstDay: 0,
+    height: 'auto',
+    fixedWeekCount: false,
+    selectable: true,
+    selectMirror: true,
+    editable: true,
+    eventDisplay: 'block',
+    displayEventTime: false,
+    dayMaxEventRows: 2,
+    eventOrder: '-allDay,start,title',
 
-  // Make timed events render as pills and use your red
-  eventDisplay: 'block',
-  eventColor: '#ef4444',         // pill background
-  eventTextColor: '#ffffff',     // pill text
-
-  // Show both an all-day block and a timed block on the same date
-  dayMaxEventRows: 2,
-  // Prefer showing timed blocks before all-day when both exist
-  eventOrder: '-allDay,start,title',
-
-  // Hide FC’s automatic leading time (“8a …”) — we’ll render our own label
-  displayEventTime: false,
-
-  // Render chip text:
-  // - for TIMED blocks → "8 am to 10 am"
-  // - for ALL-DAY blocks → use the event title (e.g., "Not Available")
-  eventContent(arg) {
-    const e = arg.event;
-    if (!e.allDay && e.start && e.end) {
-      const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
-      const s = fmt.format(e.start).toLowerCase().replace(' ', '');
-      const t = fmt.format(e.end).toLowerCase().replace(' ', '');
-      const el = document.createElement('div');
-      el.textContent = `${s} to ${t}`;
-      return { domNodes: [el] };
-    }
-    // fallback: just show the title (for all-day)
-    return { html: e.title || '' };
-  },
-
-  // Replace the overflow label
-  moreLinkContent(arg) {
-    const hidden = arg.hiddenSegs || [];
-    if (hidden.length === 1) {
-      const t = hidden[0]?.eventRange?.def?.title || arg.text;
-      return { text: t };                 // shows the hidden event’s actual title
-    }
-    return { text: arg.text };            // keep default “+N more”
-  },
-  // Keep the link clickable (opens FullCalendar popover)
-  moreLinkClick: 'popover',
-
-  events: load(),    
-
-    // Create NEW block (open modal)
-    select: (info) => {
-      currentSelection = info;
+    dateClick(info) {
       editingEvent = null;
-
-      // Default: in month view we block full day(s)
-      blockAllDay.checked = (calendar.view.type === 'dayGridMonth') || info.allDay;
+      eventId.value = '';
+      selectedDate.value = toLocalYMD(info.date);
+      blockAllDay.checked = true;
       toggleTimeRow();
-
-      // Prefill date/time
-      selectedDate.value = toLocalYMD(info.start);
       availStart.value = '08:00';
       availEnd.value   = '16:00';
       availNote.value  = '';
-      eventId.value    = '';
-
       dlg.showModal();
     },
 
-    // Edit existing block (open modal prefilled)
-    eventClick: (clickInfo) => {
-      currentSelection = null;
-      editingEvent = clickInfo.event;
+    eventContent(arg) {
+      const e = arg.event;
+      const container = document.createElement('div');
+      container.style.lineHeight = '1.1';
 
-      blockAllDay.checked = editingEvent.allDay;
-      toggleTimeRow();
-
-      selectedDate.value = toLocalYMD(editingEvent.start);
-      eventId.value = editingEvent.id || '';
-      availNote.value = editingEvent.extendedProps?.note || '';
-
-      if (!editingEvent.allDay) {
-        const fmt = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-        availStart.value = fmt(editingEvent.start);
-        // if end missing, fall back to +1 hour
-        const end = editingEvent.end || new Date(editingEvent.start.getTime() + 60*60*1000);
-        availEnd.value = fmt(end);
+      if (!e.allDay && e.start && e.end) {
+        const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
+        const s = fmt.format(e.start).toLowerCase().replace(' ', '');
+        const t = fmt.format(e.end).toLowerCase().replace(' ', '');
+        const timeLine = document.createElement('div');
+        timeLine.textContent = `${s} – ${t}`;
+        container.appendChild(timeLine);
       }
 
-      dlg.showModal();
+      const titleLine = document.createElement('div');
+      titleLine.textContent = e.title || (e.extendedProps?.type === 'block' ? 'Not Available' : '');
+      container.appendChild(titleLine);
+
+      return { domNodes: [container] };
     },
 
-    // Persist when dragging/resizing
-    eventDrop: () => save(snapshot()),
-    eventResize: () => save(snapshot())
+    // Load BOTH: availability blocks + bookings
+    async datesSet(info) {
+      try {
+        const startYMD = toLocalYMD(info.start);
+        const endYMD   = toLocalYMD(info.end);
+
+        const [blocks, bookings] = await Promise.all([
+          apiListBlocks(startYMD, endYMD),
+          apiListBookings(startYMD, endYMD)
+        ]);
+
+        calendar.removeAllEvents();
+
+        // 1) Blocks (red)
+        blocks.forEach(b => {
+          if (b.allDay) {
+            calendar.addEvent({
+              id: b._id,
+              title: 'Not Available',
+              start: b.date,
+              end: addDaysYMD(b.date, 1),
+              allDay: true,
+              color: '#ef4444',
+              textColor: '#ffffff',
+              extendedProps: { type: 'block', note: b.note }
+            });
+          } else {
+            calendar.addEvent({
+              id: b._id,
+              title: 'Not Available',
+              start: `${b.date}T${b.start}`,
+              end:   `${b.date}T${b.end}`,
+              allDay: false,
+              color: '#ef4444',
+              textColor: '#ffffff',
+              extendedProps: { type: 'block', note: b.note }
+            });
+          }
+        });
+
+        // 2) Bookings (blue if Pending/Rescheduled, green if Confirmed)
+        bookings.forEach(b => {
+          if ((b.status || 'Pending') === 'Cancelled') return;
+          const t = to24h(b.time);
+          const start = `${b.date}T${t}`;
+          const end   = `${b.date}T${hhmmPlus(t, 60)}`;
+
+          calendar.addEvent({
+            id: b._id,
+            title: `${b.service || 'Booking'} — ${b.name}`,
+            start, end, allDay: false,
+            color: (b.status === 'Confirmed') ? '#22c55e' : '#3b82f6',
+            textColor: '#ffffff',
+            extendedProps: { type: 'booking', status: b.status, email: b.email }
+          });
+        });
+      } catch (e) {
+        console.error('Calendar load error:', e);
+        tErr('Calendar', 'Failed to load items.');
+      }
+    },
+
+    // Only blocks are draggable/resizable; bookings are not
+    async eventDrop(info) {
+      const e = info.event;
+      if (e.extendedProps?.type !== 'block') {
+        info.revert();
+        return;
+      }
+      try {
+        const payload = e.allDay
+          ? { date: toLocalYMD(e.start), allDay: true }
+          : {
+              date: toLocalYMD(e.start),
+              allDay: false,
+              start: e.start.toTimeString().slice(0,5),
+              end:   (e.end || new Date(e.start.getTime()+60*60*1000)).toTimeString().slice(0,5),
+            };
+        await apiUpdateBlock(e.id, payload);
+        tOK('Availability', 'Block updated.');
+      } catch (err) {
+        info.revert();
+        tErr('Availability', 'Could not update block.');
+      }
+    },
+
+    async eventResize(info) {
+      const e = info.event;
+      if (e.extendedProps?.type !== 'block' || e.allDay) { info.revert(); return; }
+      try {
+        const payload = {
+          date: toLocalYMD(e.start),
+          allDay: false,
+          start: e.start.toTimeString().slice(0,5),
+          end:   (e.end || new Date(e.start.getTime()+60*60*1000)).toTimeString().slice(0,5),
+        };
+        await apiUpdateBlock(e.id, payload);
+        tOK('Availability', 'Block resized.');
+      } catch (err) {
+        info.revert();
+        tErr('Availability', 'Could not resize block.');
+      }
+    },
+
+    // Optional: click to view
+    eventClick(info) {
+      const e = info.event;
+      if (e.extendedProps?.type === 'booking') {
+        tInfo('Booking', `${e.title}`);
+      } else {
+        // open your existing block modal
+        editingEvent = e;
+        eventId.value = e.id || '';
+        selectedDate.value = toLocalYMD(e.start);
+        blockAllDay.checked = e.allDay;
+        toggleTimeRow();
+        if (e.allDay) { availStart.value = '08:00'; availEnd.value = '16:00'; }
+        else {
+          const fmt = (d) => d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
+          availStart.value = fmt(e.start);
+          availEnd.value   = fmt(e.end || new Date(e.start.getTime()+60*60*1000));
+        }
+        availNote.value = e.extendedProps?.note || '';
+        dlg.showModal();
+      }
+    }
   });
 
   calendar.render();
 
-  // --------- External toolbar wiring ---------
+  // toolbar
   document.querySelector('[data-cal-prev]')?.addEventListener('click', () => calendar.prev());
   document.querySelector('[data-cal-next]')?.addEventListener('click', () => calendar.next());
   document.querySelector('[data-cal-today]')?.addEventListener('click', () => calendar.today());
 
-  // Optional: dynamic title if you included [data-cal-title]
-  const titleEl = document.querySelector('[data-cal-title]');
-  const updateTitle = () => { if (titleEl) titleEl.textContent = calendar.view.title; };
-  calendar.on('datesSet', updateTitle);
-  updateTitle();
+  // Save/Delete block from modal
+  btnSave?.addEventListener('click', async () => {
+    const date = selectedDate.value;
+    const note = availNote.value.trim();
+    const id   = eventId.value || null;
 
-  // --------- Modal buttons ---------
-btnSave?.addEventListener('click', () => {
-  const dateStr = selectedDate.value;     // local YYYY-MM-DD
-  const note = availNote.value.trim();
+    if (blockAllDay.checked) {
+      const payload = { date, allDay: true, note };
+      try {
+        if (id) await apiUpdateBlock(id, payload);
+        else {
+          const created = await apiCreateBlock(payload);
+          calendar.addEvent({
+            id: created._id, title: 'Not Available',
+            start: date, end: addDaysYMD(date,1), allDay: true,
+            color: '#ef4444', textColor:'#fff', extendedProps:{ type:'block', note }
+          });
+        }
+        tOK('Availability', 'Block saved.');
+      } catch (e) { tErr('Availability', e.message || 'Save failed.'); }
+      finally { dlg.close(); calendar.refetchEvents?.(); }
+      return;
+    }
 
-  if (blockAllDay.checked) {
-    // ✅ ALL-DAY (use local helpers; end is exclusive)
-    const startYMD = dateStr;
-    const ev = {
-      id: eventId.value || crypto.randomUUID(),
-      title: 'Not Available',
-      start: startYMD,                      // local date, no UTC shift
-      end: addDaysYMD(startYMD, 1),         // next local day (exclusive)
-      allDay: true,
-      backgroundColor: '#ef4444',
-      note
-    };
+    // timed
+    const start = availStart.value;
+    const end   = availEnd.value;
+    if (!start || !end || end <= start) return alert('Please provide a valid time range.');
+    const payload = { date, allDay:false, start, end, note };
 
-    if (editingEvent) editingEvent.remove();
-    calendar.addEvent(ev);
-save(snapshot());
-tOK('Block added', 'Marked as Not Available (all day).');
-dlg.close();
-calendar.unselect();
-return;
-
-  }
-
-  // ⏱️ TIMED RANGE (still local because we build YYYY-MM-DDTHH:mm)
-  const startT = availStart.value || '08:00';
-  const endT   = availEnd.value   || '16:00';
-  if (endT <= startT) {
-    alert('End time must be after start time.');
-    return;
-  }
-
-  const ev = {
-    id: eventId.value || crypto.randomUUID(),
-    title: 'Not Available',
-    start: `${dateStr}T${startT}`,
-    end:   `${dateStr}T${endT}`,
-    allDay: false,
-    backgroundColor: '#ef4444',
-    note
-  };
-
-  if (editingEvent) editingEvent.remove();
-  calendar.addEvent(ev);
-save(snapshot());
-tOK('Block added', 'Marked as Not Available (time range).');
-dlg.close();
-calendar.unselect();
-
-});
-
-
-  btnDelete?.addEventListener('click', () => {
-if (!editingEvent) { dlg.close(); return; }
-tAsk('Remove block?', 'Delete this Not Available block?', 'Remove', 'Cancel').then((ok) => {
-  if (!ok) return;
-  editingEvent.remove();
-  save(snapshot());
-  tOK('Block removed', 'Availability restored.');
-  dlg.close();
-});
+    try {
+      if (id) await apiUpdateBlock(id, payload);
+      else {
+        const created = await apiCreateBlock(payload);
+        calendar.addEvent({
+          id: created._id, title:'Not Available',
+          start: `${date}T${start}`, end:`${date}T${end}`, allDay:false,
+          color:'#ef4444', textColor:'#fff', extendedProps:{ type:'block', note }
+        });
+      }
+      tOK('Availability', 'Block saved.');
+    } catch (e) { tErr('Availability', e.message || 'Save failed.'); }
+    finally { dlg.close(); calendar.refetchEvents?.(); }
   });
 
-  dlg?.addEventListener('close', () => {
-    currentSelection = null;
-    editingEvent = null;
+  btnDelete?.addEventListener('click', async () => {
+    const id = eventId.value;
+    if (!id) { dlg.close(); return; }
+    const ok = await (window.Toast?.confirmToast
+      ? window.Toast.confirmToast({ title:'Remove block?', message:'Delete this Not Available block?', okText:'Remove', cancelText:'Cancel' })
+      : Promise.resolve(confirm('Delete this block?')));
+    if (!ok) return;
+
+    try {
+      await apiDeleteBlock(id);
+      calendar.getEventById(id)?.remove();
+      tOK('Availability', 'Block removed.');
+    } catch (e) { tErr('Availability', e.message || 'Delete failed.'); }
+    finally { dlg.close(); }
   });
+
+  dlg?.addEventListener('close', () => { editingEvent = null; });
+
+  // ---- Blocks API (require admin token) ----
+  async function apiCreateBlock(payload) {
+    const res = await fetch(`${API}/api/blocks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...window.authHeader() },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Create failed');
+    return json.block;
+  }
+
+  async function apiUpdateBlock(id, payload) {
+    const res = await fetch(`${API}/api/blocks/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...window.authHeader() },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Update failed');
+    return json.block;
+  }
+
+  async function apiDeleteBlock(id) {
+    const res = await fetch(`${API}/api/blocks/${id}`, {
+      method: 'DELETE',
+      headers: { ...window.authHeader() }
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Delete failed');
+    return true;
+  }
 });

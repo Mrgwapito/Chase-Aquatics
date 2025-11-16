@@ -24,11 +24,20 @@ if (!cartBadge) {
 
 let cart = loadCartLS();
 
+// 👂 Allow other pages (order_summary / checkout) to force-refresh cart UI
+window.addEventListener('cart:refresh', () => {
+  cart = loadCartLS();
+  updateCartPopup();
+  updateCartBadge();
+});
+
 // ✅ NEW: helpers for one-time merge + normalization
 function mergedFlagKey() {
   const u = currentUser();
   return u?.id ? `cart_merged_${u.id}` : null;
 }
+
+
 function normalizeServerItems(items) {
   return (items || []).map(it => ({
     _id: String(it.productId || it._id),
@@ -136,68 +145,95 @@ const queueFlashToast = (opts) => {
 };
 
 
-
-
-// ===============================================================
-// 🛒 EVENT DELEGATION — WORKS EVEN FOR DYNAMIC PRODUCTS
-// ===============================================================
-document.body.addEventListener('click', function (e) {
-  // ...
-});
-
-
-
   // ===============================================================
   // 🛒 EVENT DELEGATION — WORKS EVEN FOR DYNAMIC PRODUCTS
   // ===============================================================
-  document.body.addEventListener('click', function (e) {
-    const button = e.target.closest('.add-to-cart');
-    if (!button) return;
+document.body.addEventListener('click', function (e) {
+  const button = e.target.closest('.add-to-cart');
+  if (!button) return;
 
-    const product = button.closest('.product-card');
-    if (!product) return;
+  const product = button.closest('.product-card');
+  if (!product) return;
 
-    const id = product.dataset.id || product.getAttribute('data-id');
-    const title = product.querySelector('h3')?.textContent?.trim() || 'Unnamed Product';
-    const priceText = product.querySelector('p')?.textContent?.trim() || '₱0';
-    const price = parseFloat(priceText.replace(/[₱,/a-z\s]/gi, "")) || 0;
-    const image = product.querySelector('img')?.src || 'images/placeholder.jpg';
-    const description = product.querySelector('.product-description')?.textContent?.trim() || 'No description available.';
+  const id = product.dataset.id || product.getAttribute('data-id');
+  const title = product.querySelector('h3')?.textContent?.trim() || 'Unnamed Product';
+  const priceText = product.querySelector('p')?.textContent?.trim() || '₱0';
+  const price = parseFloat(priceText.replace(/[₱,/a-z\s]/gi, "")) || 0;
+  const image = product.querySelector('img')?.src || 'images/placeholder.jpg';
+  const description =
+    product.querySelector('.product-description')?.textContent?.trim() ||
+    'No description available.';
 
-    if (!id) {
-      console.warn("⚠️ Missing product ID, skipping add to cart");
-      return;
+  if (!id) {
+    console.warn("⚠️ Missing product ID, skipping add to cart");
+    return;
+  }
+
+  // 🔢 Read stock from the card (set in product.js)
+  const rawStock = product.dataset.stock;
+  const maxStock = rawStock != null && rawStock !== '' ? Number(rawStock) : NaN;
+
+  const existingItem = cart.find(item => String(item._id) === String(id));
+  const currentQty = existingItem ? (Number(existingItem.quantity) || 0) : 0;
+  const nextQty = currentQty + 1;
+
+  // ⛔ Case 1: No stock at all
+  if (Number.isFinite(maxStock) && maxStock <= 0) {
+    showToast({
+      title: 'Unavailable',
+      message: 'This product is not available right now.',
+      type: 'warning'
+    });
+    return;
+  }
+
+  // ⛔ Case 2: trying to exceed remaining stock
+  if (Number.isFinite(maxStock) && maxStock >= 0 && nextQty > maxStock) {
+    const remaining = Math.max(0, maxStock - currentQty);
+    const msg = remaining > 0
+      ? `This product only has ${remaining} remaining in stock.`
+      : `You already reached the maximum stock (${maxStock}) for this product.`;
+
+    showToast({
+      title: 'Stock limit reached',
+      message: msg,
+      type: 'warning'
+    });
+    return;
+  }
+
+  if (existingItem) {
+    existingItem.quantity = nextQty;
+    if (Number.isFinite(maxStock)) {
+      existingItem.maxStock = maxStock; // remember max for the popup
     }
+    showToast({
+      title: 'Added to cart',
+      message: `Added another ${existingItem.title}`,
+      type: 'success'
+    });
+  } else {
+    const newItem = { _id: id, title, price, image, description, quantity: 1 };
+    if (Number.isFinite(maxStock)) {
+      newItem.maxStock = maxStock;
+    }
+    cart.push(newItem);
+    showToast({
+      title: 'Added to cart',
+      message: `${title} added to cart!`,
+      type: 'success'
+    });
+  }
 
-    const existingItem = cart.find(item => String(item._id) === String(id));
+  // 🔄 Save + re-render
+  saveCartLS(cart);
+  pushServerCartDebounced(cart);
+  updateCartPopup();
+  updateCartBadge();
+  openCartPopup();
+  animateCartIcon();
+});
 
-    if (existingItem) {
-  existingItem.quantity += 1;
-  showToast({
-    title: 'Added to cart',
-    message: `Added another ${existingItem.title}`,
-    type: 'success'
-  });
-} else {
-  cart.push({ _id: id, title, price, image, description, quantity: 1 });
-  showToast({
-    title: 'Added to cart',
-    message: `${title} added to cart!`,
-    type: 'success'
-  });
-}
-
-
-    // 🔄 Save + Re-render instantly
-saveCartLS(cart);
-pushServerCartDebounced(cart);   // 👈 NEW
-updateCartPopup();
-updateCartBadge();
-openCartPopup();
-animateCartIcon();
-
-
-  });
 
   // ===============================================================
   // 🧾 UPDATE CART POPUP CONTENT (with null safety)
@@ -242,46 +278,66 @@ animateCartIcon();
   // ===============================================================
   // 🔧 CART ITEM CONTROLS (Increase / Decrease / Remove)
   // ===============================================================
-  function attachCartItemEvents() {
-    document.querySelectorAll('.qty-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-        const index = this.getAttribute('data-index');
-        const action = this.getAttribute('data-action');
+function attachCartItemEvents() {
+  document.querySelectorAll('.qty-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const index = this.getAttribute('data-index');
+      const action = this.getAttribute('data-action');
 
-        if (!cart[index]) return;
+      const item = cart[index];
+      if (!item) return;
 
-        if (action === 'increase') {
-          cart[index].quantity++;
-        } else if (action === 'decrease' && cart[index].quantity > 1) {
-          cart[index].quantity--;
+      const maxStock =
+        typeof item.maxStock === 'number' ? item.maxStock : NaN;
+
+      if (action === 'increase') {
+        if (Number.isFinite(maxStock) && maxStock >= 0) {
+          const newQty = (Number(item.quantity) || 0) + 1;
+          if (newQty > maxStock) {
+            const remaining = Math.max(0, maxStock - (Number(item.quantity) || 0));
+            const msg = remaining > 0
+              ? `You can only add ${remaining} more of ${item.title || 'this product'}.`
+              : `You already reached the maximum stock (${maxStock}) for ${item.title || 'this product'}.`;
+
+            showToast({
+              title: 'Stock limit reached',
+              message: msg,
+              type: 'warning'
+            });
+            return;
+          }
         }
+        item.quantity++;
+      } else if (action === 'decrease' && item.quantity > 1) {
+        item.quantity--;
+      }
 
-        saveCartLS(cart);
-        updateCartPopup();
-        updateCartBadge();
-        pushServerCartDebounced(cart);      // keep server in sync
+      saveCartLS(cart);
+      updateCartPopup();
+      updateCartBadge();
+      pushServerCartDebounced(cart);
+    });
+  });
+  
+  // keep your existing remove-btn logic as is
+  document.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const index = this.getAttribute('data-index');
+      if (!cart[index]) return;
+      const removed = cart.splice(index, 1);
+      saveCartLS(cart);
+      updateCartPopup();
+      updateCartBadge();
+      pushServerCartDebounced(cart);
+      showToast({
+        title: 'Removed',
+        message: `${removed[0].title} removed from cart.`,
+        type: 'info'
       });
     });
+  });
+}
 
-    document.querySelectorAll('.remove-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-        const index = this.getAttribute('data-index');
-        if (!cart[index]) return;
-        const removed = cart.splice(index, 1);
-        saveCartLS(cart);
-        updateCartPopup();
-        updateCartBadge();
-        pushServerCartDebounced(cart);      // sync after remove
-        showToast({
-  title: 'Removed',
-  message: `${removed[0].title} removed from cart.`,
-  type: 'info'
-});
-
-
-      });
-    });
-  }
 
   // ===============================================================
   // 🧭 OPEN / CLOSE CART POPUP

@@ -15,6 +15,7 @@ body {
     align-items: center;
     padding:10px;
     box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2); 
+    position: fixed;
 }
 .nav-toggle {
   display: none;
@@ -381,3 +382,36 @@ footer p {
   .faq__question { padding: 14px 16px; }
   .faq__title {font-size: 4vh; margin: 30px 0 50px 0;}
 }
+  .site-footer{ padding:28px 0 16px; }
+
+  /* Center the content and make left/right space equal */
+  .site-footer .footer-wrap{
+    max-width:1200px;         /* adjust to 1140/1320 if you prefer */
+    margin:0 auto;
+    padding:0 24px;           /* equal side gutters */
+  }
+
+  /* Center columns on mobile, left-align on lg+ */
+  .site-footer .row > [class*="col-"]{
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+  }
+  @media (min-width: 992px){
+    .site-footer .row > [class*="col-"]{
+      align-items:flex-start; text-align:left;
+    }
+  }
+
+  /* Subtle divider + tight spacing around copyright */
+  .site-footer .copyright-hr{ margin:14px 0 8px; opacity:.25; }
+  .site-footer .copyright{ margin:0; padding:6px 0 0; text-align:center; }
+
+  /* Footer link styles */
+  .site-footer .legal-link{
+    color: rgba(255,255,255,.9);
+    text-decoration: none;
+  }
+  .site-footer .legal-link:hover{ color:#fff; text-decoration: underline; }
+
+  /* Icon links: lighter by default, bright on hover */
+  .site-footer .hover-white{ color: rgba(255,255,255,.5) !important; }
+  .site-footer .hover-white:hover{ color:#fff !important; }

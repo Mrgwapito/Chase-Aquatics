@@ -18,7 +18,9 @@ const Order = require('./models/orderModel');
 const Product = require('./models/productModel');
 const Cart = require('./models/cartModel');
 const User = require('./models/userModel');
-const Booking = require("./models/bookingModel");
+const Booking = require('./models/bookingModel');
+const Block   = require('./models/blockModel');   // <- correct file/casing
+
 
 // === Admin Logs (model + helper) === mark
 const AdminLog = require('./models/AdminLog');               // <- create models/AdminLog.js if you haven't yet
@@ -265,6 +267,7 @@ function requireAdmin(req, res, next) {
   req.user = payload;
   next();
 }
+
 
 // ================================================================
 // 📧 EMAILJS EMAIL SENDER FUNCTION (CORRECTED FOR YOUR TEMPLATE)
@@ -1232,6 +1235,8 @@ app.put('/api/change-password', async (req, res) => {
 
 // ================================================================
 // 🧾 CREATE ORDER — accepts JSON or multipart (with payReceipt)
+//    Now also triggers EmailJS order confirmation
+//    Search tag: /api/orders (create order)
 // ================================================================
 app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
   try {
@@ -1272,7 +1277,7 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
       sum + (Number(it.price) || 0) * (Number(it.quantity) || 1), 0);
     const totalAmount = subtotal + shipping;
 
-    const order = await Order.create({
+     const order = await Order.create({
       userId, name, email, phone, address,
       cart,
       subtotal, shipping, totalAmount,
@@ -1282,16 +1287,35 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
       status: "Pending",
       paymentMeta: {
         amountSent,
-        receiptUrl
-      }
+        receiptUrl,
+      },
     });
 
-    return res.json({ success:true, message:"Order placed successfully!", order });
+    // Build EmailJS template params so the frontend can send the email
+    const emailTemplate = buildOrderEmailTemplate(order);
+
+    // Optional: still call helper (it will be a no-op unless
+    // EMAILJS_ENABLE_SERVER is set)
+    sendOrderConfirmationEmail(order).catch((err) => {
+      console.error(
+        "❌ Failed to send order confirmation email (server-side):",
+        err
+      );
+    });
+
+    return res.json({
+      success: true,
+      message: "Order placed successfully!",
+      order,
+      emailTemplate, // 👈 this is used by checkout.js
+    });
+
   } catch (err) {
     console.error("POST /api/orders error:", err);
     res.status(500).json({ success:false, message:"Server error creating order", error: err.message });
   }
 });
+
 
 
 // --- auth helper: extracts userId from JWT if present ---
@@ -1806,7 +1830,7 @@ app.post("/api/complete-registration", async (req, res) => {
 
 
 // ================================================================
-// 🔁 FORGOT PASSWORD OTP ROUTE
+// 🔁 FORGOT PASSWORD OTP ROUTE  (EmailJS handled on frontend)
 // ================================================================
 app.post("/api/forgot-password", async (req, res) => {
   try {
@@ -1819,36 +1843,30 @@ app.post("/api/forgot-password", async (req, res) => {
     if (!user)
       return res.status(404).json({ success: false, message: "No account found with this email" });
 
+    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000);
     console.log(`🔐 Password reset OTP for ${email}: ${otp}`);
 
+    // Store OTP on user
     user.resetOtp = otp;
-    user.otpExpires = Date.now() + 10 * 60 * 1000;
+    user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 mins
     await user.save();
 
-    const ok = await sendEmailThroughEmailJS(
-      email,
-      "Your Life in a Box Password Reset Code",
-      `
-        Hi ${user.fullName || "User"},<br><br>
-        You requested to reset your password.<br>
-        Your OTP code is <b>${otp}</b>.<br><br>
-        It will expire in 10 minutes.<br><br>
-        If this wasn't you, please ignore this email.<br><br>
-        — Life in a Box Team
-      `,
+    // 👉 DO NOT call sendEmailThroughEmailJS here anymore.
+    // Let the frontend send via EmailJS using the SAME template as registration.
+
+    return res.json({
+      success: true,
+      message: "OTP generated successfully.",
+      // For this project it's okay to always return it so the frontend can send email:
       otp
-    );
-
-    if (!ok)
-      return res.status(502).json({ success: false, message: "Failed to send OTP email" });
-
-    res.json({ success: true, message: "OTP sent successfully to your email" });
+    });
   } catch (err) {
     console.error("❌ Forgot password error:", err);
     res.status(500).json({ success: false, message: "Server error sending OTP" });
   }
 });
+
 
 // ================================================================
 // ✅ VERIFY FORGOT PASSWORD OTP + RESET PASSWORD
@@ -1881,12 +1899,14 @@ app.post("/api/verify-reset-otp", async (req, res) => {
       now: Date.now(),
     });
 
+    const expiresAt = user.otpExpires ? new Date(user.otpExpires).getTime() : 0;
+
     if (String(user.resetOtp) !== otpStr) {
       console.log("❌ Invalid OTP: input vs stored", otpStr, user.resetOtp);
       return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
 
-    if (Date.now() > user.otpExpires) {
+    if (Date.now() > expiresAt) {
       console.log("❌ OTP expired:", new Date(user.otpExpires));
       return res.status(400).json({ success: false, message: "OTP expired" });
     }
@@ -1902,6 +1922,94 @@ app.post("/api/verify-reset-otp", async (req, res) => {
   } catch (err) {
     console.error("❌ Error verifying reset OTP:", err);
     res.status(500).json({ success: false, message: "Server error verifying OTP" });
+  }
+});
+
+
+
+// ===============================
+// 🧱 AVAILABILITY BLOCKS (Admin)
+// ===============================
+// List blocks within a (start, end) date range (YYYY-MM-DD)
+app.get('/api/blocks', requireAdmin, async (req, res) => {
+  try {
+    const { start, end } = req.query; // end is exclusive
+    const q = {};
+    if (start || end) {
+      q.date = {};
+      if (start) q.date.$gte = String(start);
+      if (end)   q.date.$lt  = String(end);
+    }
+    const blocks = await Block.find(q).sort({ date: 1, start: 1 }).lean();
+    res.json({ success: true, blocks });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// Create a block (whole day or time window)
+app.post('/api/blocks', requireAdmin, async (req, res) => {
+  try {
+    const { date, allDay, start, end, note } = req.body;
+    if (!date) return res.status(400).json({ success:false, message:'date is required' });
+
+    if (allDay === false) {
+      if (!start || !end) {
+        return res.status(400).json({ success:false, message:'start and end are required when allDay=false' });
+      }
+    }
+
+    const doc = await Block.create({
+      date: String(date),
+      allDay: !!allDay,
+      start: allDay ? null : String(start),
+      end:   allDay ? null : String(end),
+      note:  (note || '').slice(0, 300)
+    });
+
+    res.status(201).json({ success:true, block: doc });
+  } catch (e) {
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+// Update a block
+app.put('/api/blocks/:id', requireAdmin, async (req, res) => {
+  try {
+    const { date, allDay, start, end, note } = req.body;
+    const b = await Block.findById(req.params.id);
+    if (!b) return res.status(404).json({ success:false, message:'Not found' });
+
+    if (date !== undefined)  b.date  = String(date);
+    if (allDay !== undefined) b.allDay = !!allDay;
+
+    if (b.allDay) {
+      b.start = null; b.end = null;
+    } else {
+      if (start !== undefined) b.start = String(start || '');
+      if (end   !== undefined) b.end   = String(end   || '');
+      if (!b.start || !b.end) {
+        return res.status(400).json({ success:false, message:'start and end required when allDay=false' });
+      }
+    }
+
+    if (note !== undefined) b.note = String(note || '').slice(0, 300);
+
+    await b.save();
+    res.json({ success:true, block:b });
+  } catch (e) {
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+// Delete a block
+app.delete('/api/blocks/:id', requireAdmin, async (req, res) => {
+  try {
+    const out = await Block.findByIdAndDelete(req.params.id);
+    if (!out) return res.status(404).json({ success:false, message:'Not found' });
+    res.json({ success:true });
+  } catch (e) {
+    res.status(500).json({ success:false, message:e.message });
   }
 });
 
@@ -1952,12 +2060,21 @@ app.get("/api/bookings/availability", async (req, res) => {
       });
     }
 
+    // 1) booked times
     const bookings = await Booking
       .find({ date, status: { $ne: "Cancelled" } })
       .select("time -_id");
-
     const taken = bookings.map(b => to24h(b.time));
-    res.json({ success: true, taken });
+
+    // 2) closure blocks
+    const blocks = await Block.find({ date }).lean();
+
+    const closedAllDay = blocks.some(b => b.allDay);
+    const closedRanges = blocks
+      .filter(b => !b.allDay)
+      .map(b => ({ start: to24h(b.start), end: to24h(b.end) }));
+
+    res.json({ success: true, taken, closedAllDay, closedRanges });
   } catch (err) {
     console.error("❌ Availability error:", err);
     res.status(500).json({
@@ -1968,7 +2085,6 @@ app.get("/api/bookings/availability", async (req, res) => {
 });
 
 
-// ✅ Create a new booking
 // ✅ Create a new booking (stores service, ignores cancelled in conflict check)
 app.post("/api/bookings", async (req, res) => {
   try {
@@ -2016,60 +2132,11 @@ app.post("/api/bookings", async (req, res) => {
     await newBooking.save();
     console.log(`✅ Booking saved: ${name} @ ${date} ${time24} (${newBooking.service})`);
 
-    // ✉️ Customer email — include Service
-    try {
-      await sendEmailThroughEmailJS(
-        email,
-        "Chase Aquatics — Appointment Confirmation",
-        `
-          <h2>Hi ${name},</h2>
-          <p>Thank you for scheduling an appointment with <strong>Chase Aquatics</strong>! 🌊</p>
-          <p>
-            <b>Service:</b> ${newBooking.service}<br>
-            <b>Date:</b> ${date}<br>
-            <b>Time:</b> ${time24}<br>
-            <b>Topics:</b> ${topics.join(", ")}
-          </p>
-          ${notes ? `<p><b>Notes:</b> ${notes}</p>` : ""}
-          <p>We'll be expecting you at our shop:</p>
-          <p><i>Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor’s Dr, Carmona, Cavite</i></p>
-          <p>See you soon! 🐠<br><br>— The Chase Aquatics Team</p>
-        `
-      );
-    } catch (err) {
-      console.error("⚠️ Failed to send booking confirmation:", err.message);
-    }
-
-    // ✉️ Admin email — include Service
-    try {
-      await sendEmailThroughEmailJS(
-        "chaseaquatics@gmail.com",
-        "New Booking Received — Chase Aquatics",
-        `
-          <h2>📅 New Appointment Booked!</h2>
-          <p><b>Name:</b> ${name}<br>
-          <b>Email:</b> ${email}<br>
-          <b>Service:</b> ${newBooking.service}<br>
-          <b>Date:</b> ${date}<br>
-          <b>Time:</b> ${time24}<br>
-          <b>Topics:</b> ${topics.join(", ")}<br>
-          ${notes ? `<b>Notes:</b> ${notes}<br>` : ""}
-          ${
-            newBooking.guests?.length
-              ? `<b>Guests:</b> ${newBooking.guests.join(", ")}<br>`
-              : ""
-          }
-          <br><i>Check MongoDB for details.</i>
-        `
-      );
-    } catch (err) {
-      console.error("⚠️ Failed to send admin alert:", err.message);
-    }
+    // ✅ No EmailJS here anymore — emails are sent from booking.js in the browser
 
     res.json({
       success: true,
-      message:
-        "Booking scheduled successfully! Confirmation email sent to customer.",
+      message: "Booking scheduled successfully!",
       booking: newBooking,
     });
   } catch (err) {
@@ -2082,22 +2149,283 @@ app.post("/api/bookings", async (req, res) => {
   }
 });
 
+// ================================================================
+// 📧 EMAILJS — APPOINTMENT CONFIRMATION TEMPLATE (SERVER-SIDE)
+//    Uses template_aa2rtu7 (your appointment HTML code editor)
+// ================================================================
+async function sendAppointmentEmail({
+  toEmail,
+  toName,
+  date,
+  time,
+  service,
+  topics,
+  notes,
+  guests,
+  appointmentUrl
+}) {
+  const EMAILJS_SERVICE_ID = "service_2bfbogr";      // ✅ same as OTP
+  const EMAILJS_PUBLIC_KEY = "hhTpOoi07kd04LwsH";   // ✅ same as OTP
+  const EMAILJS_TEMPLATE_ID = "template_aa2rtu7";   // ✅ your appointment template
+
+  const safeName = toName || (toEmail ? toEmail.split("@")[0] : "Guest");
+
+  const templateParams = {
+    // must match variables you used in the EmailJS template
+    to_name: safeName,
+    to_email: toEmail,
+
+    brand: "Life in a Box", // or "Chase Aquatics"
+    submitted_at: new Date().toLocaleString(),
+
+    service: service || "General Consultation",
+    date,
+    time,
+
+    // matches your site footer address
+    location:
+      "Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite",
+
+    topics: Array.isArray(topics) ? topics.join(", ") : (topics || ""),
+    notes: notes || "",
+    guests: Array.isArray(guests) ? guests.join(", ") : (guests || ""),
+
+    appointment_url: appointmentUrl || ""
+  };
+
+  const payload = {
+    service_id: EMAILJS_SERVICE_ID,
+    template_id: EMAILJS_TEMPLATE_ID,
+    user_id: EMAILJS_PUBLIC_KEY,
+    template_params: templateParams
+  };
+
+  try {
+    console.log("📨 Sending appointment email via EmailJS:", {
+      toEmail,
+      template: EMAILJS_TEMPLATE_ID
+    });
+
+    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await response.text();
+    console.log("📨 Appointment EmailJS status:", response.status, text);
+
+    return response.ok;
+  } catch (err) {
+    console.error("❌ Appointment EmailJS error:", err.message);
+    return false;
+  }
+}
+
+// ================================================================
+// 📧 EMAILJS — ORDER CONFIRMATION TEMPLATE (PRODUCT RECEIPT)
+//    Uses service_1c8lq6n + template_3v3z8n7 (HTML code editor)
+//    Search tag: sendOrderConfirmationEmail
+// ================================================================
+
+// 🔹 Helper: build EmailJS template params for this order
+function buildOrderEmailTemplate(order) {
+  if (!order) return null;
+
+  const toEmail = order.email || "";
+  const toName =
+    order.name ||
+    (typeof toEmail === "string" && toEmail.includes("@")
+      ? toEmail.split("@")[0]
+      : "Customer");
+
+  const peso = (amount) =>
+    `₱${Number(amount || 0).toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  const cart = Array.isArray(order.cart) ? order.cart : [];
+  const itemsHtml = cart
+    .map((item) => {
+      const title = item.title || "Item";
+      const qty = Number(item.quantity) || 1;
+      const price = Number(item.price) || 0;
+      const lineTotal = price * qty;
+
+      // Make sure this is an absolute URL if you want images to show in emails
+      const imgUrl =
+        item.image && item.image.startsWith("http") ? item.image : "";
+
+      const safeImg =
+        imgUrl || "https://via.placeholder.com/40x40?text=%20";
+
+      return `
+        <tr>
+          <td style="padding:8px 12px;border-top:1px solid #e5e7eb;">
+            <table role="presentation" cellspacing="0" cellpadding="0">
+              <tr>
+                <td width="44" valign="top" style="padding-right:8px;">
+                  <img
+                    src="${safeImg}"
+                    width="40"
+                    height="40"
+                    alt="${title}"
+                    style="display:block;border-radius:6px;object-fit:cover;"
+                  />
+                </td>
+                <td valign="middle"
+                    style="font:400 13px/18px Montserrat,Arial,Helvetica,sans-serif;color:#111827;">
+                  ${title}
+                </td>
+              </tr>
+            </table>
+          </td>
+          <td align="right" style="padding:8px 12px;border-top:1px solid #e5e7eb;">
+            ${qty}
+          </td>
+          <td align="right" style="padding:8px 12px;border-top:1px solid #e5e7eb;">
+            ${peso(price)}
+          </td>
+          <td align="right" style="padding:8px 12px;border-top:1px solid #e5e7eb;">
+            ${peso(lineTotal)}
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const subtotal = Number(order.subtotal || 0);
+  const shipping = Number(order.shipping || 0);
+  const totalAmount = Number(
+    order.totalAmount || subtotal + shipping
+  );
+
+  // For now, VAT is 0 so totals match your DB
+  const vatAmount = 0;
+
+  return {
+    // header + greeting
+    to_name: toName,
+    brand: "Chase Aquatics", // or "Life in a Box"
+    submitted_at: new Date(order.createdAt || Date.now()).toLocaleString(),
+
+    // order meta
+    order_id: order.orderId || String(order._id),
+    order_date: new Date(order.createdAt || Date.now()).toLocaleString(),
+    order_status: order.status || "Pending",
+    payment_method: order.paymentMethod || "COD",
+    fulfillment_method: order.fulfillment || "Delivery",
+
+    // shipping/contact info
+    shipping_name: order.name || "",
+    shipping_address_line1: order.address || "",
+    shipping_barangay: "",
+    shipping_city: "",
+    shipping_province: "",
+    shipping_postal: "",
+    shipping_region: "",
+    email: order.email || "",
+    phone: order.phone || "",
+
+    // number of items shown in the header box
+    items_count: Array.isArray(order.cart) ? order.cart.length : 0,
+
+    // line items HTML (injected directly in template)
+    items_html: itemsHtml,
+
+    // totals
+    subtotal_amount: subtotal.toFixed(2),
+    vat_amount: vatAmount.toFixed(2),
+    shipping_amount: shipping.toFixed(2),
+    total_amount: totalAmount.toFixed(2),
+
+    // optional link to order tracking page
+    order_url: "", // fill later if you build tracking page
+  };
+}
+
+// 🔹 Main helper: kept for compatibility.
+//    By default, we SKIP server-side EmailJS unless EMAILJS_ENABLE_SERVER is set.
+async function sendOrderConfirmationEmail(order) {
+  if (!order || !order.email) {
+    console.warn("⚠️ sendOrderConfirmationEmail called without order/email");
+    return false;
+  }
+
+  const EMAILJS_SERVICE_ID = "service_1c8lq6n";
+  const EMAILJS_TEMPLATE_ID = "template_3v3z8n7";
+  const EMAILJS_PUBLIC_KEY = "HCwUJE1S2hr3TtLfB";
+
+  const templateParams = buildOrderEmailTemplate(order);
+  if (!templateParams) return false;
+
+  // If you want server-side send, set EMAILJS_ENABLE_SERVER=true in your env.
+  if (!process.env.EMAILJS_ENABLE_SERVER) {
+    console.log(
+      "ℹ️ Skipping server-side EmailJS send (browser-only mode). " +
+        "Set EMAILJS_ENABLE_SERVER=true to enable backend sending."
+    );
+    return false;
+  }
+
+  const payload = {
+    service_id: EMAILJS_SERVICE_ID,
+    template_id: EMAILJS_TEMPLATE_ID,
+    user_id: EMAILJS_PUBLIC_KEY,
+    template_params: templateParams,
+  };
+
+  try {
+    console.log("📨 Sending order confirmation via EmailJS:", {
+      toEmail: order.email,
+      template: EMAILJS_TEMPLATE_ID,
+    });
+
+    const response = await fetch(
+      "https://api.emailjs.com/api/v1.0/email/send",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const text = await response.text();
+    console.log("📨 Order EmailJS status:", response.status, text);
+
+    return response.ok;
+  } catch (err) {
+    console.error("❌ Order EmailJS error:", err.message);
+    return false;
+  }
+}
 
 
-// ✅ Fetch bookings (Admin View) — paginated & optional filter
-// GET /api/bookings?limit=10&page=1&status=Pending|Confirmed|Cancelled|Rescheduled
+
+// ✅ Fetch bookings (Admin View) — supports date range + status + pagination
+// GET /api/bookings?limit=10&page=1&status=Pending|Confirmed|Cancelled|Rescheduled&start=YYYY-MM-DD&end=YYYY-MM-DD
 app.get("/api/bookings", async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit || "10", 10), 100);
+    const limit = Math.min(parseInt(req.query.limit || "50", 10), 500);
     const page  = Math.max(parseInt(req.query.page  || "1", 10), 1);
-    const { status } = req.query;
+    const { status, start, end } = req.query;
 
     const filter = {};
     if (status) filter.status = status;
 
+    // Optional date range (inclusive start, exclusive end)
+    if (start || end) {
+      // Booking.date is stored as "YYYY-MM-DD"
+      // We’ll use a string range filter since the format is lexical.
+      filter.date = {};
+      if (start) filter.date.$gte = String(start);
+      if (end)   filter.date.$lt  = String(end);
+    }
+
     const total = await Booking.countDocuments(filter);
     const bookings = await Booking.find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ date: 1, time: 1 }) // chronological when filtering a range
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
@@ -2111,43 +2439,6 @@ app.get("/api/bookings", async (req, res) => {
   } catch (err) {
     console.error("❌ Error fetching bookings:", err);
     res.status(500).json({ success: false, message: "Server error fetching bookings" });
-  }
-});
-
-
-// ✅ Get single booking (keep AFTER /availability)
-app.get("/api/bookings/:id", async (req, res) => {
-  try {
-    const booking = await Booking.findById(req.params.id);
-    if (!booking)
-      return res
-        .status(404)
-        .json({ success: false, message: "Booking not found" });
-    res.json({ success: true, booking });
-  } catch (err) {
-    console.error("❌ Error fetching booking:", err);
-    res.status(500).json({
-      success: false,
-      message: "Server error fetching booking",
-    });
-  }
-});
-
-// ✅ Delete booking (Admin only)
-app.delete("/api/bookings/:id", async (req, res) => {
-  try {
-    const result = await Booking.findByIdAndDelete(req.params.id);
-    if (!result)
-      return res
-        .status(404)
-        .json({ success: false, message: "Booking not found" });
-    res.json({ success: true, message: "Booking deleted successfully" });
-  } catch (err) {
-    console.error("❌ Error deleting booking:", err);
-    res.status(500).json({
-      success: false,
-      message: "Server error deleting booking",
-    });
   }
 });
 

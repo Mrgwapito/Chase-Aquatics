@@ -80,16 +80,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ---------------------------------------------------------------
 
   // 🟩 Get cart (server if logged-in; LS if guest)
-  let cart = [];
+  // 🟩 Get cart
+  // 1) Start from localStorage
+  // 2) If logged in, try server – but only override LS if server has items
+  let cart = loadCartLS();
+
   if (authToken()) {
     const serverItems = await fetchServerCart();
-    cart = normalizeServerItems(serverItems || []);
-    saveCartLS(cart); // keep LS in sync for quick UI
+    const serverCart = normalizeServerItems(serverItems || []);
+
+    if (serverCart.length > 0) {
+      // ✅ Server has items – trust server & sync LS
+      cart = serverCart;
+      saveCartLS(cart);
+      console.log("🛒 Using SERVER cart:", cart);
+    } else {
+      // ✅ Server empty – keep local cart
+      console.log("ℹ️ Server cart empty, using LOCAL cart:", cart);
+    }
   } else {
-    cart = loadCartLS();
+    console.log("👤 Guest user, using LOCAL cart:", cart);
   }
 
-  console.log("🛒 Cart Data:", cart);
+  console.log("🛒 Final cart used in order_summary:", cart);
+
 
   const orderItemsContainer = document.getElementById("order-items");
   const subtotalEl = document.getElementById("order-subtotal");
@@ -149,7 +163,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     let subtotal = 0;
     if (orderItemsContainer) orderItemsContainer.innerHTML = "";
 
-    for (const item of cart) {
+    // use entries() so we also get the index for each cart item
+    for (const [index, item] of cart.entries()) {
       try {
         const productId = item._id || item.id || item.productId;
         let product = null;
@@ -162,20 +177,27 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.warn(`⚠️ Failed to fetch product ${productId}`, err);
         }
 
-        // Fallback to local data
-        const productName = product?.title || item.title || "Unknown Product";
-        let productImage = product?.image || item.image || "../images/placeholder.jpg";
+        // Prefer cart data (variant-aware), fallback to product
+        const productName = item.title || product?.title || "Unknown Product";
 
+        // Prefer image from cart (already normalized), fallback to product
+        let productImage = item.image || product?.image || "../images/placeholder.jpg";
         if (productImage.startsWith("/")) {
           productImage = `..${productImage}`;
         } else if (!productImage.startsWith("http") && !productImage.startsWith("../")) {
           productImage = `../${productImage}`;
         }
 
-        const productPrice = Number(product?.price) || Number(item.price) || 0;
-        const quantity = item.quantity || 1;
+        // Prefer price from cart (variant price), fallback to product price
+        const productPrice = Number(item.price) || Number(product?.price) || 0;
+        const quantity = Number(item.quantity) || 1;
         const itemTotal = productPrice * quantity;
         subtotal += itemTotal;
+
+        // If cart item has variant object with Size, show it
+        const variantLabel = item.variant?.options?.Size
+          ? `<span class="text-muted small d-block">Size: ${item.variant.options.Size}</span>`
+          : "";
 
         const itemHTML = `
           <div class="order-item d-flex align-items-center justify-content-between mb-3 p-2 border rounded shadow-sm">
@@ -186,19 +208,25 @@ document.addEventListener("DOMContentLoaded", async () => {
                    onerror="this.src='../images/placeholder.jpg'">
               <div>
                 <h6 class="mb-1">${productName}</h6>
+                ${variantLabel}
                 <p class="text-muted small mb-0">₱${productPrice.toFixed(2)} × ${quantity}</p>
               </div>
             </a>
             <div class="d-flex align-items-center gap-3">
               <strong class="text-end">₱${itemTotal.toFixed(2)}</strong>
-              <button class="remove-btn btn btn-sm btn-danger" data-id="${productId}" title="Remove">
+              <button class="remove-btn btn btn-sm btn-danger" 
+                      data-id="${productId}" 
+                      data-index="${index}" 
+                      title="Remove">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
           </div>
         `;
 
-        if (orderItemsContainer) orderItemsContainer.insertAdjacentHTML("beforeend", itemHTML);
+        if (orderItemsContainer) {
+          orderItemsContainer.insertAdjacentHTML("beforeend", itemHTML);
+        }
       } catch (err) {
         console.error("❌ Error rendering product:", err);
       }
@@ -216,32 +244,66 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.log("✅ Order summary rendered successfully.");
   }
 
-  function attachRemoveEvents() {
-    document.querySelectorAll(".remove-btn").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
 
-        // Remove from local cart
+function attachRemoveEvents() {
+  document.querySelectorAll(".remove-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const indexAttr = e.currentTarget.getAttribute("data-index");
+      const idAttr = e.currentTarget.getAttribute("data-id");
+      let removedItem = null;
+
+      if (indexAttr !== null && indexAttr !== undefined) {
+        // 🔹 Prefer index-based removal (variant-safe)
+        const index = Number(indexAttr);
+        if (!Number.isNaN(index) && cart[index]) {
+          removedItem = cart.splice(index, 1)[0];
+        }
+      } else if (idAttr) {
+        // 🔹 Fallback: ID-based removal (legacy)
+        const id = idAttr;
+        const beforeLen = cart.length;
         cart = cart.filter(
           (i) => String(i._id) !== String(id) &&
                  String(i.id) !== String(id) &&
                  String(i.productId) !== String(id)
         );
-
-        // Persist locally
-        saveCartLS(cart);
-
-        // If logged in, push to server too
-        if (authToken()) {
-          pushServerCartDebounced(cart);
+        if (cart.length < beforeLen) {
+          removedItem = { title: "Item" };
         }
+      }
 
-        if (cart.length === 0) {
-          renderEmptyCart();
-        } else {
-          await renderCartItems();
-        }
-      });
+      if (!removedItem) {
+        console.warn("⚠️ Nothing removed from cart (no matching item).");
+        return;
+      }
+
+      // Persist locally
+      saveCartLS(cart);
+
+      // If logged in, push to server too
+      if (authToken()) {
+        pushServerCartDebounced(cart);
+      }
+
+      // 🔔 Tell cart.js to refresh popup + badge
+      window.dispatchEvent(new CustomEvent("cart:refresh"));
+
+      // Toast feedback (if available)
+      if (window.Toast?.showToast) {
+        window.Toast.showToast({
+          title: "Removed",
+          message: `${removedItem.title || "Item"} removed from cart.`,
+          type: "info"
+        });
+      }
+
+      if (cart.length === 0) {
+        renderEmptyCart();
+      } else {
+        await renderCartItems();
+      }
     });
-  }
+  });
+}
 });
+

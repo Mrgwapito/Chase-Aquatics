@@ -185,15 +185,80 @@ document.addEventListener("DOMContentLoaded", async function () {
   // 🖼️ Normalize image path (fixes broken image issue)
   const normalizedImage = fixImg(product.image); // 🔧 FIX: use helper
 
-  // ✅ Populate product details
+  // ==========================================================
+  // ✅ Populate product details (Variant-Aware)
+  // ==========================================================
   document.getElementById("product-name").textContent =
     product.title || "Untitled Product";
-  document.getElementById(
-    "product-category"
-  ).innerHTML = `<strong>Category:</strong> ${product.category || "Uncategorized"}`;
-  document.getElementById(
-    "product-price"
-  ).innerHTML = `<strong>Price:</strong> ₱${product.price}${product.price_unit ? "/" + product.price_unit : ""}`;
+
+  document.getElementById("product-category").innerHTML =
+    `<strong>Category:</strong> ${product.category || "Uncategorized"}`;
+
+  // DOM refs
+  const priceEl = document.getElementById("product-price");
+  const skuEl   = document.getElementById("product-sku");
+  const stockEl = document.getElementById("product-stock");
+  const variantBox = document.getElementById("variant-options");
+
+  // ==========================================================
+  // 📌 If the product has variants → build dropdown selector
+  // ==========================================================
+  if (Array.isArray(product.variants) && product.variants.length > 0) {
+
+    // Create dropdown UI
+    let html = `
+      <label class="fw-semibold mb-1">Available Sizes</label>
+      <select id="variant-select" class="form-select" style="max-width:250px;">
+        ${product.variants.map((v, i) =>
+          `<option value="${i}">
+             ${v.options?.Size || v.sku} — ₱${v.price}
+           </option>`
+        ).join("")}
+      </select>
+    `;
+    variantBox.innerHTML = html;
+
+    // Default variant = first one
+    let selectedVariant = product.variants[0];
+
+    // Display initial values
+    priceEl.innerHTML = `<strong>Price:</strong> ₱${selectedVariant.price}`;
+    skuEl.textContent  = `SKU: ${selectedVariant.sku}`;
+    stockEl.textContent = `Stock: ${selectedVariant.stock}`;
+
+    // Change when user selects another variant
+    document.getElementById("variant-select").addEventListener("change", (e) => {
+      const v = product.variants[Number(e.target.value)];
+      selectedVariant = v;
+
+      priceEl.innerHTML = `<strong>Price:</strong> ₱${v.price}`;
+      skuEl.textContent = `SKU: ${v.sku}`;
+      stockEl.textContent = `Stock: ${v.stock}`;
+
+      // Update main image if variant has its own
+      if (v.image) {
+        document.getElementById("product-image").src = fixImg(v.image);
+      }
+    });
+
+    // Store selected variant for Add-to-Cart
+    product.__selectedVariant = () => selectedVariant;
+
+  } else {
+
+    // ========================================================
+    // 📌 If NO variants → fallback to base price and stock
+    // ========================================================
+    priceEl.innerHTML =
+      `<strong>Price:</strong> ₱${product.price}${product.price_unit ? "/" + product.price_unit : ""}`;
+
+    skuEl.textContent = `SKU: —`;
+    stockEl.textContent = `Stock: ${product.stock ?? 0}`;
+
+    variantBox.innerHTML = ""; // no variant UI
+  }
+
+  // Description
   document.getElementById("product-description").textContent =
     product.description || "No description available.";
 
@@ -221,47 +286,141 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  // ✅ Add-to-cart button
+  // ✅ Buttons
   const addToCartBtn = document.getElementById("add-to-cart-btn");
+  const buyNowBtn    = document.getElementById("buy-now-btn");
+
   if (addToCartBtn) {
     addToCartBtn.addEventListener("click", () => {
       const qtyInput = document.getElementById("quantity");
-      const quantity = parseInt(qtyInput?.value || "1");
+      const quantity = parseInt(qtyInput?.value || "1", 10);
       if (!quantity || quantity <= 0) {
         alert("Please enter a valid quantity.");
         return;
       }
-      addToCart(product, quantity);
+      addToCart(product, quantity); // normal add to cart (with success toast + popup)
     });
   }
 
-  // ✅ Fetch & show related products
-  await displayRelatedProducts(product.category, product._id);
+  // 🆕 BUY NOW → add to cart then redirect to order summary
+  if (buyNowBtn) {
+    buyNowBtn.addEventListener("click", () => {
+      const qtyInput = document.getElementById("quantity");
+      const quantity = parseInt(qtyInput?.value || "1", 10);
+      if (!quantity || quantity <= 0) {
+        alert("Please enter a valid quantity.");
+        return;
+      }
+
+      const result = addToCart(product, quantity, { skipSuccessToast: true });
+
+      if (result && result.success) {
+        // Optional soft toast
+        if (window.Toast?.showToast) {
+          window.Toast.showToast({
+            title: "Proceeding to checkout",
+            message: "Review your order before placing it.",
+            type: "info"
+          });
+        }
+        // 👉 Go to Order Summary page
+        window.location.href = "/order/order_summary.html";
+      }
+    });
+  }
 
   // ======================================================
   // 🛒 ADD TO CART FUNCTION (with popup + badge animation)
   // ======================================================
-  function addToCart(product, quantity) {
+  function addToCart(product, quantity, opts = {}) {
+    const { skipSuccessToast = false } = opts;
+
     // 🔁 use namespaced key
     let cart = loadCartLS();
-
-    const existing = cart.find((item) => String(item._id) === String(product._id));
-
     // ✅ Normalize image before storing to cart
     const normalizedImage = fixImg(product.image); // 🔧 FIX
 
+    let chosenVariant = product.__selectedVariant ? product.__selectedVariant() : null;
+
+    // Determine available stock
+    let availableStock = chosenVariant
+      ? Number(chosenVariant.stock)
+      : Number(product.stock ?? 0);
+
+    // ⛔ No stock at all
+    if (!Number.isFinite(availableStock) || availableStock <= 0) {
+      window.Toast?.showToast({
+        title: "Unavailable",
+        message: "This product is not available right now.",
+        type: "warning"
+      });
+      return { success: false, reason: "noStock" };
+    }
+
+    // Find existing item in cart (variant-aware)
+    const existing = cart.find((item) => {
+      if (chosenVariant) {
+        return String(item._id) === String(product._id) &&
+               item.variant?.sku === chosenVariant.sku;
+      }
+      return String(item._id) === String(product._id);
+    });
+
+    let newQty = quantity;
+
     if (existing) {
-      existing.quantity = Math.min(99, (existing.quantity || 1) + quantity);
+      // If exists, check if adding quantity exceeds stock
+      const currentQty = Number(existing.quantity) || 0;
+      newQty = currentQty + quantity;
+
+      if (newQty > availableStock) {
+        const remaining = Math.max(0, availableStock - currentQty);
+        const msg = remaining > 0
+          ? `You can only add ${remaining} more of ${product.title || 'this product'}.`
+          : `You already reached the maximum stock (${availableStock}) for this product.`;
+
+        window.Toast?.showToast({
+          title: "Stock limit reached",
+          message: msg,
+          type: "warning"
+        });
+        return { success: false, reason: "stockLimit" };
+      }
+
+      existing.quantity = newQty;
+
     } else {
+      // New item but requested quantity is more than stock
+      if (quantity > availableStock) {
+        const msg = `This product only has ${availableStock} remaining in stock.`;
+
+        window.Toast?.showToast({
+          title: "Stock limit reached",
+          message: msg,
+          type: "warning"
+        });
+        return { success: false, reason: "tooManyRequested" };
+      }
+
       cart.push({
         _id: String(product._id),
-        title: product.title,
-        price: product.price,
-        image: normalizedImage, // ✅ fixed path
-        quantity: Math.max(1, quantity),
+        title: chosenVariant
+          ? `${product.title} (${chosenVariant.options?.Size})`
+          : product.title,
+        price: chosenVariant ? chosenVariant.price : product.price,
+        image: chosenVariant?.image ? fixImg(chosenVariant.image) : normalizedImage,
+        quantity: quantity,
+        variant: chosenVariant
+          ? {
+              sku: chosenVariant.sku,
+              options: chosenVariant.options,
+              stock: chosenVariant.stock
+            }
+          : null
       });
     }
 
+    // ✅ Save + UI updates
     saveCartLS(cart);                 // 🔒 write to the same key as cart.js
     renderPopupFromLocal();           // ✅ NEW: refresh popup instantly
     pushServerCartDebounced(cart);    // 🔄 sync when logged in
@@ -279,12 +438,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     openCartPopupLocal();
 
     // use the shared toast (works because /assets/toast.js sets window.Toast)
-    window.Toast?.showToast({
-      title: 'Added to cart',
-      message: `${product.title} added to cart!`,
-      type: 'success'
-    });
+    if (!skipSuccessToast) {
+      window.Toast?.showToast({
+        title: 'Added to cart',
+        message: `${product.title} added to cart!`,
+        type: 'success'
+      });
+    }
 
+    return { success: true, cart };
   }
 
   // ======================================================

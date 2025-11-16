@@ -106,8 +106,6 @@ function isPastTimeOnDate(dateISO, hhmm) {
   slot.setHours(hh, mm, 0, 0);
   return slot <= now;
 }
-
-// ========== FETCH & RENDER AVAILABILITY ==========
 async function fetchAndRenderAvailability(dateISO) {
   const timesList = document.querySelector(".times__list");
   timesList.style.opacity = "0.5";
@@ -125,46 +123,52 @@ async function fetchAndRenderAvailability(dateISO) {
 
     if (!dateISO) return;
 
-    const res = await fetch(
-      `${BACKEND_URL}/api/bookings/availability?date=${encodeURIComponent(dateISO)}`
-    );
+    // ✅ single fetch only
+    const res  = await fetch(`${BACKEND_URL}/api/bookings/availability?date=${encodeURIComponent(dateISO)}`);
     const data = await res.json();
-    const taken = data?.success ? (data.taken || []).map(to24h) : [];
 
-    // Hide booked/past slots
-    timesBtns.forEach((btn) => {
-      const t = to24h(btn.dataset.time);
-      const shouldHide = taken.includes(t) || isPastTimeOnDate(dateISO, t);
-      if (shouldHide) {
-        btn.style.transition = "opacity 0.3s";
+    const taken        = data?.success ? (data.taken || []).map(to24h) : [];
+    const closedAllDay = !!data.closedAllDay;
+    const closedRanges = Array.isArray(data.closedRanges)
+      ? data.closedRanges.map(r => ({ start: to24h(r.start), end: to24h(r.end) }))
+      : [];
+
+    const inClosedRange = (hhmm) => closedRanges.some(r => (hhmm >= r.start && hhmm < r.end));
+
+    const warn = document.querySelector(".no-slots-msg") || (() => {
+      const m = document.createElement("p");
+      m.className = "no-slots-msg";
+      m.style.color = "#c00";
+      m.style.fontSize = "0.9rem";
+      m.style.marginTop = "10px";
+      document.querySelector(".times__list").after(m);
+      return m;
+    })();
+
+    if (closedAllDay) {
+      // Whole day closed
+      timesBtns.forEach((btn) => {
         btn.style.opacity = "0.3";
         btn.style.pointerEvents = "none";
         btn.disabled = true;
         btn.classList.add("booked-slot");
-      } else {
+      });
+      warn.textContent = "⚠️ Shop is closed for the whole day.";
+    } else {
+      // Partial closures + taken + past
+      let anyEnabled = false;
+      timesBtns.forEach((btn) => {
+        const t = to24h(btn.dataset.time);
+        const disabled = taken.includes(t) || inClosedRange(t) || isPastTimeOnDate(dateISO, t);
         btn.style.transition = "opacity 0.3s";
-        btn.style.opacity = "1";
-        btn.style.pointerEvents = "auto";
-        btn.disabled = false;
-        btn.classList.remove("booked-slot");
-      }
-    });
-
-    // message if nothing left
-    const visibleSlots = Array.from(timesBtns).some((b) => !b.hidden && !b.disabled);
-    const msgContainer =
-      document.querySelector(".no-slots-msg") ||
-      (() => {
-        const m = document.createElement("p");
-        m.className = "no-slots-msg";
-        m.style.color = "#c00";
-        m.style.fontSize = "0.9rem";
-        m.style.marginTop = "10px";
-        document.querySelector(".times__list").after(m);
-        return m;
-      })();
-
-    msgContainer.textContent = visibleSlots ? "" : "⚠️ No available time slots for this date.";
+        btn.style.opacity = disabled ? "0.3" : "1";
+        btn.style.pointerEvents = disabled ? "none" : "auto";
+        btn.disabled = disabled;
+        btn.classList.toggle("booked-slot", disabled);
+        if (!disabled) anyEnabled = true;
+      });
+      warn.textContent = anyEnabled ? "" : "⚠️ No available time slots for this date.";
+    }
   } catch (err) {
     console.error("❌ Availability fetch error:", err);
     notify({
@@ -178,6 +182,7 @@ async function fetchAndRenderAvailability(dateISO) {
     timesList.style.opacity = "1";
   }
 }
+
 
 // ========== DATE PICKER ==========
 if (datePicker) {
@@ -302,6 +307,65 @@ if (stepDetailsForm) {
       console.log("📩 Booking response:", data);
 
       if (data.success) {
+        // === send confirmation email to customer via EmailJS (frontend) ===
+        try {
+          if (typeof emailjs !== "undefined") {
+            await emailjs.send("service_2bfbogr", "template_aa2rtu7", {
+              to_name: bookingData.name,
+              to_email: bookingData.email,
+
+              brand: "Life in a Box", // or "Chase Aquatics"
+              submitted_at: new Date().toLocaleString(),
+
+              service: bookingData.service || "General Consultation",
+              date: bookingData.date,
+              time: to24h(bookingData.time),
+
+              location:
+                "Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite",
+
+              topics: bookingData.topics.join(", "),
+              notes: bookingData.notes || "",
+              guests: bookingData.guests.join(", "),
+              appointment_url: "" // later you can put a real URL here
+            });
+            console.log("✅ Appointment confirmation email sent to customer");
+          } else {
+            console.warn("⚠️ emailjs is not available on window");
+          }
+        } catch (err) {
+          console.error("❌ Error sending customer appointment email:", err);
+        }
+
+        // === send notification email to admin via EmailJS (frontend) ===
+        try {
+          if (typeof emailjs !== "undefined") {
+            await emailjs.send("service_2bfbogr", "template_aa2rtu7", {
+              to_name: "Chase Aquatics Admin",
+              to_email: "chaseaquatics@gmail.com",
+
+              brand: "Life in a Box",
+              submitted_at: new Date().toLocaleString(),
+
+              service: bookingData.service || "General Consultation",
+              date: bookingData.date,
+              time: to24h(bookingData.time),
+
+              location:
+                "Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite",
+
+              topics: bookingData.topics.join(", "),
+              notes: bookingData.notes || "",
+              guests: bookingData.guests.join(", "),
+              appointment_url: ""
+            });
+            console.log("✅ Appointment notification email sent to admin");
+          }
+        } catch (err) {
+          console.error("❌ Error sending admin appointment email:", err);
+        }
+
+        // === your existing success UI ===
         notify({
           title: 'Success',
           message: 'Appointment booked successfully!',
@@ -339,6 +403,7 @@ if (stepDetailsForm) {
           position: 'top'
         });
       }
+
     } catch (err) {
       console.error("❌ Network error:", err);
       notify({
@@ -375,3 +440,77 @@ document.addEventListener("click", (e) => {
 
   openBookingModal();
 });
+
+
+// ================================================================
+// 📧 EMAILJS — APPOINTMENT CONFIRMATION TEMPLATE
+//    Uses template_aa2rtu7 (your appointment HTML code editor)
+// ================================================================
+async function sendAppointmentEmail({
+  toEmail,
+  toName,
+  date,
+  time,
+  service,
+  topics,
+  notes,
+  guests,
+  appointmentUrl
+}) {
+  const EMAILJS_SERVICE_ID = "service_2bfbogr";      // ✅ same as OTP
+  const EMAILJS_PUBLIC_KEY = "hhTpOoi07kd04LwsH";   // ✅ same as OTP
+  const EMAILJS_TEMPLATE_ID = "template_aa2rtu7";   // ✅ your appointment template
+
+  const safeName = toName || (toEmail ? toEmail.split("@")[0] : "Guest");
+
+  const templateParams = {
+    // must match variables you used in the EmailJS template
+    to_name: safeName,
+    to_email: toEmail,
+
+    brand: "Life in a Box", // or "Chase Aquatics" if you prefer
+    submitted_at: new Date().toLocaleString(),
+
+    service: service || "General Consultation",
+    date,
+    time,
+
+    // hard-coded shop address (matches your site footer)
+    location:
+      "Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite",
+
+    topics: Array.isArray(topics) ? topics.join(", ") : (topics || ""),
+    notes: notes || "",
+    guests: Array.isArray(guests) ? guests.join(", ") : (guests || ""),
+
+    appointment_url: appointmentUrl || ""
+  };
+
+  const payload = {
+    service_id: EMAILJS_SERVICE_ID,
+    template_id: EMAILJS_TEMPLATE_ID,
+    user_id: EMAILJS_PUBLIC_KEY,
+    template_params: templateParams
+  };
+
+  try {
+    console.log("📨 Sending appointment email via EmailJS:", {
+      toEmail,
+      template: EMAILJS_TEMPLATE_ID
+    });
+
+    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await response.text();
+    console.log("📨 Appointment EmailJS status:", response.status, text);
+
+    return response.ok;
+  } catch (err) {
+    console.error("❌ Appointment EmailJS error:", err.message);
+    return false;
+  }
+}

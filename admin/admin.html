@@ -21,21 +21,21 @@
     <!-- ================= NAVBAR ================= -->
     <nav class="navbar">
       <div class="logo"><img src="../logo.png" alt="logo"></div>
+    <div class="admin-sections">
+    <span class="section-btn active" data-section="orders" data-target="#admin-orders">Orders</span>
+    <span class="section-btn" data-section="appointments" data-target="#section-appointments">Appointments</span>
+    <span class="section-btn" data-section="inventory" data-target="#section-inventory">Inventory</span>
+    <!-- NEW: ID Verification tab -->
+    <span class="section-btn" data-section="id-verify" data-target="#section-id-verify">ID Verification</span>
+    <span class="section-btn" data-section="logs" data-target="#section-logs">Logs</span>
+  </div>
 
       <!-- NEW: mobile hamburger -->
       <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
         <i class="fa-solid fa-bars"></i>
       </button>
 
-      <div class="navlinks" id="navlinks">
-        <ul>
-          <li><a href="/index.html">Home</a></li>
-          <li><a href="./product.html">Products</a></li>
-          <li><a href="./service.html">Services</a></li>
-          <li><a href="./about.html">About Us</a></li>
-          <li><a href="./rus.html">Reach Us</a></li>
-        </ul>
-      </div>
+
 
       <div class="nav-icons">
         <!-- 👤 Admin dropdown -->
@@ -53,15 +53,7 @@
 
     <!-- ================= MAIN SECTION ================= -->
     <h2>Admin Dashboard</h2>
-  <!-- ===== SECTION SWITCH BUTTONS ===== -->
-  <div class="admin-sections">
-    <span class="section-btn active" data-section="orders" data-target="#admin-orders">Orders</span>
-    <span class="section-btn" data-section="appointments" data-target="#section-appointments">Appointments</span>
-    <span class="section-btn" data-section="inventory" data-target="#section-inventory">Inventory</span>
-    <!-- NEW: ID Verification tab -->
-    <span class="section-btn" data-section="id-verify" data-target="#section-id-verify">ID Verification</span>
-    <span class="section-btn" data-section="logs" data-target="#section-logs">Logs</span>
-  </div>
+
 
 
     <!-- ORDERS (DEFAULT VIEW) -->

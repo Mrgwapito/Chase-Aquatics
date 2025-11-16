@@ -450,6 +450,8 @@ h2{
   margin: 1.5rem 0;
   font-weight: 600;
   font-size: 1.1rem;
+  position: relative;
+  top:15px;
 }
 .section-btn {
   cursor: pointer;

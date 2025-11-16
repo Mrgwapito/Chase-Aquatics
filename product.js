@@ -42,23 +42,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Render all products — SAME MARKUP / STYLES AS BEFORE
-    productGrid.innerHTML = products.map(p => `
-      <div class="product-card" data-id="${p._id}" data-category="${p.category}">
-        <img src="${fixImg(p.image)}" alt="${p.alt || p.title}">
-        <div class="product-info">
-          <h3>${p.title}</h3>
-          <div class="card-buttons">
-            <a href="product_shop.html?id=${encodeURIComponent(p._id)}" class="view-details">
-              <i class="fas fa-eye"></i>
-            </a>
-            <button class="add-to-cart">
-              <i class="fas fa-shopping-cart"></i>
-            </button>
-          </div>
-        </div>
-        <p>₱${p.price}${p.price_unit ? '/' + p.price_unit : ''}</p>
+productGrid.innerHTML = products.map(p => `
+  <div 
+    class="product-card"
+    data-id="${p._id}"
+    data-category="${p.category}"
+    data-stock="${p.stock ?? 0}"
+  >
+    <img src="${fixImg(p.image)}" alt="${p.alt || p.title}">
+    <div class="product-info">
+      <h3>${p.title}</h3>
+      <div class="card-buttons">
+        <a href="product_shop.html?id=${encodeURIComponent(p._id)}" class="view-details">
+          <i class="fas fa-eye"></i>
+        </a>
+        <button class="add-to-cart">
+          <i class="fas fa-shopping-cart"></i>
+        </button>
       </div>
-    `).join('');
+    </div>
+    <p>₱${p.price}${p.price_unit ? '/' + p.price_unit : ''}</p>
+  </div>
+`).join('');
+
 
     // Let cart.js own the add-to-cart click via event delegation
     makeCardsClickable();

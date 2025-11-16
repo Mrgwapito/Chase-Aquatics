@@ -86,7 +86,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const itemsContainer = document.getElementById("checkout-items");
   const subtotalEl = document.getElementById("checkout-subtotal");
   const totalEl = document.getElementById("checkout-total");
-  const shipping = 100;
+  const vatEl = document.getElementById("checkout-vat");
+  const shippingEl = document.getElementById("checkout-shipping");
+
+  const shipping = 100;       // flat shipping for now
+  const VAT_RATE = 0.12;      // 12% VAT
+  let latestTotals = null;    // used later for thankyou page
+
 
   // Form fields
   const nameInput = document.getElementById("custName");
@@ -106,6 +112,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+
+  
   // ----------------------------------------------------
   // STEP 2: load user profile (gives us stable user.id)
   // ----------------------------------------------------
@@ -199,8 +207,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     itemsContainer.insertAdjacentHTML("beforeend", itemHTML);
   });
 
-  subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
-  totalEl.textContent = `₱${(subtotal + shipping).toFixed(2)}`;
+  // 💰 Prices in your DB already INCLUDE 12% VAT.
+  // So we back-calculate the net amount and VAT portion.
+  const grossSubtotal = subtotal;                     // with VAT
+  const netSubtotal   = grossSubtotal / (1 + VAT_RATE);
+  const vat           = grossSubtotal - netSubtotal;
+
+  // remember totals so we can show on thankyou page
+  latestTotals = {
+    subtotal: netSubtotal,
+    vat,
+    shipping,
+    total: netSubtotal + vat + shipping,
+  };
+
+  if (subtotalEl) subtotalEl.textContent = `₱${netSubtotal.toFixed(2)}`;
+  if (vatEl)      vatEl.textContent      = `₱${vat.toFixed(2)}`;
+  if (shippingEl) shippingEl.textContent = `₱${shipping.toFixed(2)}`;
+  if (totalEl)    totalEl.textContent    = `₱${latestTotals.total.toFixed(2)}`;
+
 
 // ----------------------------------------------------
 // STEP 4: place order  (now sends payment + fulfillment fields)
@@ -279,16 +304,97 @@ if (!checkoutForm) {
         throw new Error(`Unexpected server response: ${text.slice(0, 200)}`);
       }
 
-      if (res.ok && data && data.success) {
-        alert("✅ Order placed successfully!");
+// ✅ Treat any response with data.success === true as success
+      if (data && data.success) {
+        // 🔔 Try to send the order confirmation email from the BROWSER via EmailJS
+        try {
+          if (window.emailjs && data.emailTemplate) {
+            // Init with the PUBLIC key that belongs to service_1c8lq6n / template_3v3z8n7
+            emailjs.init("HCwUJE1S2hr3TtLfB");
 
-        // Clear both local + server carts
+            emailjs
+              .send("service_1c8lq6n", "template_3v3z8n7", data.emailTemplate)
+              .then(() => {
+                console.log("📨 Order confirmation email sent (browser)");
+              })
+              .catch((err) => {
+                console.warn("⚠️ EmailJS browser send failed:", err);
+              });
+          } else {
+            console.log(
+              "ℹ️ EmailJS not loaded on this page or emailTemplate missing from response."
+            );
+          }
+        } catch (e) {
+          console.warn("⚠️ Error triggering EmailJS in browser:", e);
+        }
+
+        // 🧾 Build a compact order summary for the thankyou page
+        const serverOrder = data.order || data.savedOrder || null;
+
+        // 🔗 Prefer the CAQ-… order id generated in order_summary.js
+        const frontOrderId = localStorage.getItem("orderId");
+
+        const orderId =
+          frontOrderId ||
+          (serverOrder && (serverOrder.orderCode || serverOrder.orderNumber || serverOrder.shortId || serverOrder._id)) ||
+          data.orderId ||
+          "ORD-0000";
+
+        const placedAt =
+          (serverOrder && serverOrder.createdAt) || new Date().toISOString();
+
+        const summary = {
+          orderId,
+          placedAt,
+          customer: {
+            name:  bodyFields.name,
+            email: bodyFields.email,
+            phone: bodyFields.phone,
+          },
+          shipping: {
+            // right now we just store the full address line;
+            // if later you have separate barangay/city fields, you can add them here
+            line1: bodyFields.address || "",
+            barangay: "",
+            city: "",
+            province: "",
+            postal: "",
+            region: "",
+          },
+          paymentMethod: bodyFields.paymentMethod,
+          fulfillment:   bodyFields.fulfillment,
+          totals: latestTotals || {
+            subtotal: 0,
+            vat: 0,
+            shipping,
+            total: 0,
+          },
+          // prefer items from serverOrder if it has them, otherwise use the cart we just sent
+          items: (serverOrder && Array.isArray(serverOrder.items))
+            ? serverOrder.items
+            : cart,
+        };
+
+        try {
+          sessionStorage.setItem("lastOrderSummary", JSON.stringify(summary));
+        } catch (err) {
+          console.warn("⚠️ Unable to store lastOrderSummary:", err);
+        }
+
+        // 🔄 Clear both local + server carts
         saveCartLS([]);
         pushServerCartDebounced([]);
 
+        // 🔔 Tell cart.js (if loaded) to refresh popup + badge
+        window.dispatchEvent(new CustomEvent("cart:refresh"));
+
+        // ✅ Redirect to receipt page which will read lastOrderSummary
         window.location.href = "thankyou.html";
         return;
       }
+
+
 
       // Not OK
       const msg = (data && data.message) ? data.message : `HTTP ${res.status}`;

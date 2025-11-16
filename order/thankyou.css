@@ -1,0 +1,305 @@
+:root {
+  --brand-main: #335A02;
+  --brand-dark: #274101;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --shell-bg: #f3f4f6;
+}
+
+body {
+  background: var(--shell-bg);
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Page shell */
+.ty-main {
+  padding: 110px 16px 40px; /* clears sticky navbar */
+  display: flex;
+  justify-content: center;
+}
+
+.ty-shell {
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* Heading */
+.ty-heading {
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: var(--brand-main);
+  margin: 0 0 6px;
+}
+
+.ty-sub {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* Meta row */
+.ty-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  font-size: 0.95rem;
+}
+
+.meta-label {
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.meta-value {
+  font-weight: 700;
+  color: #111;
+}
+
+/* Card */
+.ty-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.08);
+  padding: 24px 26px 22px;
+}
+
+.ty-card-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 40px;
+}
+
+/* Left side */
+.ty-left-header h2,
+.ty-right-header h2 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0 0 4px;
+  color: #111;
+}
+
+.ty-left-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.ty-block {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.ty-block h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.ty-block p {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.ty-strong {
+  font-weight: 700;
+  color: #111;
+}
+
+.ty-label {
+  font-weight: 700;
+  color: #111;
+}
+
+/* Right: items & totals */
+.ty-items-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 18px;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.ty-items-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.ty-items-list li span:last-child {
+  font-weight: 600;
+}
+
+/* Totals */
+.ty-totals {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 14px;
+  margin-top: 6px;
+  font-size: 0.98rem;
+}
+
+.ty-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  color: #374151;
+}
+
+.ty-row-total {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 6px;
+  padding-top: 10px;
+  font-weight: 800;
+}
+
+.ty-row-total span:last-child {
+  color: var(--brand-main);
+}
+
+/* Buttons */
+.ty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.ty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    background 0.1s ease,
+    color 0.1s ease;
+}
+
+.ty-btn-main {
+  background: var(--brand-main);
+  color: #fff;
+  border-color: var(--brand-dark);
+}
+
+.ty-btn-main:hover {
+  background: #3f6e05;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+}
+
+.ty-btn-ghost {
+  background: #ffffff;
+  color: var(--text-main);
+  border-color: #d1d5db;
+}
+
+.ty-btn-outline {
+  background: transparent;
+  color: #135589;
+  border-color: #6096B4;
+}
+
+.ty-btn-outline:hover {
+  background: #6096B4;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .ty-card-inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ty-main {
+    padding: 90px 10px 30px;
+  }
+  .ty-card {
+    padding: 20px 18px 18px;
+  }
+}
+
+/* Print – only show the card */
+@media print {
+  nav.navbar,
+  .ty-heading,
+  .ty-sub,
+  .ty-meta-row,
+  .ty-actions,
+  footer.site-footer {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .ty-main {
+    padding: 0;
+  }
+
+  .ty-card {
+    box-shadow: none;
+    border-radius: 0;
+  }
+}
+
+.ty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition:
+    background 0.1s ease,
+    color 0.1s ease,
+    border-color 0.1s ease;  /* ⬅️ removed transform/box-shadow */
+}
+
+.ty-btn-main {
+  background: var(--brand-main);
+  color: #fff;
+  border-color: var(--brand-dark);
+}
+
+.ty-btn-main:hover {
+  background: #3f6e05;      /* simple color change */
+}
+
+.ty-btn-ghost {
+  background: #ffffff;
+  color: var(--text-main);
+  border-color: #d1d5db;
+}
+
+.ty-btn-outline {
+  background: transparent;
+  color: #135589;
+  border-color: #6096B4;
+}
+
+.ty-btn-outline:hover {
+  background: #6096B4;
+  color: #fff;
+}

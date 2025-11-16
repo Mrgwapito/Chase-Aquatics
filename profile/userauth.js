@@ -67,7 +67,67 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* === Account Quick Menu (global, zero-HTML) — no logout, cart-sized === */
-(function(){
+(function () {
+  function injectQuickStyles() {
+    if (document.getElementById("aq-inline-style")) return;
+
+    const CART_BG   = "#F3EBDC"; // same as cart
+    const HOVER_BG  = "#E9DDC6"; // a touch darker
+
+    const css = `
+      /* kill any default borders/lines/shadows */
+      .account-quick .aq-panel,
+      .account-quick .aq-actions,
+      .account-quick .aq-btn {
+        border: 10px;
+        box-shadow: none !important;
+        background: ${CART_BG} !important;
+      }
+
+      /* panel container (no white card look) */
+      .account-quick .aq-panel {
+        border-radius: 16px;
+        padding: 10px;
+      }
+
+      /* header — same bg, no divider */
+      .account-quick .aq-head {
+        padding: 14px 16px;
+        font-weight: 600;
+        background: ${CART_BG} !important;
+        border: 14px;
+      }
+
+      /* actions area */
+      .account-quick .aq-actions {
+        padding: 8px;
+      }
+
+      /* buttons — flat, no lines; only darken on hover */
+      .account-quick .aq-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 14px 16px;
+        color: #1b1b1b;
+        border-radius: 14px;
+        transition: background-color .16s ease;
+      }
+      .account-quick .aq-btn + .aq-btn { margin-top: 8px; }
+      .account-quick .aq-btn i { width: 20px; text-align: center; color: #335A02; }
+      .account-quick .aq-btn:hover { background: ${HOVER_BG} !important; }
+
+      /* keep the overlay itself transparent (no beige screen) */
+      #accountQuick { background: transparent !important; }
+    `;
+
+    const style = document.createElement("style");
+    style.id = "aq-inline-style";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
   function ensureQuickUI(){
     if (document.getElementById('accountQuick')) return;
 
@@ -84,6 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </aside>`;
 
     document.body.appendChild(wrap);
+    injectQuickStyles();   // ✅ <— added
     renderButtons();       // ✅ initial render of both items
     observeButtons();      // ✅ keep them alive
 
@@ -106,6 +167,58 @@ document.addEventListener("DOMContentLoaded", () => {
       if (where === 'orders')  location.href = '/profile/trackorder.html';
     });
   }
+  // === Close "My Account" popup on scroll (wheel/touch/scroll) ===
+(function () {
+  let onScroll = null;
+
+  function attachScrollClose() {
+    if (onScroll) return;
+    onScroll = () => {
+      const el = document.getElementById('accountQuick');
+      if (el && !el.hidden) {
+        // Close immediately on any scroll
+        window.AccountQuick?.close?.();
+      }
+    };
+    // Listen to multiple inputs for reliability
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('wheel', onScroll, { passive: true });
+    window.addEventListener('touchmove', onScroll, { passive: true });
+  }
+
+  function detachScrollClose() {
+    if (!onScroll) return;
+    window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('wheel', onScroll);
+    window.removeEventListener('touchmove', onScroll);
+    onScroll = null;
+  }
+
+  function patchWhenReady() {
+    if (!window.AccountQuick) {
+      // Wait until the menu script defines AccountQuick
+      setTimeout(patchWhenReady, 50);
+      return;
+    }
+    const _open  = window.AccountQuick.open;
+    const _close = window.AccountQuick.close;
+
+    window.AccountQuick.open = function () {
+      _open && _open.apply(this, arguments);
+      attachScrollClose();
+    };
+    window.AccountQuick.close = function () {
+      _close && _close.apply(this, arguments);
+      detachScrollClose();
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', patchWhenReady);
+  } else {
+    patchWhenReady();
+  }
+})();
 
   // ✅ Always render BOTH buttons (overwrites partial DOM if some other code changed it)
   function renderButtons(){
