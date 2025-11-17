@@ -1,7 +1,11 @@
 // product_shop.js (patched to use namespaced cart key + server sync)
 
 // 🔧 FIX: make API base globally accessible to helpers below
-window.__API_BASE__ = window.__API_BASE__ || 'http://localhost:3000';
+window.__API_BASE__ =
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://127.0.0.1:3000"
+    : "https://chase-aquatics.onrender.com";
 
 // 🔧 FIX: tiny helper to normalize image paths (uploads -> absolute)
 function fixImg(src) {
