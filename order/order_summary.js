@@ -239,7 +239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (shippingEl) shippingEl.textContent = `₱${shipping.toFixed(2)}`;
     if (totalEl) totalEl.textContent = `₱${total.toFixed(2)}`;
 
-    attachRemoveEvents();
+     attachRemoveEvents();
 
     console.log("✅ Order summary rendered successfully.");
   }
@@ -305,5 +305,31 @@ function attachRemoveEvents() {
     });
   });
 }
-});
 
+// ================================================================
+// 🚪 Gate "Proceed to Checkout" with login + toast
+// ================================================================
+const checkoutLink = document.querySelector('a[href="checkout.html"]');
+if (checkoutLink) {
+  checkoutLink.addEventListener('click', (e) => {
+    const token = authToken();
+    if (!token) {
+      e.preventDefault();
+
+      if (window.Toast && typeof window.Toast.showToast === 'function') {
+        window.Toast.showToast({
+          title: 'Please log in',
+          message: 'Sign in or create an account before checking out.',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
+      } else {
+        // Very last fallback
+        alert('Please log in before checking out.');
+      }
+    }
+  });
+}
+
+});

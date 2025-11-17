@@ -243,16 +243,22 @@
    🎯 FORGOT PASSWORD - UPDATED STYLING
    ============================================================ */
 
+/* ============================================================
+   🎯 FORGOT PASSWORD - COMPACT DESIGN
+   ============================================================ */
+
 .forgot-container {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     background: white;
-    padding: 35px;
+    padding: 30px;
     border-radius: 10px;
     box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
     width: 400px;
+    max-height: 80vh; /* Prevent it from getting too tall */
+    
     z-index: 1000;
     display: none;
 }
@@ -275,51 +281,63 @@
 
 .forgot-box input {
     width: 100%;
-    padding: 14px;
-    margin: 10px 0;
-    border: 1.5px solid #e1e5e9; /* Light gray border */
+    padding: 12px;
+    margin: 8px 0;
+    border: 1.5px solid #e1e5e9;
     border-radius: 6px;
-    font-size: 15px;
+    font-size: 14px;
     background: #fff;
     transition: all 0.2s ease;
     box-sizing: border-box;
 }
 
-.forgot-box input:focus {
-    border-color: #3A5A40;
-    box-shadow: 0 0 0 3px rgba(58, 90, 64, 0.1);
-    outline: none;
+/* Make the OTP section more compact */
+#forgotStep2 {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
 }
 
-.forgot-box input::placeholder {
-    color: #8a94a6;
-    font-weight: 400;
+#forgotStep2 input {
+    margin: 6px 0;
+}
+
+/* Adjust password meter spacing in forgot popup */
+#forgotStep2 .pw-meter {
+    margin: 4px 0 2px 0;
+}
+
+#forgotStep2 .pw-strength {
+    margin: 0 0 8px 0;
+}
+
+#forgotStep2 .pw-confirm-message {
+    margin: 0 0 12px 0;
 }
 
 .forgot-box .btn {
     background-color: #3A5A40;
     color: white;
     border: none;
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 16px;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
     width: 100%;
-    margin: 15px 0 8px;
+    margin: 8px 0;
 }
 
 .forgot-box .btn:hover {
     background-color: #2d4733;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(58, 90, 64, 0.3);
 }
 
 .forgot-box .back-to-login {
     margin-top: 15px;
     color: #3A5A40;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
 }
 
 .forgot-box .back-to-login:hover {
@@ -327,12 +345,12 @@
     color: #6096B4;
 }
 
-/* Close button (X) */
+/* Close button */
 .close-x {
     position: absolute;
     top: 10px;
     right: 15px;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
     color: #333;
     cursor: pointer;
@@ -342,6 +360,25 @@
 
 .close-x:hover {
     color: red;
+}
+
+/* Make the popup more compact on mobile */
+@media (max-width: 480px) {
+    .forgot-container {
+        width: 90vw;
+        padding: 20px;
+        max-height: 85vh;
+    }
+    
+    .forgot-box input {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    .forgot-box .btn {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
 }
 
 /* Navbar fix */
@@ -675,4 +712,124 @@ input.is-invalid:focus {
     #regPassword {
         margin-bottom: 8px;
     }
+}
+
+/* ============================================================
+   🎯 CONFIRM PASSWORD MESSAGE STYLES
+   ============================================================ */
+
+.pw-confirm-message {
+    color: #6c757d;
+    margin-bottom: .5rem;
+    font-size: 12px;
+    text-align: left;
+    margin-top: 2px;
+    line-height: 1.3;
+    min-height: 16px; /* Reserve space so layout doesn't shift */
+}
+
+/* Match the existing valid/invalid colors */
+.pw-confirm-message.valid {
+    color: #198754 !important; /* Green for match */
+}
+
+.pw-confirm-message.invalid {
+    color: #dc3545 !important; /* Red for no match */
+}
+
+/* Adjust spacing for confirm password fields */
+#regConfirmPassword {
+    margin-bottom: 8px;
+}
+
+#forgotConfirmPass {
+    margin-bottom: 8px;
+}
+
+/* ============================================================
+   📱 RESPONSIVE MEDIA QUERIES
+   ============================================================ */
+
+/* Tablet & Mobile (768px and below) */
+@media (max-width: 768px) {
+  .login-container,
+  .register-container,
+  .forgot-container {
+    width: 90vw;
+    padding: 25px;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+  }
+  
+  .login-box input,
+  .register-box input,
+  .forgot-box input {
+    padding: 12px;
+    font-size: 14px;
+    margin: 10px 0;
+  }
+  
+  #signInBtn,
+  #registerBtn,
+  .forgot-box .btn {
+    width: 100%;
+    max-width: 200px;
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+  
+  .name-group {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .aq-panel {
+    right: 12px;
+    top: 70px;
+    width: calc(100vw - 24px);
+  }
+}
+
+/* Mobile (480px and below) */
+@media (max-width: 480px) {
+  .login-container,
+  .register-container,
+  .forgot-container {
+    width: 95vw;
+    padding: 20px;
+  }
+  
+  #signInBtn,
+  #registerBtn,
+  .forgot-box .btn {
+    max-width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+  
+  .aq-panel {
+    top: 65px;
+    padding: 14px;
+  }
+}
+
+/* Small Mobile (360px and below) */
+@media (max-width: 360px) {
+  .login-container,
+  .register-container,
+  .forgot-container {
+    padding: 16px;
+  }
+}
+
+/* Safe area support */
+@supports (padding: max(0px)) {
+  @media (max-width: 768px) {
+    .login-container,
+    .register-container,
+    .forgot-container {
+      padding-left: max(20px, env(safe-area-inset-left));
+      padding-right: max(20px, env(safe-area-inset-right));
+    }
+  }
 }

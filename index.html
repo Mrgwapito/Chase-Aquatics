@@ -75,20 +75,17 @@
     <input type="email" id="forgotEmail" placeholder="Enter your registered email">
     <button class="btn" id="forgotSendBtn">Send OTP</button>
 
-<div id="forgotStep2" style="display:none; margin-top:15px;">
-  <input type="text" id="forgotOtp" placeholder="Enter OTP">
-
-  <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)" autocomplete="new-password">
-  <!-- strength meter -->
-  <div class="pw-meter" id="forgotPwMeter">
-    <div class="bar"><span class="fill"></span></div>
-  </div>
-  <div class="pw-strength" id="forgotPwLabel"></div>
-
-  <input type="password" id="forgotConfirmPass" placeholder="Confirm Password" autocomplete="new-password">
-  <button class="btn" id="forgotResetBtn">Reset Password</button>
-</div>
-
+    <div id="forgotStep2" style="display:none;">
+      <input type="text" id="forgotOtp" placeholder="Enter OTP">
+      <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)" autocomplete="new-password">
+      <div class="pw-meter" id="forgotPwMeter">
+        <div class="bar"><span class="fill"></span></div>
+      </div>
+      <div class="pw-strength" id="forgotPwLabel"></div>
+      <input type="password" id="forgotConfirmPass" placeholder="Confirm Password" autocomplete="new-password">
+      <div class="pw-confirm-message" id="forgotConfirmMessage"></div>
+      <button class="btn" id="forgotResetBtn">Reset Password</button>
+    </div>
 
     <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
     <span class="close-x" id="closeForgot">&times;</span>
@@ -125,6 +122,8 @@
     <div class="pw-strength" id="regPwLabel"></div>
 
     <input type="password" placeholder="Confirm Password" id="regConfirmPassword" autocomplete="new-password">
+<!-- Add this line below confirm password -->
+<div class="pw-confirm-message" id="regConfirmMessage"></div>
 
     <!-- Consent -->
     <div class="legal-consent">

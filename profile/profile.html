@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="../popups/login.css">
   <link rel="stylesheet" href="../popups/cart.css">
   <link rel="stylesheet" href="./profile.css">
-  <link rel="stylesheet" href="/assets/toast.css">
+  <link rel="stylesheet" href="../assets/toast.css">
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
 
@@ -381,16 +381,20 @@
   </form>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
-  <script type="module" src="/assets/toast.js"></script>
+
+  <!-- ✅ Toast FIRST, normal script, single source -->
+  <script src="/assets/toast.js" defer></script>
+  <!-- Then your profile + auth scripts -->
   <script src="./profile.js"></script>
   <script src="../profile/userauth.js"></script>
 
+  <!-- Keep this helper if you want -->
   <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    window.Toast && window.Toast.consumeFlashToast && window.Toast.consumeFlashToast();
-
-  });
-</script>
-
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.Toast && typeof window.Toast.consumeFlashToast === 'function') {
+        window.Toast.consumeFlashToast();
+      }
+    });
+  </script>
 </body>
 </html>

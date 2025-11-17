@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -7,6 +8,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const https = require('https'); // for EmailJS requests
 const fs = require('fs');
+
+
 
 // Ensure fetch is available in Node (for EmailJS REST calls)
 if (typeof fetch === "undefined") {
@@ -28,8 +31,8 @@ const { logAdminAction } = require('./utils/logAdminAction'); // <- you said you
 
 
 const app = express();
-const port = 3000;
-const JWT_SECRET = "lifeinabox_secret_key";
+const port = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || "lifeinabox_secret_key";
 
 // ---------- ROBUST ASSETS DISCOVERY (handles mono-repo layouts) ----------
 const candidateAssets = [
@@ -229,12 +232,25 @@ app.use(express.static(path.join(__dirname)));
 // ================================================================
 // 🧩 MONGODB CONNECTION
 // ================================================================
-mongoose.connect('mongodb://localhost:27017/Lifeinabox', {
+// 🧩 MONGODB CONNECTION
+const MONGO_URI = process.env.MONGODB_URI;
+
+if (!MONGO_URI) {
+  console.error('❌ MONGODB_URI is not set in .env');
+  process.exit(1);
+}
+
+mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
 })
   .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.log('❌ MongoDB connection error:', err));
+  .catch(err => {
+    console.error('❌ MongoDB connection error:');
+    console.error(err); // full error for debugging
+  });
+
+
 
   // --- helper: stable public userId derived from Mongo _id ---
 function makeUserId(mongoId) {

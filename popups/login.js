@@ -878,58 +878,78 @@ document.addEventListener("DOMContentLoaded", function () {
     return map[score];
   }
 
-  function paintLikeProfile({inputEl, meterEl, labelEl, confirmEl}){
-    const val = inputEl?.value || '';
-    const score = scorePassword(val);
-    const ui = strengthToUI(score);
+function paintLikeProfile({inputEl, meterEl, labelEl, confirmEl, messageEl}){
+  const val = inputEl?.value || '';
+  const confirmVal = confirmEl?.value || '';
+  const score = scorePassword(val);
+  const ui = strengthToUI(score);
 
-    // your login/register markup uses: #regPwMeter .bar > .fill (same for forgot)
-    const fill = meterEl?.querySelector('.fill');
-    if (fill) {
-      // if empty, keep bar at 0
-      fill.style.width = val ? (ui.pct + '%') : '0%';
-      fill.style.backgroundColor = ui.color;
-    }
-
-    if (labelEl) {
-      labelEl.textContent = val
-        ? (val.length < 8 ? 'Must be at least 8 characters' : ui.label)
-        : 'Enter a strong password (min 8 chars)';
-    }
-
-    if (confirmEl) {
-      const match = confirmEl.value && confirmEl.value === val;
-      confirmEl.classList.toggle('is-valid', !!match);
-      confirmEl.classList.toggle('is-invalid', !match && confirmEl.value.length > 0);
-    }
+  // Update password strength meter
+  const fill = meterEl?.querySelector('.fill');
+  if (fill) {
+    fill.style.width = val ? (ui.pct + '%') : '0%';
+    fill.style.backgroundColor = ui.color;
   }
 
-  function bindMeter(opts){
-    const inputEl   = document.getElementById(opts.inputId);
-    const meterEl   = document.getElementById(opts.meterId);
-    const labelEl   = document.getElementById(opts.labelId);
-    const confirmEl = opts.confirmId ? document.getElementById(opts.confirmId) : null;
-    if (!inputEl || !meterEl || !labelEl) return;
-
-    const render = () => paintLikeProfile({inputEl, meterEl, labelEl, confirmEl});
-    inputEl.addEventListener('input', render);
-    if (confirmEl) confirmEl.addEventListener('input', render);
-    render(); // initial render for prefilled cases
+  // Update password strength label
+  if (labelEl) {
+    labelEl.textContent = val
+      ? (val.length < 8 ? 'Must be at least 8 characters' : ui.label)
+      : 'Enter a strong password (min 8 chars)';
   }
 
-  // Register page fields
-  bindMeter({
-    inputId:  'regPassword',
-    confirmId:'regConfirmPassword',
-    meterId:  'regPwMeter',
-    labelId:  'regPwLabel'
-  });
+  // Update confirm password validation and message
+  if (confirmEl && messageEl) {
+    const hasConfirmValue = confirmVal.length > 0;
+    const passwordsMatch = hasConfirmValue && confirmVal === val;
+    
+    // Update input field styles
+    confirmEl.classList.toggle('is-valid', passwordsMatch);
+    confirmEl.classList.toggle('is-invalid', hasConfirmValue && !passwordsMatch);
+    
+    // Update message text and styling
+    if (!hasConfirmValue) {
+      messageEl.textContent = 'Please confirm your password';
+      messageEl.className = 'pw-confirm-message';
+    } else if (passwordsMatch) {
+      messageEl.textContent = '✓ Passwords match';
+      messageEl.className = 'pw-confirm-message valid';
+    } else {
+      messageEl.textContent = 'Passwords do not match'; // Removed the "✗"
+      messageEl.className = 'pw-confirm-message invalid';
+    }
+  }
+}
 
-  // Forgot password popup fields
-  bindMeter({
-    inputId:  'forgotNewPass',
-    confirmId:'forgotConfirmPass',
-    meterId:  'forgotPwMeter',
-    labelId:  'forgotPwLabel'
-  });
+function bindMeter(opts){
+  const inputEl   = document.getElementById(opts.inputId);
+  const meterEl   = document.getElementById(opts.meterId);
+  const labelEl   = document.getElementById(opts.labelId);
+  const confirmEl = opts.confirmId ? document.getElementById(opts.confirmId) : null;
+  const messageEl = opts.messageId ? document.getElementById(opts.messageId) : null;
+  
+  if (!inputEl || !meterEl || !labelEl) return;
+
+  const render = () => paintLikeProfile({inputEl, meterEl, labelEl, confirmEl, messageEl});
+  inputEl.addEventListener('input', render);
+  if (confirmEl) confirmEl.addEventListener('input', render);
+  render(); // initial render for prefilled cases
+}
+// Register page fields
+bindMeter({
+  inputId:  'regPassword',
+  confirmId:'regConfirmPassword',
+  meterId:  'regPwMeter',
+  labelId:  'regPwLabel',
+  messageId: 'regConfirmMessage' // Add this
+});
+
+// Forgot password popup fields
+bindMeter({
+  inputId:  'forgotNewPass',
+  confirmId:'forgotConfirmPass',
+  meterId:  'forgotPwMeter',
+  labelId:  'forgotPwLabel',
+  messageId: 'forgotConfirmMessage' // Add this
+});
 })();

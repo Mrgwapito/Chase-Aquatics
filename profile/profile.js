@@ -8,19 +8,35 @@
       ? "http://127.0.0.1:3000"
       : "http://localhost:3000";
 
-  // --- Toast helper
-  let __lastTopToast = 0;
-  function notify({ title='Notice', message='', type='info', duration=2200, position='top' } = {}) {
-    const now = Date.now();
-    if (position !== 'br' && now - __lastTopToast < 1200) return;
-    if (position !== 'br') __lastTopToast = now;
+/// --- Toast helper (toast-first, no alert UI)
+let __lastTopToast = 0;
 
-    if (window.Toast?.showToast) {
-      window.Toast.showToast({ title, message, type, duration, position });
-    } else {
-      alert(`${title}\n${message}`);
-    }
+function notify({
+  title = 'Notice',
+  message = '',
+  type = 'info',
+  duration = 2200,
+  position = 'top'
+} = {}) {
+  const now = Date.now();
+  if (position !== 'br' && now - __lastTopToast < 1200) return;
+  if (position !== 'br') __lastTopToast = now;
+
+  const payload = { title, message, type, duration, position };
+
+  // Debug so we can see what happens
+  console.log('[notify]', payload, 'Toast?', !!(window.Toast && window.Toast.showToast));
+
+  if (window.Toast && typeof window.Toast.showToast === 'function') {
+    window.Toast.showToast(payload);
+  } else {
+    // ❗ NO alert here, we keep look consistent.
+    // If you *really* want a debug popup while building, uncomment this line:
+    // alert(`${title}\n${message}`);
   }
+}
+
+
 
   // ======= Initialize EmailJS =======
   if (typeof emailjs !== "undefined") {
@@ -188,10 +204,22 @@
 
   async function submitValidId() {
     const token = localStorage.getItem('token');
-    if (!token) {
-      notify({ title:'Not signed in', message:'Please log in.', type:'error', duration:5000, position:'top' });
-      return;
-    }
+if (!token) {
+  notify({
+    title: 'Not signed in',
+    message: 'Please log in first.',
+    type: 'error',
+    duration: 5000,
+    position: 'top'
+  });
+
+setTimeout(() => {
+    window.location.href = "../index.html";
+  }, 800);   // 👈 important so toast shows
+
+  return;
+}
+
 
     const f = validIdFile?.files?.[0];
     if (!f) {
@@ -651,11 +679,19 @@ if (bSel && user.barangay) {
   // ======= LOAD USER PROFILE =======
   (async function loadProfile() {
     const token = localStorage.getItem("token");
-    if (!token) {
-      notify({ title: 'Not signed in', message: 'Please log in first.', type: 'error', duration: 5000, position: 'top' });
-      window.location.href = "../index.html";
-      return;
-    }
+ if (!token) {
+  notify({
+    title: 'Not signed in',
+    message: 'Please log in first.',
+    type: 'error',
+    duration: 5000,
+    position: 'top'
+  });
+
+  window.location.href = "../index.html";
+  return;
+}
+
 
     try {
       const res = await fetch(`${BACKEND_URL}/api/profile`, {
@@ -710,7 +746,7 @@ if (bSel && user.barangay) {
 
     } catch (err) {
       console.error("Profile load error:", err);
-      notify({ title: 'Load failed', message: err.message, type: 'error', duration: 6000, position: 'top' });
+
     }
   })();
 
@@ -1199,11 +1235,25 @@ if (document.readyState === 'loading') {
         }
       } catch {}
 
-      const token = localStorage.getItem('token');
-      if (!token) {
-        notify({ title:'Not signed in', message:'Please log in.', type:'error', duration:6000, position:'top' });
-        return;
-      }
+const token = localStorage.getItem('token');
+if (!token) {
+  notify({
+    title: 'Not signed in',
+    message: 'Please log in first.',
+    type: 'error',
+    duration: 5000,
+    position: 'top'
+  });
+
+  setTimeout(() => {
+    window.location.href = "../index.html";
+  }, 600);
+
+  return;
+}
+
+
+
 
       const fd = new FormData();
       fd.append('image', file);

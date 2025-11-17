@@ -137,3 +137,198 @@
   .liab-toast--top{ max-width: 92vw; }
 }
 
+/* ============================================================
+   📱 RESPONSIVE MEDIA QUERIES FOR TOAST SYSTEM
+   ============================================================ */
+
+/* Tablet (768px and below) */
+@media (max-width: 768px) {
+  #liab-toast-container {
+    right: 12px;
+    bottom: 12px;
+    gap: 10px;
+  }
+  
+  .liab-toast {
+    min-width: 260px;
+    max-width: 320px;
+    padding: 10px 12px;
+    gap: 10px;
+    border-radius: 12px;
+  }
+  
+  .liab-toast__icon {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+  
+  .liab-toast__title {
+    font-size: 14px;
+  }
+  
+  .liab-toast__msg {
+    font-size: 12px;
+  }
+  
+  .liab-toast__close {
+    font-size: 16px;
+    padding: 3px;
+  }
+  
+  .liab-toast__progress {
+    margin: 6px -12px -10px -12px;
+  }
+  
+  /* Center and top toasts */
+  .liab-toast--center,
+  .liab-toast--top,
+  .liab-toast--confirm {
+    max-width: 85vw;
+    width: calc(100vw - 32px);
+  }
+}
+
+/* Mobile (480px and below) */
+@media (max-width: 480px) {
+  #liab-toast-container {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    align-items: stretch; /* Make toasts full width on mobile */
+  }
+  
+  .liab-toast {
+    min-width: auto;
+    max-width: none;
+    width: 100%;
+    grid-template-columns: 22px 1fr auto;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 10px;
+  }
+  
+  .liab-toast__icon {
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
+  }
+  
+  .liab-toast__title {
+    font-size: 13px;
+  }
+  
+  .liab-toast__msg {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  
+  .liab-toast__close {
+    font-size: 15px;
+    padding: 2px;
+  }
+  
+  .liab-toast__progress {
+    margin: 6px -12px -12px -12px;
+    height: 2px;
+  }
+  
+  /* Center and top toasts */
+  .liab-toast--center,
+  .liab-toast--top,
+  .liab-toast--confirm {
+    max-width: 92vw;
+    width: calc(100vw - 24px);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  /* Adjust confirm toast buttons for mobile */
+  .liab-toast--confirm .liab-toast__actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .liab-btn {
+    padding: 10px 12px;
+    font-size: 14px;
+    width: 100%;
+  }
+}
+
+/* Small Mobile (360px and below) */
+@media (max-width: 360px) {
+  #liab-toast-container {
+    right: 6px;
+    bottom: 6px;
+    left: 6px;
+  }
+  
+  .liab-toast {
+    padding: 10px;
+    gap: 6px;
+  }
+  
+  .liab-toast__icon {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+  
+  .liab-toast__title {
+    font-size: 12px;
+  }
+  
+  .liab-toast__msg {
+    font-size: 10px;
+  }
+  
+  .liab-toast--center,
+  .liab-toast--top,
+  .liab-toast--confirm {
+    max-width: 94vw;
+    width: calc(100vw - 20px);
+  }
+}
+
+/* Tablet Landscape (1024px and below) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  #liab-toast-container {
+    right: 16px;
+    bottom: 16px;
+  }
+  
+  .liab-toast {
+    max-width: 350px;
+  }
+  
+  .liab-toast--center,
+  .liab-toast--top,
+  .liab-toast--confirm {
+    max-width: 450px;
+  }
+}
+
+/* Prevent toast from being too tall on mobile */
+@media (max-height: 600px) {
+  .liab-toast {
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  
+  .liab-toast--center {
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  @media (max-width: 480px) {
+    #liab-toast-container {
+      right: max(8px, env(safe-area-inset-right));
+      bottom: max(8px, env(safe-area-inset-bottom));
+      left: max(8px, env(safe-area-inset-left));
+    }
+  }
+}

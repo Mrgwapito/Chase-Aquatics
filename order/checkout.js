@@ -106,11 +106,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ----------------------------------------------------
   // STEP 1: require login
   // ----------------------------------------------------
+  // ----------------------------------------------------
+  // STEP 1: require login
+  // ----------------------------------------------------
   if (!token) {
-    alert("⚠️ Please log in first before checking out.");
+    // Use toast + flash message for consistency
+    if (window.Toast && typeof window.Toast.queueFlashToast === 'function') {
+      window.Toast.queueFlashToast({
+        title: 'Please log in',
+        message: 'Create an account or sign in before checking out.',
+        type: 'error',
+        duration: 5000,
+        position: 'top'
+      });
+    } else {
+      // Fallback (only if toast is not loaded for some reason)
+      alert("⚠️ Please log in first before checking out.");
+    }
+
     window.location.href = "../index.html";
     return;
   }
+
 
 
   
@@ -337,7 +354,11 @@ if (!checkoutForm) {
 
         const orderId =
           frontOrderId ||
-          (serverOrder && (serverOrder.orderCode || serverOrder.orderNumber || serverOrder.shortId || serverOrder._id)) ||
+          (serverOrder &&
+            (serverOrder.orderCode ||
+             serverOrder.orderNumber ||
+             serverOrder.shortId ||
+             serverOrder._id)) ||
           data.orderId ||
           "ORD-0000";
 
@@ -353,8 +374,6 @@ if (!checkoutForm) {
             phone: bodyFields.phone,
           },
           shipping: {
-            // right now we just store the full address line;
-            // if later you have separate barangay/city fields, you can add them here
             line1: bodyFields.address || "",
             barangay: "",
             city: "",
@@ -382,18 +401,39 @@ if (!checkoutForm) {
           console.warn("⚠️ Unable to store lastOrderSummary:", err);
         }
 
-        // 🔄 Clear both local + server carts
-        saveCartLS([]);
-        pushServerCartDebounced([]);
+        // ✅ CLEAR CART EVERYWHERE
+        try {
+          // clear current user's cart in LS
+          saveCartLS([]);
+
+          // just in case there is a leftover guest cart
+          localStorage.removeItem("cart_guest");
+
+          // 🔥 force clear server cart immediately (no debounce)
+          await fetch(`${API_BASE}/api/cart`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ items: [] }),
+          });
+        } catch (err) {
+          console.warn("⚠️ Failed to clear cart after order:", err);
+        }
 
         // 🔔 Tell cart.js (if loaded) to refresh popup + badge
-        window.dispatchEvent(new CustomEvent("cart:refresh"));
+        try {
+          window.dispatchEvent(new CustomEvent("cart:refresh"));
+        } catch (err) {
+          console.warn("⚠️ Failed to dispatch cart:refresh:", err);
+        }
 
         // ✅ Redirect to receipt page which will read lastOrderSummary
         window.location.href = "thankyou.html";
         return;
-      }
 
+      }
 
 
       // Not OK

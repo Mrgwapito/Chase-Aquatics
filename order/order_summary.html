@@ -40,7 +40,7 @@
     </nav> 
 
 
- <!-- Login Form (Hidden Initially) -->    
+  <!-- Login Form (Hidden Initially) -->    
 <div class="login-container" id="loginContainer" style="display: none;">
   <div class="login-box">
     <h2>Sign In</h2>
@@ -65,75 +65,84 @@
   </div>
 </div>
 
+<!-- 🔒 Forgot Password Popup -->
+<div class="forgot-container" id="forgotContainer" style="display: none;">
+  <div class="forgot-box">
+    <h2>Reset Password</h2>
+    <p style="font-size: 14px; color: #666;">Enter your email to receive a reset code.</p>
+
+    <input type="email" id="forgotEmail" placeholder="Enter your registered email">
+    <button class="btn" id="forgotSendBtn">Send OTP</button>
+
+    <div id="forgotStep2" style="display:none;">
+      <input type="text" id="forgotOtp" placeholder="Enter OTP">
+      <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)" autocomplete="new-password">
+      <div class="pw-meter" id="forgotPwMeter">
+        <div class="bar"><span class="fill"></span></div>
+      </div>
+      <div class="pw-strength" id="forgotPwLabel"></div>
+      <input type="password" id="forgotConfirmPass" placeholder="Confirm Password" autocomplete="new-password">
+      <div class="pw-confirm-message" id="forgotConfirmMessage"></div>
+      <button class="btn" id="forgotResetBtn">Reset Password</button>
+    </div>
+
+    <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
+    <span class="close-x" id="closeForgot">&times;</span>
+  </div>
+</div>
+
+
+
+
+
+
+
+
 <!-- Registration Form (Hidden Initially) -->
 <div class="register-container" id="registerContainer" style="display:none;">
+  <span id="closeRegister" class="close-x">&times;</span>
 
   <div class="register-box">
     <h2>Register</h2>
 
-    <!-- 👇 Split name into first + last -->
+    <!-- First / Last name -->
     <div class="name-group">
-      <input type="text" placeholder="First Name" id="regFirstName">
-      <input type="text" placeholder="Last Name" id="regLastName">
+      <input type="text" placeholder="First Name" id="regFirstName" autocomplete="given-name">
+      <input type="text" placeholder="Last Name" id="regLastName" autocomplete="family-name">
     </div>
 
-    <input type="email" placeholder="Email" id="regEmail">
+    <input type="email" placeholder="Email" id="regEmail" autocomplete="email">
 
-    <!-- 🔹 Email Verification Section -->
-    <div class="otp-container">
-      <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
-      <button id="sendOtpBtn" class="otp-btn">Send Code</button>
-      <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
+    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8" autocomplete="new-password">
+    <!-- strength meter -->
+    <div class="pw-meter" id="regPwMeter">
+      <div class="bar"><span class="fill"></span></div>
+    </div>
+    <div class="pw-strength" id="regPwLabel"></div>
+
+    <input type="password" placeholder="Confirm Password" id="regConfirmPassword" autocomplete="new-password">
+<!-- Add this line below confirm password -->
+<div class="pw-confirm-message" id="regConfirmMessage"></div>
+
+    <!-- Consent -->
+    <div class="legal-consent">
+      <label class="legal-check" for="agreeTerms">
+        <input type="checkbox" id="agreeTerms">
+        <span>
+          I agree to the
+          <a href="./termsncondi.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+          and
+          <a href="./termsncondi.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+        </span>
+      </label>
     </div>
 
-    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8">
-    <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
+    <button id="registerBtn" disabled>Register</button>
 
-    
-<!-- Consent: place above the Register button -->
-<div class="legal-consent">
-  <label class="legal-check" for="agreeTerms">
-    <input type="checkbox" id="agreeTerms">
-    <span>
-      I agree to the
-      <a href="./termsncondi.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
-      and
-      <a href="./termsncondi.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>.
-    </span>
-  </label>
-</div>
-
-
-
-    <button class="btn" id="registerBtn" disabled>Register</button>
-    <p class="back-to-login" id="backToLogin">Back to Login</p>
-    <span class="close-x" id="closeRegister">&times;</span>
+    <div class="back-to-login" id="backToLogin">Back to Login</div>
   </div>
 </div>
 
-
-<!-- Registration Form (Hidden Initially) -->
-<div class="register-container" id="registerContainer">
-  <div class="register-box">
-    <h2>Register</h2>
-    <input type="text" placeholder="Full Name" id="regFullName">
-    <input type="email" placeholder="Email" id="regEmail">
-
-    <!-- 🔹 Email Verification Section -->
-    <div class="otp-container">
-      <input type="text" placeholder="Enter OTP" id="emailOtp" disabled>
-      <button id="sendOtpBtn" class="otp-btn">Send Code</button>
-      <button id="verifyOtpBtn" class="otp-btn" disabled>Verify</button>
-    </div>
-
-    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8">
-    <input type="password" placeholder="Confirm Password" id="regConfirmPassword">
-
-    <button class="btn" id="registerBtn" disabled>Register</button>
-    <p class="back-to-login" id="backToLogin">Back to Login</p>
-    <span class="close-x" id="closeRegister">&times;</span>
-  </div>
-</div>
 
 
 
