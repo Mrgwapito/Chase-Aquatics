@@ -3,9 +3,11 @@
 // ================================================================
 
 const BACKEND_URL =
-  window.location.hostname === "127.0.0.1"
-    ? "http://127.0.0.1:3000"
-    : "http://localhost:3000";
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://127.0.0.1:3000"                 // local dev
+    : "https://chase-aquatics.onrender.com";  // deployed backend
+
 
 // --- Toast helper (same style as login.js). Falls back to alert if toast not ready.
 function notify({ title='Notice', message='', type='info', duration=2200, position='br' } = {}) {

@@ -1,6 +1,17 @@
 // /admin/idverify.js
 (function () {
-  const API = window.API || "http://localhost:3000";
+  // ✅ Unified backend base URL (local + Render), shared with other scripts
+  const API =
+    window.__API_BASE__ ||
+    window.API ||
+    ((window.location.hostname === "127.0.0.1" ||
+      window.location.hostname === "localhost")
+      ? "http://127.0.0.1:3000"                 // local dev
+      : "https://chase-aquatics.onrender.com"); // deployed backend
+
+  // Expose globally so other scripts can reuse it
+  window.__API_BASE__ = window.__API_BASE__ || API;
+
 
   // ---------- Elements ----------
   const tbody   = document.getElementById("idsBody");

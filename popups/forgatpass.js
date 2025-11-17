@@ -12,7 +12,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // but keeping init here won't hurt anything.
   try { emailjs.init("hhTpOoi07kd04LwsH"); } catch {}
 
-  const API_BASE = "http://localhost:3000";
+  // ✅ Backend base URL (works on localhost + Render, and reuses global if already set)
+  const API_BASE =
+    window.__API_BASE__ ||
+    ((window.location.hostname === "127.0.0.1" ||
+      window.location.hostname === "localhost")
+      ? "http://127.0.0.1:3000"
+      : "https://chase-aquatics.onrender.com");
+
+  // Expose globally so other scripts (login.js, booking.js, etc.) can share it
+  window.__API_BASE__ = window.__API_BASE__ || API_BASE;
+
 
   // Popup containers & controls
   const forgotContainer        = document.getElementById("forgotContainer");

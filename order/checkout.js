@@ -4,9 +4,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ----------------------------------------------------
   // Env + helpers (aligned with cart.js / order_summary.js)
   // ----------------------------------------------------
-  const API_BASE = window.location.hostname === "127.0.0.1"
-    ? "http://127.0.0.1:3000"
-    : "http://localhost:3000";
+  // ✅ Backend base URL (local + Render) — shared across scripts
+  const API_BASE =
+    window.__API_BASE__ ||
+    ((window.location.hostname === "127.0.0.1" ||
+      window.location.hostname === "localhost")
+      ? "http://127.0.0.1:3000"                 // local dev
+      : "https://chase-aquatics.onrender.com"); // deployed backend
+
+  // expose globally so other scripts can reuse it
+  window.__API_BASE__ = window.__API_BASE__ || API_BASE;
 
   function authToken() {
     return localStorage.getItem("token") || sessionStorage.getItem("token") || null;
@@ -432,7 +439,6 @@ if (!checkoutForm) {
         // ✅ Redirect to receipt page which will read lastOrderSummary
         window.location.href = "thankyou.html";
         return;
-
       }
 
 

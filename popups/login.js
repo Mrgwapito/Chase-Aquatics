@@ -2,6 +2,15 @@
   // 🌊 CHASE AQUATICS FRONTEND AUTH SCRIPT (FULLY FIXED + PERSISTENT LOGIN)
   // ================================================================
 
+// ✅ Backend base URL (works on localhost + Render)
+const API =
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://127.0.0.1:3000"
+    : "https://chase-aquatics.onrender.com";
+
+// ✅ Expose globally so other scripts can reuse the same base
+window.__API_BASE__ = window.__API_BASE__ || API;
 // ======================= LOGIN SECTION (FIXED & MERGED) =======================
 document.addEventListener('DOMContentLoaded', () => {
   const signBtn   = document.getElementById('signInBtn');
@@ -33,11 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch('http://localhost:3000/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
+const res = await fetch(`${API}/login`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email, password })
+});
+
 
       const contentType = res.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -191,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('❌ Login error:', err);
       notify({
         title: 'Server unreachable',
-        message: 'Make sure the backend is running on http://localhost:3000',
+message: `Make sure the backend is running on ${API}`,
         type: 'error',
         duration: 6000,
         position: 'top'
@@ -343,11 +353,12 @@ let emailVerified = false;
     }
 
     try {
-      const res = await fetch("http://localhost:3000/api/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+const res = await fetch(`${API}/api/send-otp`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email }),
+});
+
 
       const data = await res.json();
       if (!data.success) {
@@ -417,11 +428,12 @@ let emailVerified = false;
     }
 
     try {
-      const res = await fetch("http://localhost:3000/api/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp: enteredOtp }),
-      });
+const res = await fetch(`${API}/api/verify-otp`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, otp: enteredOtp }),
+});
+
 
       const data = await res.json();
       if (!data.success) {
@@ -474,11 +486,12 @@ let emailVerified = false;
   // 🔸 Your original backend call (unchanged)
   async function doBackendRegister({ firstName, lastName, email, password }) {
     try {
-      const res = await fetch('http://localhost:3000/register-fix', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, email, password })
-      });
+const res = await fetch(`${API}/register-fix`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ firstName, lastName, email, password })
+});
+
 
       if (!res.ok) {
         if (res.status === 400) {

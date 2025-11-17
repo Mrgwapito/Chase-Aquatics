@@ -3,10 +3,12 @@
   // ================================================================
 
   // ✅ Auto-detect backend URL
-  const BACKEND_URL =
-    window.location.hostname === "127.0.0.1"
-      ? "http://127.0.0.1:3000"
-      : "http://localhost:3000";
+// ✅ Auto-detect backend URL (local + Render)
+const BACKEND_URL =
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://127.0.0.1:3000"                 // local dev
+    : "https://chase-aquatics.onrender.com";  // deployed backend
 
 /// --- Toast helper (toast-first, no alert UI)
 let __lastTopToast = 0;

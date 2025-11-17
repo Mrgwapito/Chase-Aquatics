@@ -5,9 +5,17 @@
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("🧾 Order Summary Page Loaded");
 
-  const API_BASE = window.location.hostname === "127.0.0.1"
-    ? "http://127.0.0.1:3000"
-    : "http://localhost:3000";
+  // ✅ Backend base URL (local + Render) — shared with other scripts
+  const API_BASE =
+    window.__API_BASE__ ||
+    ((window.location.hostname === "127.0.0.1" ||
+      window.location.hostname === "localhost")
+      ? "http://127.0.0.1:3000"                 // local dev
+      : "https://chase-aquatics.onrender.com"); // deployed backend
+
+  // Expose globally so cart.js, login.js, forgotpass.js, etc. can reuse it
+  window.__API_BASE__ = window.__API_BASE__ || API_BASE;
+
 
   // ---------- auth + cart helpers (aligned with cart.js) ----------
   function authToken() {

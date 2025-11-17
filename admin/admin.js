@@ -1,7 +1,16 @@
 /* ================================================================
    🌐 GLOBAL HELPERS (define these FIRST, before any DOMContentLoaded)
    ================================================================ */
-window.API = 'http://localhost:3000';
+// ✅ Unified backend base URL (local dev vs deployed)
+window.__API_BASE__ =
+  window.__API_BASE__ ||
+  ((window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "localhost")
+    ? "http://127.0.0.1:3000"                 // local dev API
+    : "https://chase-aquatics.onrender.com"); // deployed API (Render)
+
+window.API = window.__API_BASE__;
+
 
 /* ==== GLOBAL toast helpers ==== */
 (function () {

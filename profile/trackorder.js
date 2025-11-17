@@ -2,7 +2,12 @@
 // 🧭 CLIENT ORDER TRACKER — 3 steps + counters
 // ===============================================
 document.addEventListener('DOMContentLoaded', () => {
-  const API = 'http://localhost:3000';
+  const API =
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "localhost"
+      ? "http://127.0.0.1:3000"                 // local dev
+      : "https://chase-aquatics.onrender.com";  // deployed backend
+
 
   // DOM
   const listEl   = document.getElementById('ordersList');

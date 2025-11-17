@@ -449,7 +449,17 @@ function saveCartLS(c) {
   updateCartBadge();
 });
 
-const API_BASE = 'http://localhost:3000';
+// ✅ Backend base URL (local + Render) — shared with other scripts
+const API_BASE =
+  window.__API_BASE__ ||
+  ((window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === 'localhost')
+    ? 'http://127.0.0.1:3000'
+    : 'https://chase-aquatics.onrender.com');
+
+// Expose globally so login.js, forgotpass.js, booking.js, etc. can reuse it
+window.__API_BASE__ = window.__API_BASE__ || API_BASE;
+
 
 function authToken() {
   return localStorage.getItem('token') || sessionStorage.getItem('token') || null;

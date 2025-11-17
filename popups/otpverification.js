@@ -3,6 +3,14 @@ if (typeof emailjs !== 'undefined') {
   emailjs.init('hhTpOoi07kd04LwsH');
 }
 
+// ===== Backend base URL (local + Render) =====
+const API =
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://127.0.0.1:3000"                 // local dev
+    : "https://chase-aquatics.onrender.com";  // deployed backend
+
+    
 function toast(title, message = '', type = 'info') {
   if (window.Toast?.showToast) {
     window.Toast.showToast({ title, message, type, duration: 2400, position: 'top' });
@@ -136,14 +144,15 @@ async function sendOtpEmail() {
     if (emailResult.status === 200) {
       // Store OTP server-side for verification
       try {
-        await fetch('/api/store-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: pendingEmail,
-            otp: currentOTP
-          })
-        });
+await fetch(`${API}/api/store-otp`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: pendingEmail,
+    otp: currentOTP
+  })
+});
+
       } catch (e) {
         console.log('Server OTP storage failed, using client OTP as fallback only');
       }
