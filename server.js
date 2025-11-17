@@ -514,34 +514,54 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
 
 
 // ✅ Get products (paginated + optional category + q search)
-// GET /api/products?limit=10&page=1&category=Fish&q=beta
+//    If no `limit`/`page` is provided, return ALL matching products
+//    so product.html can render the full catalogue.
 app.get('/api/products', async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit || '10', 10), 100);
-    const page  = Math.max(parseInt(req.query.page  || '1', 10), 1);
     const { category, q } = req.query;
 
     const filter = {};
     if (category) filter.category = category;
     if (q) {
       filter.$or = [
-        { title: { $regex: q, $options: 'i' } },
+        { title:       { $regex: q, $options: 'i' } },
         { description: { $regex: q, $options: 'i' } },
-        { category: { $regex: q, $options: 'i' } }
+        { category:    { $regex: q, $options: 'i' } }
       ];
     }
 
+    // Detect if the client explicitly requested pagination
+    const hasLimit = Object.prototype.hasOwnProperty.call(req.query, 'limit');
+    const hasPage  = Object.prototype.hasOwnProperty.call(req.query, 'page');
+    const shouldPaginate = hasLimit || hasPage;
+
     const total = await Product.countDocuments(filter);
-    const products = await Product.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
+
+    let page       = 1;
+    let limit      = total || 1;         // default: return everything
+    let totalPages = 1;
+
+    let query = Product.find(filter).sort({ createdAt: -1 });
+
+    if (shouldPaginate) {
+      // Keep pagination behaviour for admin / list views that send limit/page
+      limit = Math.min(parseInt(req.query.limit || '10', 10), 100);
+      page  = Math.max(parseInt(req.query.page  || '1', 10), 1);
+      totalPages = Math.max(1, Math.ceil(total / limit));
+
+      query = query
+        .skip((page - 1) * limit)
+        .limit(limit);
+    }
+
+    const products = await query.lean();
 
     res.json({
       success: true,
-      page, limit, total,
-      totalPages: Math.max(1, Math.ceil(total / limit)),
+      page,
+      limit,
+      total,
+      totalPages,
       products
     });
   } catch (err) {
