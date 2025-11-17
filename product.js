@@ -7,12 +7,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toggleBtn = document.querySelector('.nav-toggle');
   const navlinks = document.getElementById('navlinks');
 
-  // Helper: ensure image paths work for /uploads/...
+  // Decide API base:
+  // - Local dev (localhost / 127.0.0.1)  → hit Node on port 3000
+  // - Render (chase-aquatics.onrender.com) → same origin ("")
+  const isLocal =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  const API_BASE = isLocal ? 'http://localhost:3000' : '';
+
+  // Helper: ensure image paths work for /uploads/... and /images/...
   const fixImg = (src) => {
     if (!src) return '';
     if (src.startsWith('http://') || src.startsWith('https://')) return src;
-    // your server serves /uploads at http://localhost:3000/uploads/...
-    return `http://localhost:3000${src.startsWith('/') ? '' : '/'}${src}`;
+
+    // When deployed, Node is serving /uploads and /images from the same origin
+    const base = API_BASE || '';
+    return `${base}${src.startsWith('/') ? '' : '/'}${src}`;
   };
 
   // ✅ Navbar toggle (mobile)
@@ -25,9 +36,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ✅ Load products dynamically
   try {
-    // ask for ALL products (server treats limit=0 as "no limit" per our route)
-    const res = await fetch('http://localhost:3000/api/products?limit=0');
+    // ask for "all" products (up to 100, which is your backend max)
+    const res = await fetch(`${API_BASE}/api/products?limit=100`);
     const payload = await res.json();
+
 
     // Server returns an object; extract the array robustly
     const products = Array.isArray(payload)
