@@ -110,6 +110,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const mStatus = document.getElementById("mStatus");
   const btnPaid = document.getElementById("modalPaid");
   const btnDone = document.getElementById("modalDone");
+  const btnCancel = document.getElementById("modalCancel"); 
 
   // Remove the duplicate global helpers that were here
 
@@ -292,7 +293,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     btnPaid.onclick = () => updateOrderStatus(order._id, "Paid");
     btnDone.onclick = () => updateOrderStatus(order._id, "Completed");
+
+    // NEW: admin cancel handler
+    if (btnCancel) {
+      btnCancel.onclick = () => handleAdminCancel(order._id, order.orderId);
+    }
   }
+
 
   // Close (never set inline display; just remove the class)
   const hideOrderModal = () => {
@@ -303,29 +310,56 @@ document.addEventListener("DOMContentLoaded", async () => {
   closeModal.onclick = hideOrderModal;
   window.addEventListener("click", (e) => { if (e.target === modal) hideOrderModal(); });
 
-  async function updateOrderStatus(orderId, newStatus) {
-    try {
-      const res = await fetch(`${API}/api/orders/${orderId}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
+  async function updateOrderStatus(orderId, newStatus, meta = {}) {
+  try {
+    const res = await fetch(`${API}/api/orders/${orderId}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: newStatus,
+        ...meta,                 // NEW: pass extra fields (cancelNote, cancelledBy, etc.)
+      }),
+    });
 
-      const text = await res.text();
-      if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0, 200)}`);
+    const text = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0, 200)}`);
 
-      let data;
-      try { data = JSON.parse(text); } catch { throw new Error("Server did not return JSON."); }
-      if (!data.success) throw new Error(data.message || "Update failed");
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error("Server did not return JSON."); }
+    if (!data.success) throw new Error(data.message || "Update failed");
 
-      tOK(`Order ${newStatus}`, `Order status updated successfully.`);
-      modal.classList.remove("show");
-      fetchOrders(currentPage);
-    } catch (err) {
-      console.error("❌ Failed to update order:", err);
-      tErr('Could not update order', brief(err.message));
-    }
+    tOK(`Order ${newStatus}`, `Order status updated successfully.`);
+    modal.classList.remove("show");
+    fetchOrders(currentPage);
+  } catch (err) {
+    console.error("❌ Failed to update order:", err);
+    tErr('Could not update order', brief(err.message));
   }
+}
+
+// admin cancel (no note prompt)
+async function handleAdminCancel(orderId, friendlyCode) {
+  const confirmCancel = await (window.Toast?.confirmToast
+    ? window.Toast.confirmToast({
+        title: 'Cancel this order?',
+        message: friendlyCode
+          ? `Order #${friendlyCode} will be marked as Cancelled.`
+          : 'This order will be marked as Cancelled.',
+        okText: 'Cancel order',
+        cancelText: 'Keep order',
+        type: 'error',
+      })
+    : Promise.resolve(window.confirm('Cancel this order?')));
+
+  if (!confirmCancel) return;
+
+  await updateOrderStatus(orderId, 'Cancelled', {
+    cancelledBy: 'admin',
+    cancelNote: '',   // still send field, but no comment box
+  });
+}
+
+
 
   // =======================================================
   // 🟩 Filter Tabs (server-side filter) — reset to page 1

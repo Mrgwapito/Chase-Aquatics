@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const dlg      = document.getElementById('orderDetails');
   const odTitle  = document.getElementById('odTitle');
   const odBody   = document.getElementById('odBody');
+  const odCancelBtn = document.getElementById('odCancelBtn');
 
 
   const searchEl   = document.getElementById('orderSearch');
@@ -231,6 +232,54 @@ function renderOrderCard(o) {
   listEl.appendChild(card);
 }
 
+// NEW: customer-side cancel helper
+async function handleCustomerCancel(orderId, code, currentStatus) {
+  // Only allow if status is to-pay or processing (extra safety)
+  const ui = mapUIStatus(currentStatus);
+  if (ui !== 'to-pay' && ui !== 'processing') {
+    toast('info', 'Cannot cancel', 'This order can no longer be cancelled.');
+    return;
+  }
+
+  const sure = window.confirm(`Cancel order #${code || orderId}?`);
+  if (!sure) return;
+
+  const note = window.prompt(
+    'Optional: tell us why you are cancelling this order:',
+    ''
+  );
+
+  try {
+    const res = await fetch(`${API}/api/orders/${orderId}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeader
+      },
+      body: JSON.stringify({
+        status: 'Cancelled',
+        cancelledBy: 'customer',
+        cancelNote: note || ''
+      })
+    });
+
+    const text = await res.text();
+    let data;
+    try { data = text ? JSON.parse(text) : {}; }
+    catch { throw new Error('Server did not return JSON.'); }
+
+    if (!res.ok || data.success === false) {
+      throw new Error(data.message || `HTTP ${res.status}`);
+    }
+
+    toast('success', 'Order cancelled', 'We’ve cancelled your order.');
+    dlg.close();
+    fetchMyOrders(); // refresh list
+  } catch (err) {
+    console.error('❌ Cancel order failed:', err);
+    toast('error', 'Could not cancel order', err.message || '');
+  }
+}
 
 
 async function openDetails(id, code) {
@@ -265,8 +314,8 @@ async function openDetails(id, code) {
     odBody.innerHTML = `
       <div class="od-summary">
         <p><strong>Status:</strong>
-  <span class="od-badge ${badgeClass(o.status)}">${escapeHTML(o.status || '')}</span>
-</p>
+          <span class="od-badge ${badgeClass(o.status)}">${escapeHTML(o.status || '')}</span>
+        </p>
 
         <p><strong>Fulfillment:</strong> ${escapeHTML(o.fulfillment || '—')}</p>
         <p><strong>Address:</strong> ${escapeHTML(o.address || '—')}</p>
@@ -285,13 +334,32 @@ async function openDetails(id, code) {
             : '—' }
       </p>
     `;
+
+    // 👇 NEW: enable / disable Cancel button depending on status
+    if (odCancelBtn) {
+      const ui = mapUIStatus(o.status);
+      const canCancel = ui === 'to-pay' || ui === 'processing';
+
+      odCancelBtn.hidden = !canCancel;
+      odCancelBtn.disabled = !canCancel;
+
+      odCancelBtn.onclick = canCancel
+        ? () => handleCustomerCancel(o._id || id, o.code || code || id, o.status)
+        : null;
+    }
   } catch (e) {
     console.error(e);
     odBody.innerHTML = `<p style="color:#c00">Failed to load details.</p>`;
+    if (odCancelBtn) {
+      odCancelBtn.hidden = true;
+      odCancelBtn.disabled = true;
+      odCancelBtn.onclick = null;
+    }
   }
 
   dlg.showModal();
 }
+
 
 
   // Filters

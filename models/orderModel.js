@@ -43,6 +43,8 @@ const orderSchema = new mongoose.Schema({
   fulfillment: { type: String, enum: ["Delivery", "Pickup"], default: "Delivery" },
 
   status: { type: String, enum: ["Pending", "Paid", "Completed", "Cancelled"], default: "Pending" },
+
+  
 }, { timestamps: true });
 
 module.exports = mongoose.model("Order", orderSchema);
