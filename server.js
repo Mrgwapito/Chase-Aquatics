@@ -2381,8 +2381,7 @@ function buildOrderEmailTemplate(order) {
   };
 }
 
-// 🔹 Main helper: kept for compatibility.
-//    By default, we SKIP server-side EmailJS unless EMAILJS_ENABLE_SERVER is set.
+// 🔹 Main helper: sends order confirmation via EmailJS (server-side)
 async function sendOrderConfirmationEmail(order) {
   if (!order || !order.email) {
     console.warn("⚠️ sendOrderConfirmationEmail called without order/email");
@@ -2396,11 +2395,12 @@ async function sendOrderConfirmationEmail(order) {
   const templateParams = buildOrderEmailTemplate(order);
   if (!templateParams) return false;
 
-  // If you want server-side send, set EMAILJS_ENABLE_SERVER=true in your env.
-  if (!process.env.EMAILJS_ENABLE_SERVER) {
+  // ✅ Default: ENABLE server-side send.
+  // Only skip if you EXPLICITLY set EMAILJS_ENABLE_SERVER=false
+  const enableServerSend = (process.env.EMAILJS_ENABLE_SERVER || "true").toLowerCase() !== "false";
+  if (!enableServerSend) {
     console.log(
-      "ℹ️ Skipping server-side EmailJS send (browser-only mode). " +
-        "Set EMAILJS_ENABLE_SERVER=true to enable backend sending."
+      "ℹ️ EMAILJS_ENABLE_SERVER=false, skipping server-side EmailJS send."
     );
     return false;
   }
@@ -2436,7 +2436,6 @@ async function sendOrderConfirmationEmail(order) {
     return false;
   }
 }
-
 
 
 // ✅ Fetch bookings (Admin View) — supports date range + status + pagination

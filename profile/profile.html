@@ -149,91 +149,90 @@
             <!-- LEFT: form -->
             <div class="col-xl-8">
               <div class="tab-content" id="profileTabsContent">
-                <!-- PROFILE -->
-                <div class="tab-pane fade show active" id="pane-profile" role="tabpanel">
-                  <div class="row g-3">
+               <!-- PROFILE -->
+<div class="tab-pane fade show active" id="pane-profile" role="tabpanel">
+  <div class="row g-3">
 
-                    <div class="col-12">
-                      <label class="form-label fw-semibold">Username</label>
-                      <input type="text" class="form-control" value="aaronpogi" disabled>
-                    </div>
+    <div class="col-12">
+      <label class="form-label fw-semibold">Username</label>
+      <input type="text" class="form-control edit-input" id="usernameInput" placeholder="Username" disabled>
+    </div>
 
-                    <div class="col-md-6">
-                      <label class="form-label fw-semibold">Surname</label>
-                      <input type="text" class="form-control edit-input text-end-input" id="lastNameInput" placeholder="Surname" disabled>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label fw-semibold">First Name</label>
-                      <input type="text" class="form-control edit-input text-end-input" id="firstNameInput" placeholder="First name" disabled>
-                    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Surname</label>
+      <input type="text" class="form-control edit-input text-end-input" id="lastNameInput" placeholder="Surname" disabled>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">First Name</label>
+      <input type="text" class="form-control edit-input text-end-input" id="firstNameInput" placeholder="First name" disabled>
+    </div>
 
-                    <div class="col-12">
-                      <label class="form-label fw-semibold">Full Name</label>
-                      <input type="text" class="form-control" id="fullNameComputed" placeholder="Auto-filled from Surname, First name" disabled>
-                    </div>
+    <div class="col-12">
+      <label class="form-label fw-semibold">Full Name</label>
+      <input type="text" class="form-control" id="fullNameComputed" placeholder="Auto-filled from Surname, First name" disabled>
+    </div>
 
-                    <div class="col-12">
-                      <label class="form-label fw-semibold">Email</label>
-                      <input type="email" class="form-control" id="emailInput" disabled>
-                      <!-- small hint always visible -->
-                      <small id="emailHint" class="form-text text-muted d-block mt-1">
-                        Change your email and we’ll send a 6-digit code to verify.
-                      </small>
-                    </div>
+    <div class="col-12">
+      <label class="form-label fw-semibold">Email</label>
+      <input type="email" class="form-control" id="emailInput" disabled>
+      <!-- small hint always visible -->
+      <small id="emailHint" class="form-text text-muted d-block mt-1">
+        Change your email and we'll send a 6-digit code to verify.
+      </small>
+    </div>
 
-                    <!-- INLINE email verification: appears only when email changes -->
-                    <div class="col-12" id="profileEmailOtpSection" hidden>
-                      <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span class="badge badge-soft" id="profileEmailStatus">Verify new email</span>
-                        <input type="text"
-                               id="profileEmailOtp"
-                               class="form-control"
-                               placeholder="Enter 6-digit code"
-                               inputmode="numeric"
-                               maxlength="6"
-                               style="max-width:220px">
-                        <button class="btn btn-sm btn-outline-success" id="profileSendEmailOtp" type="button">Send Code</button>
-                        <button class="btn btn-sm btn-success" id="profileVerifyEmailOtp" type="button" disabled>Verify</button>
-                      </div>
-                      <small class="form-text">
-                        Code will be sent to <span id="profileEmailTarget" class="fw-semibold"></span>. Check your inbox/spam.
-                      </small>
-                    </div>
+    <!-- INLINE email verification: appears only when email changes -->
+    <div class="col-12" id="profileEmailOtpSection" hidden>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge badge-soft" id="profileEmailStatus">Verify new email</span>
+        <input type="text"
+               id="profileEmailOtp"
+               class="form-control"
+               placeholder="Enter 6-digit code"
+               inputmode="numeric"
+               maxlength="6"
+               style="max-width:220px">
+        <button class="btn btn-sm btn-outline-success" id="profileSendEmailOtp" type="button">Send Code</button>
+        <button class="btn btn-sm btn-success" id="profileVerifyEmailOtp" type="button" disabled>Verify</button>
+      </div>
+      <small class="form-text">
+        Code will be sent to <span id="profileEmailTarget" class="fw-semibold"></span>. Check your inbox/spam.
+      </small>
+    </div>
 
-                    <div class="col-12">
-                      <label class="form-label fw-semibold">Phone Number</label>
-                      <div class="input-group phone-group">
-                        <span class="input-group-text">+63</span>
-                        <input
-                          type="text"
-                          class="form-control edit-input text-end-input"
-                          id="phoneInput"
-                          placeholder="9XXXXXXXXX"
-                          inputmode="numeric"
-                          maxlength="10"
-                          disabled>
-                      </div>
-                    </div>
+    <div class="col-12">
+      <label class="form-label fw-semibold">Phone Number</label>
+      <div class="input-group phone-group">
+        <span class="input-group-text">+63</span>
+        <input
+          type="text"
+          class="form-control edit-input text-end-input"
+          id="phoneInput"
+          placeholder="9XXXXXXXXX"
+          inputmode="numeric"
+          maxlength="10"
+          disabled>
+      </div>
+    </div>
 
-                    <div class="col-12">
-                      <div class="verify-box mx-auto">
-                        <label class="form-label fw-semibold d-block text-start">Valid ID (JPG/PNG/PDF)</label>
-                        <input class="form-control" id="validIdFile" type="file" accept="image/*,.pdf">
-                        <div class="form-text">Max 8MB. Examples: Student ID, Driver’s License, Passport.</div>
-                        <button class="btn btn-outline-primary w-100" id="submitValidIdBtn">
-                          Submit ID for verification
-                        </button>
-                        <div class="small mt-2" id="validIdNote" hidden></div>
-                      </div>
-                    </div>
+    <div class="col-12">
+      <div class="verify-box mx-auto">
+        <label class="form-label fw-semibold d-block text-start">Valid ID (JPG/PNG/PDF)</label>
+        <input class="form-control" id="validIdFile" type="file" accept="image/*,.pdf">
+        <div class="form-text">Max 8MB. Examples: Student ID, Driver's License, Passport.</div>
+        <button class="btn btn-outline-primary w-100" id="submitValidIdBtn">
+          Submit ID for verification
+        </button>
+        <div class="small mt-2" id="validIdNote" hidden></div>
+      </div>
+    </div>
 
-
-                    <div class="col-12">
-                      <button class="btn btn-primary px-4" id="editProfileBtn"><i class="fa-solid fa-pen me-1"></i>Save Changes</button>
-                      <button class="btn btn-success px-4 d-none" id="saveProfileBtn"><i class="fa-solid fa-floppy-disk me-1"></i>Save Changes</button>
-                    </div>
-                  </div>
-                </div>
+    <div class="col-12">
+      <button class="btn btn-brand mt-3" id="saveProfileBtn">Save Changes</button>
+      <button class="btn btn-outline-secondary mt-3 ms-2" id="editProfileBtn">Edit</button>
+    </div>
+  </div>
+</div>
 
                 <!-- ADDRESS -->
 <div class="tab-pane fade" id="pane-address" role="tabpanel">

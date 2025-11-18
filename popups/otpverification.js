@@ -229,15 +229,16 @@ verifyBtn.addEventListener('click', async () => {
       registrationData
     });
 
-    const response = await fetch('/api/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: pendingEmail,
-        otp,
-        registrationData // { firstName, lastName, password } from session
-      })
-    });
+const response = await fetch(`${API}/api/verify-otp`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: pendingEmail,
+    otp,
+    registrationData // { firstName, lastName, password } from session
+  })
+});
+
 
     const result = await response.json();
     console.log('📥 /api/verify-otp response:', result);
