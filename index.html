@@ -6,9 +6,9 @@
     <title>Life in a Box</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;900&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous"> 
-    <link rel="stylesheet" href="popups/login.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous"> 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="popups/login.css">
     <link rel="stylesheet" href="popups/cart.css">
     <link rel="stylesheet" href="lpage.css">
     <link rel="stylesheet" href="/assets/toast.css">
@@ -16,553 +16,404 @@
 </head>
 
 <body>
-   <nav class="navbar">
-    <div class="logo"><img src="./logo.png" alt="logo"></div>
+    <!-- === Navigation === -->
+    <nav class="navbar">
+        <div class="logo"><img src="./logo.png" alt="logo"></div>
 
-    <!-- NEW: mobile hamburger -->
-    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
-        <i class="fa-solid fa-bars"></i>
-    </button>
+        <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-    <div class="navlinks" id="navlinks">
-        <ul>
-        <li><a class="active" href="./index.html">Home</a></li>
-        <li><a class="active" href="./product.html">Products</a></li>
-        <li><a class="active" href="./service.html">Services</a></li>
-        <li><a class="active" href="./about.html">About Us</a></li>
-        <li><a class="active" href="./rus.html">Reach Us</a></li>
-        </ul>
-    </div>
+        <div class="navlinks" id="navlinks">
+            <ul>
+                <li><a class="active" href="./index.html">Home</a></li>
+                <li><a class="active" href="./product.html">Products</a></li>
+                <li><a class="active" href="./service.html">Services</a></li>
+                <li><a class="active" href="./about.html">About Us</a></li>
+                <li><a class="active" href="./rus.html">Reach Us</a></li>
+            </ul>
+        </div>
 
-    <div class="nav-icons">
-        <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
-        <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
-    </div>
+        <div class="nav-icons">
+            <button id="cart-btn" class="cart"><i class="fa-solid fa-cart-shopping"></i></button>
+            <button class="user"><i class="fa-solid fa-user" id="loginTrigger"></i></button>
+        </div>
     </nav> 
 
+    <!-- === Login Modal === -->    
+    <div class="login-container" id="loginContainer" style="display: none;">
+        <div class="login-box">
+            <h2>Sign In</h2>
+            <input type="text" placeholder="Username or Email" id="loginEmail">
+            <input type="password" placeholder="Password" id="password">
+            
+            <div class="remember-me">
+                <input type="checkbox" id="remember">
+                <label for="remember">Remember Me</label>
+            </div>
 
- <!-- Login Form (Hidden Initially) -->    
-<div class="login-container" id="loginContainer" style="display: none;">
-  <div class="login-box">
-    <h2>Sign In</h2>
-    <input type="text" placeholder="Username or Email" id="loginEmail">
-    <input type="password" placeholder="Password" id="password">
-    
-    <div class="remember-me">
-      <input type="checkbox" id="remember">
-      <label for="remember">Remember Me</label>
+            <button class="btn" id="signInBtn">Sign In</button>
+
+            <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
+
+            <p class="signup-text" id="showRegister">
+                Don't have an account? Sign Up
+            </p>
+
+            <span class="close-x" id="closeLogin">&times;</span>
+        </div>
     </div>
 
-    <button class="btn" id="signInBtn">Sign In</button>
+    <!-- === Forgot Password Modal === -->
+    <div class="forgot-container" id="forgotContainer" style="display: none;">
+        <div class="forgot-box">
+            <h2>Reset Password</h2>
+            <p style="font-size: 14px; color: #666;">Enter your email to receive a reset code.</p>
 
-    <!-- Forgot Password Link -->
-    <p class="forgot-text" id="showForgotPassword">Forgot Password?</p>
+            <input type="email" id="forgotEmail" placeholder="Enter your registered email">
+            <button class="btn" id="forgotSendBtn">Send OTP</button>
 
-    <p class="signup-text" id="showRegister">
-      Don't have an account? Sign Up
-    </p>
+            <div id="forgotStep2" style="display:none;">
+                <input type="text" id="forgotOtp" placeholder="Enter OTP">
+                <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)" autocomplete="new-password">
+                <div class="pw-meter" id="forgotPwMeter">
+                    <div class="bar"><span class="fill"></span></div>
+                </div>
+                <div class="pw-strength" id="forgotPwLabel"></div>
+                <input type="password" id="forgotConfirmPass" placeholder="Confirm Password" autocomplete="new-password">
+                <div class="pw-confirm-message" id="forgotConfirmMessage"></div>
+                <button class="btn" id="forgotResetBtn">Reset Password</button>
+            </div>
 
-    <span class="close-x" id="closeLogin">&times;</span>
-  </div>
-</div>
-
-<!-- 🔒 Forgot Password Popup -->
-<div class="forgot-container" id="forgotContainer" style="display: none;">
-  <div class="forgot-box">
-    <h2>Reset Password</h2>
-    <p style="font-size: 14px; color: #666;">Enter your email to receive a reset code.</p>
-
-    <input type="email" id="forgotEmail" placeholder="Enter your registered email">
-    <button class="btn" id="forgotSendBtn">Send OTP</button>
-
-    <div id="forgotStep2" style="display:none;">
-      <input type="text" id="forgotOtp" placeholder="Enter OTP">
-      <input type="password" id="forgotNewPass" placeholder="New Password (min 8 chars)" autocomplete="new-password">
-      <div class="pw-meter" id="forgotPwMeter">
-        <div class="bar"><span class="fill"></span></div>
-      </div>
-      <div class="pw-strength" id="forgotPwLabel"></div>
-      <input type="password" id="forgotConfirmPass" placeholder="Confirm Password" autocomplete="new-password">
-      <div class="pw-confirm-message" id="forgotConfirmMessage"></div>
-      <button class="btn" id="forgotResetBtn">Reset Password</button>
+            <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
+            <span class="close-x" id="closeForgot">&times;</span>
+        </div>
     </div>
 
-    <p class="back-to-login" id="backToLoginFromForgot">Back to Login</p>
-    <span class="close-x" id="closeForgot">&times;</span>
-  </div>
-</div>
+    <!-- === Registration Modal === -->
+    <div class="register-container" id="registerContainer" style="display:none;">
+        <span id="closeRegister" class="close-x">&times;</span>
 
+        <div class="register-box">
+            <h2>Register</h2>
 
+            <div class="name-group">
+                <input type="text" placeholder="First Name" id="regFirstName" autocomplete="given-name">
+                <input type="text" placeholder="Last Name" id="regLastName" autocomplete="family-name">
+            </div>
 
+            <input type="email" placeholder="Email" id="regEmail" autocomplete="email">
 
+            <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8" autocomplete="new-password">
+            <div class="pw-meter" id="regPwMeter">
+                <div class="bar"><span class="fill"></span></div>
+            </div>
+            <div class="pw-strength" id="regPwLabel"></div>
 
+            <input type="password" placeholder="Confirm Password" id="regConfirmPassword" autocomplete="new-password">
+            <div class="pw-confirm-message" id="regConfirmMessage"></div>
 
+            <div class="legal-consent">
+                <label class="legal-check" for="agreeTerms">
+                    <input type="checkbox" id="agreeTerms">
+                    <span>
+                        I agree to the
+                        <a href="./termsncondi.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+                        and
+                        <a href="./termsncondi.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+                    </span>
+                </label>
+            </div>
 
+            <button id="registerBtn" disabled>Register</button>
 
-<!-- Registration Form (Hidden Initially) -->
-<div class="register-container" id="registerContainer" style="display:none;">
-  <span id="closeRegister" class="close-x">&times;</span>
-
-  <div class="register-box">
-    <h2>Register</h2>
-
-    <!-- First / Last name -->
-    <div class="name-group">
-      <input type="text" placeholder="First Name" id="regFirstName" autocomplete="given-name">
-      <input type="text" placeholder="Last Name" id="regLastName" autocomplete="family-name">
+            <div class="back-to-login" id="backToLogin">Back to Login</div>
+        </div>
     </div>
 
-    <input type="email" placeholder="Email" id="regEmail" autocomplete="email">
-
-    <input type="password" placeholder="Create Password (min 8 chars)" id="regPassword" minlength="8" autocomplete="new-password">
-    <!-- strength meter -->
-    <div class="pw-meter" id="regPwMeter">
-      <div class="bar"><span class="fill"></span></div>
-    </div>
-    <div class="pw-strength" id="regPwLabel"></div>
-
-    <input type="password" placeholder="Confirm Password" id="regConfirmPassword" autocomplete="new-password">
-<!-- Add this line below confirm password -->
-<div class="pw-confirm-message" id="regConfirmMessage"></div>
-
-    <!-- Consent -->
-    <div class="legal-consent">
-      <label class="legal-check" for="agreeTerms">
-        <input type="checkbox" id="agreeTerms">
-        <span>
-          I agree to the
-          <a href="./termsncondi.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
-          and
-          <a href="./termsncondi.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>.
-        </span>
-      </label>
-    </div>
-
-    <button id="registerBtn" disabled>Register</button>
-
-    <div class="back-to-login" id="backToLogin">Back to Login</div>
-  </div>
-</div>
-
-
-
-    <!-- Cart Popup -->
+    <!-- === Cart Popup === -->
     <div class="cart-popup">
-    <h2>Cart</h2>
-    <div class="cart-items">
-        <!-- Cart items will be dynamically inserted here -->
-    </div>
-    <button class="review-btn">Review My Cart</button>
+        <h2>Cart</h2>
+        <div class="cart-items"></div>
+        <button class="review-btn">Review My Cart</button>
     </div>
 
-
-
-   <section class="hero">
+    <!-- === Hero Section === -->
+    <section class="hero">
         <video autoplay muted loop playsinline class="bg-video">
             <source src="./herobg.mp4" type="video/mp4">
             Your browser does not support HTML5 video.
         </video>
-         <div class="hero-content">
-        <img src="./Life In A Box.png" alt="life in a box">
-        <p>Bring the beauty of underwater world to your home</p>
-        <button type="button" class="btn btn-success"  onclick="location.href='service.html#spart'">Explore Our Collection</button>
-       
-         </div>
+        <div class="hero-content">
+            <img src="./Life In A Box.png" alt="life in a box">
+            <p>Bring the beauty of underwater world to your home</p>
+            <button type="button" class="btn btn-success" onclick="location.href='service.html#spart'">Explore Our Collection</button>
+        </div>
     </section>
 
-<section class="spart">
-  <h1>Featured Products</h1>
-  <div class="prodcont">
-    <button class="previous bton"><i class="fa-solid fa-square-caret-left"></i></button>
+    <!-- === Featured Products === -->
+    <section class="spart">
+        <h1>Featured Products</h1>
+        <div class="prodcont">
+            <button class="previous bton"><i class="fa-solid fa-square-caret-left"></i></button>
 
-    <div class="wrapper">
-      <div class="cont">
+            <div class="wrapper">
+                <div class="cont">
 
-        <!-- SAMPLE CARD -->
-        <div class="box">
-          <div class="text">Ledstar Model X</div>
-          <a
-            href="product.html?slug=ledstar-model-x"
-            class="prod-trigger"
-            data-name="Ledstar Model X"
-            data-category="lighting"
-            data-price="₱1,250"
-            data-img="./fprod/led.jpg"
-            data-desc="High-output LED for planted tanks; energy-efficient and slim profile."
-          >
-            <img src="./fprod/led.jpg" alt="Ledstar Model X">
-          </a>
+                    <div class="box">
+                        <div class="text">Ledstar Model X</div>
+                        <a href="product.html?slug=ledstar-model-x" class="prod-trigger"
+                            data-name="Ledstar Model X"
+                            data-category="lighting"
+                            data-price="₱1,250"
+                            data-img="./fprod/led.jpg"
+                            data-desc="High-output LED for planted tanks; energy-efficient and slim profile.">
+                            <img src="./fprod/led.jpg" alt="Ledstar Model X">
+                        </a>
+                    </div>
+
+                    <div class="box">
+                        <div class="text">Shiruba Hang On Filter</div>
+                        <a href="product.html?slug=shiruba-hob" class="prod-trigger"
+                            data-name="Shiruba Hang On Filter"
+                            data-category="filters"
+                            data-price="₱750"
+                            data-img="./fprod/shiruba.jpg"
+                            data-desc="Quiet HOB filter; crystal-clear water for nano to mid-size tanks.">
+                            <img src="./fprod/shiruba.jpg" alt="Shiruba Hang On Filter">
+                        </a>
+                    </div>
+
+                    <div class="box">
+                        <div class="text">YAKO Aquarium Oxygen Pump 13W</div>
+                        <a href="product.html?slug=yako-oxygen-pump" class="prod-trigger"
+                            data-name="YAKO Aquarium Oxygen Pump 13W"
+                            data-category="pumps"
+                            data-price="₱890"
+                            data-img="./fprod/pump.jpg"
+                            data-desc="Adjustable pump with dual-outlet; quiet and reliable.">
+                            <img src="./fprod/pump.jpg" alt="YAKO Aquarium Oxygen Pump 13W">
+                        </a>
+                    </div>
+
+                    <div class="box">
+                        <div class="text">EHEIM 300W Jager Heater</div>
+                        <a href="product.html?slug=eheim-heater" class="prod-trigger"
+                            data-name="EHEIM 300W Jager Heater"
+                            data-category="heaters"
+                            data-price="₱1,500"
+                            data-img="./fprod/heater.jpg"
+                            data-desc="German precision; robust and accurate temperature control.">
+                            <img src="./fprod/heater.jpg" alt="EHEIM 300W Jager Heater">
+                        </a>
+                    </div>
+
+                    <div class="box">
+                        <div class="text">River Rock Set (Kilo Gram)</div>
+                        <a href="product.html?slug=river-rock-set" class="prod-trigger"
+                            data-name="River Rock Set (Kilo Gram)"
+                            data-category="hardscape"
+                            data-price="₱35"
+                            data-img="./fprod/riverock.jpg"
+                            data-desc="Natural pebbles perfect for aquascaping; creates a tranquil riverbed look.">
+                            <img src="./fprod/riverock.jpg" alt="River Rock Set (Kilo Gram)">
+                        </a>
+                    </div>
+
+                    <div class="box">
+                        <div class="text">Henna Wood Driftwood</div>
+                        <a href="product.html?slug=henna-wood" class="prod-trigger"
+                            data-name="Henna Wood Driftwood"
+                            data-category="hardscape"
+                            data-price="₱280"
+                            data-img="./fprod/henna.jpg"
+                            data-desc="Lightweight, intricate branches; ideal for lush planted tanks.">
+                            <img src="./fprod/henna.jpg" alt="Henna Wood Driftwood">
+                        </a>
+                    </div>
+
+                    <div class="box">
+                        <div class="text">Bucephalandra Plant</div>
+                        <a href="product.html?slug=bucephalandra" class="prod-trigger"
+                            data-name="Bucephalandra Plant"
+                            data-category="plants"
+                            data-price="₱150"
+                            data-img="./fprod/buche.jpg"
+                            data-desc="Low-maintenance rheophyte; small, colorful leaves.">
+                            <img src="./fprod/buche.jpg" alt="Bucephalandra Plant">
+                        </a>
+                    </div>
+
+                    <div class="box">
+                        <div class="text">Ludwigla Acuatris Plant</div>
+                        <a href="product.html?slug=ludwigia-acuatris" class="prod-trigger"
+                            data-name="Ludwigla Acuatris Plant"
+                            data-category="plants"
+                            data-price="₱50"
+                            data-img="./fprod/ludwigia.jpg"
+                            data-desc="Easy stem plant with reddish leaves; great contrast.">
+                            <img src="./fprod/ludwigia.jpg" alt="Ludwigla Acuatris Plant">
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            <button class="next bton"><i class="fa-solid fa-square-caret-right"></i></button>
         </div>
+    </section>
 
-        <div class="box">
-          <div class="text">Shiruba Hang On Filter</div>
-          <a
-            href="product.html?slug=shiruba-hob"
-            class="prod-trigger"
-            data-name="Shiruba Hang On Filter"
-            data-category="filters"
-            data-price="₱750"
-            data-img="./fprod/shiruba.jpg"
-            data-desc="Quiet HOB filter; crystal-clear water for nano to mid-size tanks."
-          >
-            <img src="./fprod/shiruba.jpg" alt="Shiruba Hang On Filter">
-          </a>
+    <!-- === Product Quick View Modal === -->
+    <div class="prod-modal" id="prodModal" aria-hidden="true" role="dialog" aria-labelledby="pmTitle">
+        <div class="pm-backdrop" data-close-modal></div>
+        <div class="pm-dialog">
+            <button class="pm-close" aria-label="Close" data-close-modal>&times;</button>
+            <div class="pm-grid">
+                <div class="pm-media">
+                    <img id="pmImg" src="" alt="">
+                </div>
+                <div class="pm-info">
+                    <h2 id="pmTitle">Product Name</h2>
+                    <div class="pm-cat" id="pmCat">Category: —</div>
+                    <div class="pm-price" id="pmPrice">Price: —</div>
+                    <p class="pm-desc" id="pmDesc"></p>
+                    <div class="pm-actions">
+                        <a id="pmViewMore" href="#" class="pm-btn primary">View More Details</a>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="box">
-          <div class="text">Shiruba Canister Filter</div>
-          <a
-            href="product.html?slug=shiruba-canister"
-            class="prod-trigger"
-            data-name="Shiruba Canister Filter"
-            data-category="filters"
-            data-price="₱2,650"
-            data-img="./fprod/canister.jpeg"
-            data-desc="External canister with strong flow and multi-stage media baskets."
-          >
-            <img src="./fprod/canister.jpeg" alt="Shiruba Canister Filter">
-          </a>
-        </div>
-
-        <div class="box">
-          <div class="text">Anislag Driftwood</div>
-          <a
-            href="product.html?slug=anislag-driftwood"
-            class="prod-trigger"
-            data-name="Anislag Driftwood"
-            data-category="driftwoods-stones"
-            data-price="₱220/kg"
-            data-img="./fprod/anislag.jpg"
-            data-desc="Natural wood for aquascaping; safe for shrimp and fish."
-          >
-            <img src="./fprod/anislag.jpg" alt="Anislag Driftwood">
-          </a>
-        </div>
-
-        <div class="box">
-          <div class="text">Dragon Stone</div>
-          <a
-            href="product.html?slug=dragon-stone"
-            class="prod-trigger"
-            data-name="Dragon Stone"
-            data-category="driftwoods-stones"
-            data-price="₱150/kg"
-            data-img="./fprod/dragon.jpeg"
-            data-desc="Iconic texture stone; perfect for Iwagumi and natural layouts."
-          >
-            <img src="./fprod/dragon.jpeg" alt="Dragon Stone">
-          </a>
-        </div>
-
-        <div class="box">
-          <div class="text">Ista Premium Soil</div>
-          <a
-            href="product.html?slug=ista-premium-soil"
-            class="prod-trigger"
-            data-name="Ista Premium Soil"
-            data-category="substrates"
-            data-price="₱980/9L"
-            data-img="./fprod/soil.jpg"
-            data-desc="Nutrient-rich soil; buffers pH and boosts plant growth."
-          >
-            <img src="./fprod/soil.jpg" alt="Ista Premium Soil">
-          </a>
-        </div>
-
-        <div class="box">
-          <div class="text">Black Sand</div>
-          <a
-            href="product.html?slug=black-sand"
-            class="prod-trigger"
-            data-name="Black Sand"
-            data-category="substrates"
-            data-price="₱45/kg"
-            data-img="./fprod/sand.jpeg"
-            data-desc="Inert black sand for clean, striking aquascapes."
-          >
-            <img src="./fprod/sand.jpeg" alt="Black Sand">
-          </a>
-        </div>
-
-        <div class="box">
-          <div class="text">Ceramic Ring</div>
-          <a
-            href="product.html?slug=ceramic-ring"
-            class="prod-trigger"
-            data-name="Ceramic Ring"
-            data-category="filter-media"
-            data-price="₱120/pack"
-            data-img="./fprod/ring.jpg"
-            data-desc="Porous media for beneficial bacteria and stable cycles."
-          >
-            <img src="./fprod/ring.jpg" alt="Ceramic Ring">
-          </a>
-        </div>
-
-        <div class="box">
-          <div class="text">Nerite Snail</div>
-          <a
-            href="product.html?slug=nerite-snail"
-            class="prod-trigger"
-            data-name="Nerite Snail"
-            data-category="livestock"
-            data-price="₱60/pc"
-            data-img="./fprod/snail.png"
-            data-desc="Top algae eater; won’t breed in freshwater."
-          >
-            <img src="./fprod/snail.png" alt="Nerite Snail">
-          </a>
-        </div>
-
-        <div class="box">
-          <div class="text">Glofish Tetra</div>
-          <a
-            href="product.html?slug=glofish-tetra"
-            class="prod-trigger"
-            data-name="Glofish Tetra"
-            data-category="livestock"
-            data-price="₱90/pc"
-            data-img="./fprod/glofish.png"
-            data-desc="Colorful schooling fish; active and hardy."
-          >
-            <img src="./fprod/glofish.png" alt="Glofish Tetra">
-          </a>
-        </div>
-
-        <div class="box">
-          <div class="text">Blue Danio</div>
-          <a
-            href="product.html?slug=blue-danio"
-            class="prod-trigger"
-            data-name="Blue Danio"
-            data-category="livestock"
-            data-price="₱70/pc"
-            data-img="./fprod/blue.png"
-            data-desc="Fast swimmers; peaceful community fish."
-          >
-            <img src="./fprod/blue.png" alt="Blue Danio">
-          </a>
-        </div>
-
-        <div class="box">
-          <div class="text">Purple Danio</div>
-          <a
-            href="product.html?slug=purple-danio"
-            class="prod-trigger"
-            data-name="Purple Danio"
-            data-category="livestock"
-            data-price="₱75/pc"
-            data-img="./fprod/purple.jpeg"
-            data-desc="Unique purple sheen; thrives in groups."
-          >
-            <img src="./fprod/purple.jpeg" alt="Purple Danio">
-          </a>
-        </div>
-
-      </div>
     </div>
 
-    <button class="next bton"><i class="fa-solid fa-square-caret-right"></i></button>
-  </div>
-</section>
-
-<!-- QUICK VIEW MODAL -->
-<div id="prodModal" class="prod-modal" aria-hidden="true">
-  <div class="pm-backdrop" data-close-modal></div>
-
-  <div class="pm-dialog" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
-    <button class="pm-close" type="button" title="Close" data-close-modal>&times;</button>
-
-    <div class="pm-grid">
-      <div class="pm-media">
-        <img id="pmImg" src="" alt="">
-      </div>
-
-      <div class="pm-info">
-        <h2 id="pmTitle">Product Name</h2>
-        <p class="pm-cat" id="pmCat">Category: —</p>
-        <p class="pm-price" id="pmPrice">Price: —</p>
-
-
-        <p class="pm-desc" id="pmDesc">Description here…</p>
-
-        <div class="pm-actions pm-actions--single">
-          <a id="pmViewMore" class="pm-btn primary" href="#" rel="nofollow">
-            View more
-          </a>
+    <!-- === About Section === -->
+    <section class="tpart">
+        <div class="fdiv">
+            <h1>About Us</h1>
+            <p>At Chase Aquatics, our mission is to bring a slice of nature into your home through beautifully crafted aquascapes. We design serene, natural aquatic environments that enhance your living space, promote relaxation, and foster a deeper connection to nature.</p>
+            <button type="button" class="btn btn-success" onclick="location.href='about.html'">Learn More</button>
         </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-
-
-<section class="fpart">
-  <h1>Our Services</h1>
-
-  <div class="services-grid">
-    <!-- Card 1 -->
-    <article class="service-card">
-      <i class="fa-solid fa-brush"></i>
-      <h2>Custom Design</h2>
-      <p>Professional aquarium design tailored to your space and style preferences</p>
-      <button type="button" class="btn btn-primary">Get Started</button>
-    </article>
-
-    <!-- Card 2 -->
-    <article class="service-card">
-      <i class="fa-solid fa-screwdriver-wrench"></i>
-      <h2>Maintenance</h2>
-      <p>Regular maintenance services to keep your aquarium healthy and beautiful</p>
-      <button type="button" class="btn btn-primary" data-open="bookingModal">Book Appointment</button>
-    </article>
-
-    <!-- Card 3 -->
-    <article class="service-card">
-      <i class="fa-solid fa-headset"></i>
-      <h2>Consultation</h2>
-      <p>Expert advice on fish care, water quality, and aquarium management</p>
-      <button type="button" class="btn btn-primary" data-open="bookingModal">Book Appointment</button>
-    </article>
-  </div>
-</section>
-
-<!-- ===================== BOOKING POPUP ===================== -->
-<div id="bookingModal" class="booking-modal" role="dialog" aria-modal="true" aria-labelledby="bookingTitle" hidden>
-  <div class="modal__backdrop" data-close></div>
-
-  <div class="modal__panel">
-    <button class="modal__close" type="button" aria-label="Close" data-close>&times;</button>
-
-    <!-- Header -->
-    <header class="booking__header">
-      <h1 id="bookingTitle" class="booking__title">In Person Appointment</h1>
-      <div class="booking__meta">
-        <span class="booking__meta-item" aria-label="Duration">🕒 1 hr</span>
-        <span class="booking__meta-item" aria-label="Location">
-          📍 Paseo de Carmona, Unit 8 Lot E/F paseo square, Governor's Dr, Carmona, 4116 Cavite
-        </span>
-      </div>
-      <p class="booking__intro">Let’s create something beautiful together!</p>
-    </header>
-
-    <!-- Body -->
-    <div class="booking">
-      <!-- Left column -->
-      <aside class="booking__aside">
-        <p>
-          Whether you’re dreaming of a custom-built aquarium, need help with tank maintenance,
-          want to explore our handcrafted cabinets, or simply have questions, we’re here to help.
-          Book an in-person consultation with our team at <strong>Chase Aquatics</strong>.
-        </p>
-        <div class="booking__timezone">
-          <small>Time zone</small>
-          <div class="booking__tz-row">🌐 Philippine Time</div>
+        <div class="sdiv">
+            <img src="./abtptt.png" alt="about picture">
         </div>
-      </aside>
+    </section>
 
-      <!-- Right column -->
-<section class="booking__main">
-  <div class="step step--calendar" data-step="calendar" aria-labelledby="stepCalendarTitle">
-    <!-- row 1 (two columns): left = main title, right = selected date -->
-    <h2 id="stepCalendarTitle">Select a Date &amp; Time</h2>
-    <div class="times__date-heading" data-times-date>—</div>
-
-    <!-- row 2: calendar | times list -->
-    <div class="cal-times">
-      <div class="cal__picker">
-        <input id="datePicker" type="text" aria-label="Choose a date" />
-      </div>
-
-      <aside class="times" aria-live="polite">
-        <div class="times__list">
-          <button class="times__btn" type="button" data-time="09:00">9:00am</button>
-          <button class="times__btn" type="button" data-time="10:00">10:00am</button>
-          <button class="times__btn" type="button" data-time="11:00">11:00am</button>
-          <button class="times__btn" type="button" data-time="12:00">12:00pm</button>
-          <button class="times__btn" type="button" data-time="13:00">1:00pm</button>
-          <button class="times__btn" type="button" data-time="14:00">2:00pm</button>
-          <button class="times__btn" type="button" data-time="15:00">3:00pm</button>
-          <button class="times__btn" type="button" data-time="16:00">4:00pm</button>
+    <!-- === Services Section === -->
+    <section class="fpart">
+        <h1>Our Services</h1>
+        <div class="fwrap">
+            <div class="boxx">
+                <i class="fa-solid fa-wrench"></i>
+                <h2>Installation</h2>
+                <p>Professional setup and installation of custom aquariums</p>
+                <a href="service.html#installation" class="btn btn-success">Learn More</a>
+            </div>
+            <div class="boxx">
+                <i class="fa-solid fa-broom"></i>
+                <h2>Maintenance</h2>
+                <p>Regular cleaning and upkeep services to keep your aquarium pristine</p>
+                <a href="service.html#maintenance" class="btn btn-success">Learn More</a>
+            </div>
+            <div class="boxx">
+                <i class="fa-solid fa-palette"></i>
+                <h2>Consultation</h2>
+                <p>Expert advice on aquascaping design and fish selection</p>
+                <a href="service.html#consultation" class="btn btn-success">Learn More</a>
+            </div>
         </div>
-      </aside>
+    </section>
+
+    <!-- === Booking Modal === -->
+    <div class="booking-modal" id="bookingModal" hidden>
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__panel">
+            <button class="close-btn" data-close aria-label="Close">&times;</button>
+
+            <div class="booking">
+                <aside class="summary">
+                    <h3 class="summary__title">Your Appointment</h3>
+                    <div class="summary__when" data-summary-when>Choose a time</div>
+                </aside>
+
+                <div class="steps">
+                    <form class="step step--calendar" data-step="calendar" hidden>
+                        <h2>Choose Date & Time</h2>
+                        <div class="times__date-heading" data-times-date>Today</div>
+                        <div class="cal-times">
+                            <div class="cal__picker">
+                                <input id="datePicker" type="text">
+                            </div>
+                            <div class="times">
+                                <ul class="times__list">
+                                    <li><button type="button" class="times__btn">10:00am</button></li>
+                                    <li><button type="button" class="times__btn">11:00am</button></li>
+                                    <li><button type="button" class="times__btn">1:00pm</button></li>
+                                    <li><button type="button" class="times__btn">2:00pm</button></li>
+                                    <li><button type="button" class="times__btn">3:00pm</button></li>
+                                    <li><button type="button" class="times__btn">4:00pm</button></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </form>
+
+                    <form class="step step--details" data-step="details" aria-labelledby="stepDetailsTitle" hidden>
+                        <h2 id="stepDetailsTitle">Enter Details</h2>
+
+                        <div class="form__row">
+                            <label for="guestName">Name *</label>
+                            <input id="guestName" name="name" type="text" required>
+                        </div>
+
+                        <div class="form__row">
+                            <label for="guestEmail">Email *</label>
+                            <input id="guestEmail" name="email" type="email" required>
+                        </div>
+
+                        <details class="form__row">
+                            <summary>Add Guests</summary>
+                            <input name="guests" type="email" placeholder="guest1@example.com, guest2@example.com">
+                        </details>
+
+                        <div class="form__row">
+                            <label for="notes">Do you have anything you'd like us to know before the appointment?</label>
+                            <textarea id="notes" name="notes" rows="4" placeholder="Feel free to share your space, style, or ideas."></textarea>
+                        </div>
+
+                        <fieldset class="form__row form__row--topics">
+                            <legend>What would you like to talk about? *</legend>
+
+                            <label class="topic">
+                                <span>Building of aquarium</span>
+                                <input type="checkbox" name="topic" value="build">
+                            </label>
+
+                            <label class="topic">
+                                <span>Tank maintenance</span>
+                                <input type="checkbox" name="topic" value="maintenance">
+                            </label>
+
+                            <label class="topic">
+                                <span>Inquiry</span>
+                                <input type="checkbox" name="topic" value="inquiry">
+                            </label>
+
+                            <label class="topic topic--other">
+                                <span>Other</span>
+                                <input type="checkbox" name="topic" value="other" data-other-toggle>
+                            </label>
+
+                            <input type="text" name="other_text" placeholder="Please specify" class="other__input" hidden>
+                        </fieldset>
+
+                        <button class="btn btn--primary" type="submit">Schedule Appointment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-
-        <!-- STEP 2: Details -->
-        <form class="step step--details" data-step="details" aria-labelledby="stepDetailsTitle" hidden>
-          <h2 id="stepDetailsTitle">Enter Details</h2>
-
-          <div class="form__row">
-            <label for="guestName">Name *</label>
-            <input id="guestName" name="name" type="text" required />
-          </div>
-
-          <div class="form__row">
-            <label for="guestEmail">Email *</label>
-            <input id="guestEmail" name="email" type="email" required />
-          </div>
-
-          <details class="form__row">
-            <summary>Add Guests</summary>
-            <input name="guests" type="email" placeholder="guest1@example.com, guest2@example.com" />
-          </details>
-
-          <div class="form__row">
-            <label for="notes">Do you have anything you’d like us to know before the appointment?</label>
-            <textarea id="notes" name="notes" rows="4" placeholder="Feel free to share your space, style, or ideas."></textarea>
-          </div>
-
-<!-- Topics: add a helper class and keep simple label+checkbox items -->
-<fieldset class="form__row form__row--topics">
-  <legend>What would you like to talk about? *</legend>
-
-  <label class="topic">
-    <span>Building of aquarium</span>
-    <input type="checkbox" name="topic" value="build">
-  </label>
-
-  <label class="topic">
-    <span>Tank maintenance</span>
-    <input type="checkbox" name="topic" value="maintenance">
-
-  </label>
-
-  <label class="topic">
-    <span>Inquiry</span>
-    <input type="checkbox" name="topic" value="inquiry">
-  </label>
-
-  <label class="topic topic--other">
-    <span>Other</span>
-    <input type="checkbox" name="topic" value="other" data-other-toggle>
-  </label>
-
-  <!-- full-width, aligned with other text inputs -->
-  <input type="text" name="other_text" placeholder="Please specify" class="other__input" hidden>
-</fieldset>
-
-
-          <button class="btn btn--primary" type="submit">Schedule Appointment</button>
-        </form>
-      </section>
-    </div>
-  </div>
-</div>
-
-
-
-
-
+    <!-- === Why Choose Us === -->
     <section class="fifpart">
-        <h1>Why Choose US</h1>
+        <h1>Why Choose Us</h1>
         <div class="conti">
             <div class="bx">
                 <i class="fa-solid fa-medal"></i>
@@ -597,109 +448,103 @@
         <div class="testi-box">
             <h2 class="tt">What Our Customers Say</h2>
             
-            
             <div class="testi-cont">
-              <div class="testimonial">
-                <div class="testimonial-avatar"></div>
-                <p class="testimonial-text">"The team at Life in a Box created the perfect aquarium for our office. Their attention to detail is impressive!"</p>
-                <p class="testimonial-name"><strong>Mark Milca</strong></p>
-                <p class="testimonial-role">IT Web Developer</p>
-              </div>
-          
-              <div class="testimonial">
-                <div class="testimonial-avatar"></div>
-                <p class="testimonial-text">"Their maintenance service is exceptional. My aquarium has never looked better!"</p>
-                <p class="testimonial-name"><strong>Aaron Cortez</strong></p>
-                <p class="testimonial-role">Aquaruim Specialist</p>
-              </div>
-          
-              <div class="testimonial">
-                <div class="testimonial-avatar"></div>
-                <p class="testimonial-text">"Professional, knowledgeable, and always available when needed. Highly recommended!"</p>
-                <p class="testimonial-name"><strong>Cio Roque</strong></p>
-                <p class="testimonial-role">Fish Collector</p>
-              </div>
+                <div class="testimonial">
+                    <div class="testimonial-avatar"></div>
+                    <p class="testimonial-text">"The team at Life in a Box created the perfect aquarium for our office. Their attention to detail is impressive!"</p>
+                    <p class="testimonial-name"><strong>Mark Milca</strong></p>
+                    <p class="testimonial-role">IT Web Developer</p>
+                </div>
+            
+                <div class="testimonial">
+                    <div class="testimonial-avatar"></div>
+                    <p class="testimonial-text">"Their maintenance service is exceptional. My aquarium has never looked better!"</p>
+                    <p class="testimonial-name"><strong>Aaron Cortez</strong></p>
+                    <p class="testimonial-role">Aquarium Specialist</p>
+                </div>
+            
+                <div class="testimonial">
+                    <div class="testimonial-avatar"></div>
+                    <p class="testimonial-text">"Professional, knowledgeable, and always available when needed. Highly recommended!"</p>
+                    <p class="testimonial-name"><strong>Cio Roque</strong></p>
+                    <p class="testimonial-role">Fish Collector</p>
+                </div>
             </div>
-          </div>
+        </div>
     </section>
 
-<footer class="site-footer">
-  <div class="footer-wrap">
-    <div class="row gy-4 gx-5 align-items-start">
+    <!-- === Footer === -->
+    <footer class="site-footer">
+        <div class="footer-wrap">
+            <div class="row gy-4 gx-5 align-items-start">
 
-      <!-- Logo/About -->
-      <div class="col-12 col-lg-3">
-        <img src="./logo.png" alt="Life In A Box Logo" style="max-width:140px;">
-        <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
-      </div>
+                <div class="col-12 col-lg-3">
+                    <img src="./logo.png" alt="Life In A Box Logo" style="max-width:140px;">
+                    <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
+                </div>
 
-      <!-- Contact -->
-      <div class="col-12 col-lg-4">
-        <h5 class="fw-bold mb-3">Contact Us</h5>
-        <ul class="list-unstyled small mb-0">
-          <li class="mb-2">
-            <i class="fas fa-map-marker-alt me-2"></i>
-            Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite
-          </li>
-          <li class="mb-2">
-            <i class="fas fa-phone me-2"></i> +63 932 241 2734
-          </li>
-          <li class="mb-2">
-            <i class="fas fa-envelope me-2"></i> chaseaquascape09@gmail.com
-          </li>
-        </ul>
-      </div>
+                <div class="col-12 col-lg-4">
+                    <h5 class="fw-bold mb-3">Contact Us</h5>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Paseo de Carmona, Unit 8 Lot E/F Paseo Square, Governor's Dr, Carmona, 4116 Cavite
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-phone me-2"></i> +63 932 241 2734
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-envelope me-2"></i> chaseaquascape09@gmail.com
+                        </li>
+                    </ul>
+                </div>
 
-      <!-- Social -->
-      <div class="col-6 col-lg-2">
-        <h5 class="fw-bold mb-3">Follow Us</h5>
-        <div class="d-flex gap-3 justify-content-center justify-content-lg-start">
-          <a href="https://www.facebook.com/Chaseaquatics" class="hover-white" target="_blank"><i class="fab fa-facebook fa-lg"></i></a>
-          <a href="https://www.instagram.com/chaseaquascaping" class="hover-white" target="_blank"><i class="fab fa-instagram fa-lg"></i></a>
-          <a href="https://www.youtube.com/@chaseaquascape962" class="hover-white" target="_blank"><i class="fa-brands fa-youtube fa-lg"></i></a>
-          <a href="https://www.tiktok.com/@chase_aquascape" class="hover-white" target="_blank"><i class="fa-brands fa-tiktok fa-lg"></i></a>
+                <div class="col-6 col-lg-2">
+                    <h5 class="fw-bold mb-3">Follow Us</h5>
+                    <div class="d-flex gap-3 justify-content-center justify-content-lg-start">
+                        <a href="https://www.facebook.com/Chaseaquatics" class="hover-white" target="_blank"><i class="fab fa-facebook fa-lg"></i></a>
+                        <a href="https://www.instagram.com/chaseaquascaping" class="hover-white" target="_blank"><i class="fab fa-instagram fa-lg"></i></a>
+                        <a href="https://www.youtube.com/@chaseaquascape962" class="hover-white" target="_blank"><i class="fa-brands fa-youtube fa-lg"></i></a>
+                        <a href="https://www.tiktok.com/@chase_aquascape" class="hover-white" target="_blank"><i class="fa-brands fa-tiktok fa-lg"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <h5 class="fw-bold mb-3">Policy</h5>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <a class="legal-link" href="./termsncondi.html">Terms &amp; Conditions</a>
+                        </li>
+                        <li>
+                            <a class="legal-link" href="./termsncondi.html#privacy">Privacy Policy</a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <hr class="copyright-hr">
+            <p class="small copyright">© 2025 Life in a Box. All rights reserved.</p>
         </div>
-      </div>
+    </footer>
 
-      <!-- Policy -->
-      <div class="col-6 col-lg-3">
-        <h5 class="fw-bold mb-3">Policy</h5>
-        <ul class="list-unstyled small mb-0">
-          <li class="mb-2">
-            <a class="legal-link" href="./termsncondi.html">Terms &amp; Conditions</a>
-          </li>
-          <li>
-            <a class="legal-link" href="./termsncondi.html#privacy">Privacy Policy</a>
-          </li>
-        </ul>
-      </div>
-
-    </div>
-
-    <hr class="copyright-hr">
-    <p class="small copyright">© 2025 Life in a Box. All rights reserved.</p>
-  </div>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
-      <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-      <script> emailjs.init("hhTpOoi07kd04LwsH"); </script>
-      <script src="popups/forgatpass.js"></script>
-      <script src="./lpage.js"></script>
-      <script src="productModal/cartModel.js"></script>
-      <script src="productModal/userModel.js"></script>
-      <script src="./profile/userauth.js"></script>
-      <script type="module" src="/popups/login.js"></script>
-      <script type="module" src="/popups/cart.js"></script>
-      <script src="./booking.js"></script>
-      <script src="/assets/toast.js" defer></script>
-      <script>
-  // show any queued message (useful after redirects)
-  window.addEventListener('DOMContentLoaded', () => {
-    window.Toast && window.Toast.consumeFlashToast && window.Toast.consumeFlashToast();
-  });
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script> emailjs.init("hhTpOoi07kd04LwsH"); </script>
+    <script src="popups/forgatpass.js"></script>
+    <script src="./lpage.js"></script>
+    <script src="productModal/cartModel.js"></script>
+    <script src="productModal/userModel.js"></script>
+    <script src="./profile/userauth.js"></script>
+    <script type="module" src="/popups/login.js"></script>
+    <script type="module" src="/popups/cart.js"></script>
+    <script src="./booking.js"></script>
+    <script src="/assets/toast.js" defer></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            window.Toast && window.Toast.consumeFlashToast && window.Toast.consumeFlashToast();
+        });
+    </script>
 </body>
 </html>

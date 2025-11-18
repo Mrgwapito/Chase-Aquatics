@@ -2331,19 +2331,21 @@ function buildOrderEmailTemplate(order) {
     })
     .join("");
 
-  const subtotal = Number(order.subtotal || 0);
-  const shipping = Number(order.shipping || 0);
-  const totalAmount = Number(
-    order.totalAmount || subtotal + shipping
-  );
+  const subtotal    = Number(order.subtotal || 0);
+  const shipping    = Number(order.shipping || 0);
+  const totalAmount = Number(order.totalAmount || subtotal + shipping);
 
   // For now, VAT is 0 so totals match your DB
   const vatAmount = 0;
 
   return {
+    // 👇 needed by your EmailJS template header
+    to_email: toEmail,              // used by: To Email: {{to_email}}
+    name:    "Life in a Box",       // used by: From Name: {{name}}
+
     // header + greeting
     to_name: toName,
-    brand: "Chase Aquatics", // or "Life in a Box"
+    brand: "Life in a Box",
     submitted_at: new Date(order.createdAt || Date.now()).toLocaleString(),
 
     // order meta
@@ -2361,25 +2363,26 @@ function buildOrderEmailTemplate(order) {
     shipping_province: "",
     shipping_postal: "",
     shipping_region: "",
-    email: order.email || "",
+    email: order.email || "",       // still here for Reply-To: {{email}}
     phone: order.phone || "",
 
     // number of items shown in the header box
-    items_count: Array.isArray(order.cart) ? order.cart.length : 0,
+    items_count: cart.length,
 
     // line items HTML (injected directly in template)
     items_html: itemsHtml,
 
     // totals
     subtotal_amount: subtotal.toFixed(2),
-    vat_amount: vatAmount.toFixed(2),
+    vat_amount:      vatAmount.toFixed(2),
     shipping_amount: shipping.toFixed(2),
-    total_amount: totalAmount.toFixed(2),
+    total_amount:    totalAmount.toFixed(2),
 
     // optional link to order tracking page
-    order_url: "", // fill later if you build tracking page
+    order_url: "",
   };
 }
+
 
 // 🔹 Main helper: sends order confirmation via EmailJS (server-side)
 async function sendOrderConfirmationEmail(order) {
