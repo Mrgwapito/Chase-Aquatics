@@ -159,15 +159,115 @@ document.addEventListener("DOMContentLoaded", async function () {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ items: items.map(it => ({
-            productId: it._id || it.productId,
-            quantity: it.quantity,
-            title: it.title, price: it.price, image: it.image
-          })) })
+          body: JSON.stringify({
+            items: items.map(it => ({
+              productId: it._id || it.productId,
+              quantity: it.quantity,
+              title: it.title,
+              price: it.price,
+              image: it.image
+            }))
+          })
         });
       } catch {}
     }, 300);
   }
+
+  // 🔐 Before ordering, require the user to be logged in AND have a Valid ID
+  async function ensureValidIdBeforeOrder() {
+    const token = authToken();
+
+// 1) Not logged in → show error at top + open login popup
+if (!token) {
+  window.Toast?.showToast?.({
+    title: 'Sign in required',
+    message: 'Please sign in or sign up first before ordering items.',
+    type: 'error',
+    position: 'top'
+  });
+
+  // 🔓 Try normal triggers first
+  const loginIcon   = document.getElementById('loginTrigger'); // <i ...>
+  const loginButton = document.querySelector('.user');         // <button class="user">
+
+  if (loginIcon) {
+    // Fire a real click on the icon
+    loginIcon.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  } else if (loginButton) {
+    // Or on the button that usually opens the popup
+    loginButton.click();
+  }
+
+  // 🔁 Hard fallback: directly force the popup open
+  if (typeof window.forceOpenLoginPopup === 'function') {
+    window.forceOpenLoginPopup();
+  }
+
+  return { ok: false, reason: 'noToken' };
+}
+
+
+    try {
+      const res = await fetch(`${API_BASE}/api/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Unable to read profile.');
+      }
+
+      const rawStatus = data.user?.validId?.status || 'none';
+      const status = rawStatus.toLowerCase();
+
+      // 2) Check ID status AFTER the user is signed in
+      if (status !== 'approved') {
+        let title = 'Valid ID required';
+        let message = 'We could not verify your Valid ID. Please check your profile.';
+
+        if (status === 'none') {
+          // ❌ No ID yet
+          message = 'Please submit your Valid ID in your profile before ordering items.';
+        } else if (status === 'pending') {
+          // ⏳ Under review
+          title   = 'ID under review';
+          message = 'Your Valid ID is currently under review. You can place orders once it is approved.';
+        } else if (status === 'rejected' || status === 'declined') {
+          // ❌ Declined
+          message = 'Your Valid ID was declined. Please upload a new Valid ID before placing an order.';
+        }
+
+        window.Toast?.showToast?.({
+          title,
+          message,
+          type: 'error',
+          position: 'top'
+        });
+
+        // Redirect to profile so they can upload / check ID
+        setTimeout(() => {
+          window.location.href = '/profile/profile.html';
+        }, 800);
+
+        return { ok: false, reason: status };
+      }
+
+      // 👍 Approved → allowed to order
+      return { ok: true, status: 'approved' };
+    } catch (err) {
+      console.error('Valid ID check failed:', err);
+      window.Toast?.showToast?.({
+        title: 'Could not verify ID',
+        message: 'Please try again in a moment.',
+        type: 'error',
+        position: 'top'
+      });
+      return { ok: false, reason: 'error', error: err };
+    }
+  }
+
 
   console.log("🌐 Current URL:", window.location.href);
   console.log("🆔 Product ID from URL:", productId);
@@ -306,9 +406,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  // 🆕 BUY NOW → add to cart then redirect to order summary
+  // 🆕 BUY NOW → require login + Valid ID, then add to cart and go to order summary
   if (buyNowBtn) {
-    buyNowBtn.addEventListener("click", () => {
+    buyNowBtn.addEventListener("click", async () => {
       const qtyInput = document.getElementById("quantity");
       const quantity = parseInt(qtyInput?.value || "1", 10);
       if (!quantity || quantity <= 0) {
@@ -316,20 +416,30 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
       }
 
-      const result = addToCart(product, quantity, { skipSuccessToast: true });
-
-      if (result && result.success) {
-        // Optional soft toast
-        if (window.Toast?.showToast) {
-          window.Toast.showToast({
-            title: "Proceeding to checkout",
-            message: "Review your order before placing it.",
-            type: "info"
-          });
-        }
-        // 👉 Go to Order Summary page
-        window.location.href = "/order/order_summary.html";
+      // ✅ First gate: login + Valid ID
+      const gate = await ensureValidIdBeforeOrder();
+      if (!gate.ok) {
+        // A toast was already shown (and maybe redirect to profile/login),
+        // so just stop here. User can STILL use normal "Add to Cart" button.
+        return;
       }
+
+      // ✅ Only if gate passed → add to cart (so cart stays clean for guests / blocked users)
+      const result = addToCart(product, quantity, { skipSuccessToast: true });
+      if (!result || !result.success) return;
+
+      // Optional soft toast
+      if (window.Toast?.showToast) {
+        window.Toast.showToast({
+          title: "Proceeding to checkout",
+          message: "Review your order before placing it.",
+          type: "info",
+          position: "top"
+        });
+      }
+
+      // 👉 Go to Order Summary page
+      window.location.href = "/order/order_summary.html";
     });
   }
 
@@ -567,6 +677,31 @@ async function displayRelatedProducts(category, excludeId) {
       '<p class="text-danger text-center">Error loading related products.</p>';
   }
 }
+// ======================================================
+// 🪟 Hard fallback: force open login popup programmatically
+// ======================================================
+window.forceOpenLoginPopup = function () {
+  const loginContainer    = document.getElementById('loginContainer');
+  const registerContainer = document.getElementById('registerContainer');
+  const loginEmail        = document.getElementById('loginEmail');
+
+  if (registerContainer) {
+    // make sure register is hidden
+    registerContainer.style.display = 'none';
+    registerContainer.classList.remove('active', 'show');
+  }
+
+  if (loginContainer) {
+    // show login popup (covers both "flex" and class-based CSS)
+    loginContainer.style.display = 'flex';
+    loginContainer.classList.add('active', 'show');
+  }
+
+  if (loginEmail) {
+    loginEmail.focus();
+  }
+};
+
 
 // 🔗 Redirect
 function viewProductDetails(productId) {

@@ -315,29 +315,115 @@ function attachRemoveEvents() {
 }
 
 // ================================================================
-// 🚪 Gate "Proceed to Checkout" with login + toast
+// 🧩 Helper: open login popup (icon click + fallback)
+// ================================================================
+function openLoginPopup() {
+  // Try the same trigger used by login.js
+  const loginIcon = document.getElementById('loginTrigger');
+  if (loginIcon) loginIcon.click();
+
+  // Hard fallback in case module didn’t attach yet
+  const loginContainer = document.getElementById('loginContainer');
+  if (loginContainer) {
+    loginContainer.style.display = 'flex';
+  }
+}
+
+// ================================================================
+// 🚪 Gate "Proceed to Checkout" with login + Valid ID + popup
 // ================================================================
 const checkoutLink = document.querySelector('a[href="checkout.html"]');
 if (checkoutLink) {
-  checkoutLink.addEventListener('click', (e) => {
-    const token = authToken();
-    if (!token) {
-      e.preventDefault();
+  checkoutLink.addEventListener('click', async (e) => {
+    e.preventDefault(); // we decide manually if they can proceed
 
+    const token = authToken();
+
+    // 1️⃣ Not logged in → toast + open login popup
+    if (!token) {
       if (window.Toast && typeof window.Toast.showToast === 'function') {
         window.Toast.showToast({
-          title: 'Please log in',
-          message: 'Sign in or create an account before checking out.',
+          title: 'Sign in required',
+          message: 'Please sign in or sign up first before ordering items.',
           type: 'error',
           duration: 5000,
           position: 'top'
         });
       } else {
-        // Very last fallback
-        alert('Please log in before checking out.');
+        alert('Please sign in or sign up first before ordering items.');
+      }
+
+      openLoginPopup();
+      return;
+    }
+
+    // 2️⃣ Logged in → check Valid ID status
+    try {
+      const res = await fetch(`${API_BASE}/api/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Unable to read profile.');
+      }
+
+      const rawStatus = data.user?.validId?.status || 'none';
+      const status = rawStatus.toLowerCase();
+
+      // ❌ Block when no ID submitted / pending / declined
+      if (status !== 'approved') {
+        let title = 'Valid ID required';
+        let message = 'We could not verify your Valid ID. Please check your profile.';
+
+        if (status === 'none') {
+          message = 'Please submit your Valid ID in your profile before proceeding to checkout.';
+        } else if (status === 'pending') {
+          title   = 'ID under review';
+          message = 'Your Valid ID is currently under review. You can place orders once it is approved.';
+        } else if (status === 'rejected' || status === 'declined') {
+          message = 'Your Valid ID was declined. Please upload a new Valid ID before proceeding to checkout.';
+        }
+
+        if (window.Toast && typeof window.Toast.showToast === 'function') {
+          window.Toast.showToast({
+            title,
+            message,
+            type: 'error',
+            duration: 5000,
+            position: 'top'
+          });
+        } else {
+          alert(`${title}\n${message}`);
+        }
+
+        // Send them to profile to fix ID
+        setTimeout(() => {
+          window.location.href = '/profile/profile.html';
+        }, 800);
+
+        return;
+      }
+
+      // 3️⃣ Approved → allow navigation to checkout
+      window.location.href = 'checkout.html';
+
+    } catch (err) {
+      console.error('Valid ID check failed on order_summary:', err);
+      if (window.Toast && typeof window.Toast.showToast === 'function') {
+        window.Toast.showToast({
+          title: 'Could not verify ID',
+          message: 'Please try again in a moment.',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
+      } else {
+        alert('Could not verify ID. Please try again in a moment.');
       }
     }
   });
 }
+
 
 });

@@ -89,6 +89,8 @@ function notify({
   const bSel = document.getElementById('addrBrgy');
   const zInp = document.getElementById('addrZip');
   const saveAddressBtn = document.getElementById("saveAddressBtn");
+  const editAddressBtn = document.getElementById("editAddressBtn");
+
 
   // Avatar
   let selectImageBtn = document.getElementById("selectImageBtn");
@@ -1116,6 +1118,18 @@ if (document.readyState === 'loading') {
       labelSpan.textContent = opt ? opt.text : 'Select';
     });
   }
+
+  // ===== Address: enable fields when clicking "Edit" =====
+editAddressBtn?.addEventListener('click', () => {
+  // enable all address inputs
+  [addrLine1, rSel, pSel, cSel, bSel, zInp].forEach(el => {
+    if (el) el.disabled = false;
+  });
+
+  // show Save, hide Edit while in edit mode
+  saveAddressBtn?.classList.remove('d-none');
+  editAddressBtn.classList.add('d-none');
+});
 
 
   // ======= Save Address (structured + single string for backward-compat) =======
