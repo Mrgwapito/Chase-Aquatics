@@ -1491,3 +1491,51 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   }
 });
+
+// ================================================================
+// 🛡️ ADMIN: VALID ID REVIEW
+// ================================================================
+app.put('/api/admin/valid-id/:userId', requireAdmin, async (req, res) => {
+  try {
+    const { status, note } = req.body;
+    const norm = String(status || '').toLowerCase();
+
+    const allowed = ['pending', 'approved', 'rejected', 'declined', 'none'];
+    if (!allowed.includes(norm)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    const userDoc = await User.findById(req.params.userId);
+    if (!userDoc) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const prev = userDoc.validId || {};
+    userDoc.validId = {
+      ...prev,
+      status: norm,
+      note: note || prev.note || '',
+      reviewedAt: new Date(),
+      reviewedBy: req.user.id || req.user._id
+    };
+
+    await userDoc.save();
+
+    // optional log
+    try {
+      await logAdminAction(req, {
+        category: 'verification',
+        action: 'VALID_ID_REVIEWED',
+        target: { type: 'user', id: String(userDoc._id), name: userDoc.fullName || userDoc.email },
+        meta: { from: prev.status || 'none', to: norm }
+      });
+    } catch (e) {
+      console.warn('log fail (VALID_ID_REVIEWED):', e.message);
+    }
+
+    res.json({ success: true, validId: userDoc.validId });
+  } catch (err) {
+    console.error('PUT /api/admin/valid-id error:', err);
+    res.status(500).json({ success: false, message: 'Error updating Valid ID' });
+  }
+});

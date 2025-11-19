@@ -66,28 +66,57 @@ const res = await fetch(`${API}/login`, {
       const data = await res.json();
 
       if (data.success && data.token) {
-        // === your existing success logic (unchanged) ===
+        // 🔹 1) Get the freshest user from /api/profile (includes profileImage, etc.)
+        let finalUser = data.user || null;
+        try {
+          const profRes = await fetch(`${API}/api/profile`, {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          const profJson = await profRes.json().catch(() => null);
+          if (profRes.ok && profJson?.success && profJson.user) {
+            finalUser = profJson.user;
+          }
+        } catch (e) {
+          console.warn('Could not refresh profile after login:', e);
+        }
+
+        // 🔹 2) Store token + user in storage (respect Remember Me,
+        //       but still mirror to localStorage for navbar usage)
         if (rememberMe) {
           localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('user', JSON.stringify(finalUser || data.user || {}));
           localStorage.setItem('isLoggedIn', 'true');
+
+          // clear any old session copy
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
+          sessionStorage.removeItem('isLoggedIn');
         } else {
           sessionStorage.setItem('token', data.token);
-          sessionStorage.setItem('user', JSON.stringify(data.user));
+          sessionStorage.setItem('user', JSON.stringify(finalUser || data.user || {}));
           sessionStorage.setItem('isLoggedIn', 'true');
         }
-        // also mirror to localStorage for safety
+
+        // Always mirror a copy to localStorage so navbar code
+        // can read it on any page/tab.
         localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('user', JSON.stringify(finalUser || data.user || {}));
         localStorage.setItem('isLoggedIn', 'true');
 
-        // ✅ INSTANTLY update navbar avatar (no reload needed)
+        // 🔹 3) INSTANTLY update navbar avatar (now using up-to-date user)
         if (typeof window.refreshNavAvatar === 'function') {
           window.refreshNavAvatar();
         }
 
         try {
-          const u = data.user || JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+          const u =
+            finalUser ||
+            data.user ||
+            JSON.parse(
+              localStorage.getItem('user') ||
+              sessionStorage.getItem('user') ||
+              '{}'
+            );
 
           if (u && u.role === 'admin') {
             window.location.href = './admin/admin.html';
@@ -820,15 +849,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // --- Toast helpers: reuse global notify from profile/notify script ---
   function flashThenNavigate(opts, href) {
+    // prefer queued flash if available
     if (window.Toast && typeof window.Toast.queueFlashToast === 'function') {
       window.Toast.queueFlashToast(opts);
       window.location.href = href;
     } else {
-      notify(opts);
+      // fall back to normal notify if defined
+      if (typeof notify === 'function') notify(opts);
       window.location.href = href;
     }
   }
+
 
   // ---- Marketing frequency cap (30 days) + cross-tab dedupe ----
   function mkLastShownKey(userId) { return userId ? `mk_last_shown_${userId}` : null; }

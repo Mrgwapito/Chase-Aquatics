@@ -2,7 +2,6 @@
   // 🌊 CHASE AQUATICS - PROFILE SCRIPT (LOCALHOST/127.0.0.1 AUTO FIXED)
   // ================================================================
 
-  // ✅ Auto-detect backend URL
 // ✅ Auto-detect backend URL (local + Render)
 const BACKEND_URL =
   window.location.hostname === "127.0.0.1" ||
@@ -726,7 +725,7 @@ if (bSel && user.barangay) {
         return;
       }
 
-const user = data.user;
+      const user = data.user;
 
       // --- basic profile fields
       const uiName = user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "New User";
@@ -735,7 +734,7 @@ const user = data.user;
 
       if (firstNameInput) firstNameInput.value = user.firstName || "";
       if (lastNameInput)  lastNameInput.value  = user.lastName  || "";
-      if (usernameInput)  usernameInput.value  = user.username  || ""; // ✅ NEW
+      if (usernameInput)  usernameInput.value  = user.username  || "";
 
       const emailEl = document.getElementById("emailInput");
       if (emailEl) emailEl.value = user.email || "";
@@ -747,7 +746,32 @@ const user = data.user;
 
       originalEmail = user.email || "";
 
-      // Valid ID badge/note
+      // --- avatar image (use saved profileImage if present)
+      if (bigAvatar) {
+        const initialsEl = bigAvatar.querySelector('.big-initials');
+        const raw = (user.profileImage || '').trim();
+
+        if (raw) {
+          // support both absolute URLs and "/uploads/..." paths
+          const imgUrl = raw.startsWith('http')
+            ? raw
+            : `${BACKEND_URL.replace(/\/+$/,'')}${raw.startsWith('/') ? '' : '/'}${raw}`;
+
+          bigAvatar.style.backgroundImage    = `url('${imgUrl}')`;
+          bigAvatar.style.backgroundSize     = 'cover';
+          bigAvatar.style.backgroundPosition = 'center';
+          bigAvatar.style.backgroundColor    = 'transparent';
+          if (initialsEl) initialsEl.style.opacity = '0';
+        } else {
+          // no saved image → show initials again
+          bigAvatar.style.removeProperty('background-image');
+          bigAvatar.style.removeProperty('background-size');
+          bigAvatar.style.removeProperty('background-position');
+          if (initialsEl) initialsEl.style.opacity = '1';
+        }
+      }
+
+      // Valid ID badge/note (status: none | pending | approved | rejected/declined)
       renderIdStatus(user.validId || null);
 
       buildFullNamePreview();
@@ -756,9 +780,8 @@ const user = data.user;
       updatePwMeter();
 
       // ⚠️ IMPORTANT: finish building the Region/Province/City options first…
-  await initPHAddress();
-  applySavedAddressFromUser(user);
-
+      await initPHAddress();
+      applySavedAddressFromUser(user);
 
 
 

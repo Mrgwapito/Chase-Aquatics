@@ -165,6 +165,8 @@ const upload = multer({
 
 // Serve uploaded files under http://localhost:3000/uploads/...
 app.use('/uploads', express.static(uploadsDir));
+
+
 /* --------------------------------------------------------------------------- */
 
 // ---- Valid ID uploads (images + PDF) ----
@@ -283,6 +285,43 @@ function requireAdmin(req, res, next) {
   req.user = payload;
   next();
 }
+
+// ================================================================
+// 👤 PROFILE – return safe user data (including profileImage + validId)
+// ================================================================
+app.get('/api/profile', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const userDoc = await User.findById(userId);
+
+    if (!userDoc) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // ensure stable userId
+    if (!userDoc.userId) {
+      userDoc.userId = makeUserId(userDoc._id);
+      await userDoc.save();
+    }
+
+    const user = userDoc.toObject();
+
+    // never send password or OTP fields
+    delete user.password;
+    delete user.registerOtp;
+    delete user.otpExpires;
+
+    // normalize validId so frontend always gets something
+    if (!user.validId) {
+      user.validId = { status: 'none', path: '', note: '' };
+    }
+
+    return res.json({ success: true, user });
+  } catch (err) {
+    console.error('GET /api/profile error:', err);
+    res.status(500).json({ success: false, message: 'Server error loading profile' });
+  }
+});
 
 
 // ================================================================
@@ -994,6 +1033,41 @@ res.json({
   }
 });
 
+// ================================================================
+// 🖼️ PROFILE IMAGE UPLOAD
+// ================================================================
+app.put('/api/profile-image', requireAuth, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image uploaded' });
+    }
+
+    const userId = req.user.id || req.user._id;
+    const userDoc = await User.findById(userId);
+    if (!userDoc) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const relPath = `/uploads/${req.file.filename}`;
+    userDoc.profileImage = relPath;
+    await userDoc.save();
+
+    const safeUser = userDoc.toObject();
+    delete safeUser.password;
+    delete safeUser.registerOtp;
+    delete safeUser.otpExpires;
+
+    res.json({
+      success: true,
+      imageUrl: relPath,
+      user: safeUser
+    });
+  } catch (err) {
+    console.error('PUT /api/profile-image error:', err);
+    res.status(500).json({ success: false, message: 'Error saving profile image' });
+  }
+});
+
 
 // ================================================================
 // 🧩 UPDATE PROFILE (Supports firstName + lastName)
@@ -1135,6 +1209,43 @@ app.post('/api/profile/valid-id', requireAuth, uploadValidId.single('validId'), 
   } catch (e) {
     console.error(e);
     res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+// ================================================================
+// 🪪 VALID ID UPLOAD (user side)
+// ================================================================
+app.post('/api/profile/valid-id', requireAuth, uploadValidId.single('validId'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No ID file uploaded' });
+    }
+
+    const userId = req.user.id || req.user._id;
+    const userDoc = await User.findById(userId);
+    if (!userDoc) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const relPath = `/uploads/valid-id/${req.file.filename}`;
+
+    userDoc.validId = {
+      status: 'pending',
+      path: relPath,
+      note: '',
+      uploadedAt: new Date()
+    };
+
+    await userDoc.save();
+
+    res.json({
+      success: true,
+      file: relPath,
+      status: 'pending'
+    });
+  } catch (err) {
+    console.error('POST /api/profile/valid-id error:', err);
+    res.status(500).json({ success: false, message: 'Error saving Valid ID' });
   }
 });
 
