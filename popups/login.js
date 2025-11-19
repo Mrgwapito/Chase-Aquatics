@@ -81,6 +81,11 @@ const res = await fetch(`${API}/login`, {
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('isLoggedIn', 'true');
 
+        // ✅ INSTANTLY update navbar avatar (no reload needed)
+        if (typeof window.refreshNavAvatar === 'function') {
+          window.refreshNavAvatar();
+        }
+
         try {
           const u = data.user || JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
 

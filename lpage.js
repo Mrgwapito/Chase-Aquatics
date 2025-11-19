@@ -2,6 +2,56 @@ const boxes = document.querySelectorAll(".box");
 const nextBtn = document.querySelector(".next");
 const prevBtn = document.querySelector(".previous");
 
+
+// ========== BACK BUTTON FUNCTIONALITY ==========
+const headerBackBtn = document.getElementById('headerBackBtn');
+
+headerBackBtn?.addEventListener('click', () => {
+  stepCalendar.hidden = false;
+  stepDetails.hidden = true;
+  headerBackBtn.hidden = true;
+});
+
+// Update the proceedToDetails function to show the header back button
+function proceedToDetails() {
+  const selectedDate = datePicker?.value.trim();
+  const selectedTimeBtn = document.querySelector(".times__btn.selected");
+  const selectedTime = selectedTimeBtn ? selectedTimeBtn.dataset.time : "";
+
+  if (!selectedDate || !selectedTime) {
+    notify({
+      title: 'Missing selection',
+      message: 'Please select both a date and a time before continuing.',
+      type: 'warning',
+      duration: 5000,
+      position: 'top'
+    });
+    return;
+  }
+
+  stepCalendar.hidden = true;
+  stepDetails.hidden = false;
+  headerBackBtn.hidden = false; // Show the header back button
+}
+
+// Also hide the back button when modal closes
+function closeBookingModal() {
+  bookingModal.hidden = true;
+  document.body.style.overflow = "";
+
+  // Reset all buttons for next open
+  timesBtns.forEach((btn) => {
+    btn.hidden = false;
+    btn.disabled = false;
+    btn.classList.remove("selected");
+    btn.style.opacity = "1";
+    btn.setAttribute("aria-disabled", "false");
+  });
+
+  // Hide the header back button when closing modal
+  headerBackBtn.hidden = true;
+}
+
 if (boxes.length && nextBtn && prevBtn) {
   let currentPage = 0;
   let boxesPerPage = getBoxesPerPage();
@@ -142,24 +192,22 @@ if (boxes.length && nextBtn && prevBtn) {
     }
   });
 
-  // Times click
-  const timesList = document.querySelector('.times__list');
-  if (timesList){
-    timesList.addEventListener('click', (e) => {
-      const btn = e.target.closest('.times__btn');
-      if (!btn) return;
-      const start = btn.textContent.trim();
-      const end   = addOneHour(start);
-      const d     = selectedDate || fp.selectedDates[0] || new Date();
-
-      if (summaryWhen){
-        summaryWhen.textContent = `${start} – ${end}, ${d.toLocaleDateString('en-US',
-          { weekday:'long', year:'numeric', month:'long', day:'numeric' })}`;
-      }
-      calendarStep.hidden = true;
-      detailsStep.hidden  = false;
-    });
-  }
+// Times click
+const timesList = document.querySelector('.times__list');
+if (timesList){
+  timesList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.times__btn');
+    if (!btn || btn.disabled) return; // Don't proceed if button is disabled
+    
+    // Remove selected class from all buttons
+    document.querySelectorAll('.times__btn').forEach(b => b.classList.remove('selected'));
+    // Add selected class to clicked button
+    btn.classList.add('selected');
+    
+    // Proceed to details
+    proceedToDetails();
+  });
+}
 
   function addOneHour(label){
     const m = /(\d{1,2}):00\s*(am|pm)/i.exec(label);

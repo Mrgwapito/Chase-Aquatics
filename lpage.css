@@ -873,3 +873,74 @@ fieldset.form__row legend {
   /* Icon links: lighter by default, bright on hover */
   .site-footer .hover-white{ color: rgba(255,255,255,.5) !important; }
   .site-footer .hover-white:hover{ color:#fff !important; }
+/* Green text styling */
+.booking__title,
+.step--calendar h2,
+.step--details h2,
+.form__row--topics legend {
+  color: #335A02 !important;
+}
+
+/* Green hover for time buttons */
+.times__btn:hover {
+  background: #335A02 !important;
+  border-color: #335A02 !important;
+  color: white !important;
+}
+
+/* Green schedule button */
+.btn.btn--primary {
+  background: #335A02 !important;
+  border-color: #335A02 !important;
+}
+
+.btn.btn--primary:hover {
+  background: #2b4d02 !important;
+  border-color: #2b4d02 !important;
+}
+
+/* Header back button styling - TOP OF HEADER */
+.header-back-btn {
+  position: absolute;
+  top: 15px; /* Position relative to modal panel */
+  left: 40px; /* Match modal panel padding */
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+  color: #335A02;
+  border-color: #335A02;
+}
+
+.header-back-btn:hover {
+  background: #335A02;
+  color: white;
+}
+
+.booking__header {
+  position: relative;
+  /* Remove padding-top since button is positioned absolutely */
+}
+
+/* Selected time button styling */
+.times__btn.selected {
+  background: #335A02 !important;
+  border-color: #335A02 !important;
+  color: white !important;
+}
+
+/* Make sure disabled buttons don't look selected */
+.times__btn.booked-slot.selected {
+  background: #ccc !important;
+  border-color: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+}

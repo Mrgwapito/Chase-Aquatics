@@ -74,10 +74,11 @@ function notify({
   const profileHeader = document.querySelector('.card-body h3.mb-1');
   const profileSub    = document.querySelector('.card-body .text-muted.mb-4');
 
-  // Name fields
+// Name fields
   const firstNameInput = document.getElementById("firstNameInput");
   const lastNameInput  = document.getElementById("lastNameInput");
   const fullNameComputed = document.getElementById("fullNameComputed");
+  const usernameInput = document.getElementById("usernameInput"); // ✅ NEW
   const phoneInput = document.getElementById("phoneInput");
 
   // Address (cascading + manual ZIP)
@@ -132,8 +133,8 @@ function notify({
     if (fullNameComputed) fullNameComputed.value = preview || "Auto-filled from Surname, First name";
   }
 
-  function forceRightAlign() {
-    [firstNameInput, lastNameInput, phoneInput].forEach(el => {
+function forceRightAlign() {
+    [firstNameInput, lastNameInput, usernameInput, phoneInput].forEach(el => { // ✅ added usernameInput
       if (el && !el.classList.contains("text-end-input")) {
         el.classList.add("text-end-input");
       }
@@ -265,12 +266,13 @@ setTimeout(() => {
   submitValidIdBtn?.addEventListener('click', submitValidId);
 
 
-  // ======= EDIT PROFILE =======
+// ======= EDIT PROFILE =======
   if (editBtn) {
     editBtn.addEventListener("click", () => {
       inputs.forEach((input) => (input.disabled = false));
       if (firstNameInput) firstNameInput.disabled = false;
       if (lastNameInput) lastNameInput.disabled = false;
+      if (usernameInput) usernameInput.disabled = false; // ✅ NEW
       if (!emailVerified && emailInput) emailInput.disabled = false;
 
       if (firstNameInput) firstNameInput.addEventListener("input", buildFullNamePreview);
@@ -281,6 +283,14 @@ setTimeout(() => {
       editBtn.classList.add('d-none');
       saveBtn.classList.remove('d-none');
       if (emailOtpSection) emailOtpSection.style.display = "block";
+      
+      notify({ 
+        title: 'Edit mode', 
+        message: 'You can now edit your profile fields.', 
+        type: 'info', 
+        duration: 2000, 
+        position: 'br' 
+      }); // ✅ NEW toast
     });
   }
 
@@ -299,13 +309,15 @@ setTimeout(() => {
         return;
       }
 
-      const firstName = firstNameInput?.value.trim() || "";
+const firstName = firstNameInput?.value.trim() || "";
       const lastName  = lastNameInput?.value.trim() || "";
+      const username  = usernameInput?.value.trim() || ""; // ✅ NEW
       const fullName  = `${firstName} ${lastName}`.trim();
 
       const updatedData = {
         firstName,
         lastName,
+        username, // ✅ NEW
         fullName,
         phone: phoneInput ? phoneInput.value.trim() : "",
         address: document.getElementById("addressInput")?.value?.trim?.() || "",
@@ -341,9 +353,10 @@ setTimeout(() => {
           (lastName && firstName) ? `${lastName}, ${firstName}` :
           (lastName || firstName || "Auto-filled from Surname, First name");
 
-        inputs.forEach((input) => (input.disabled = true));
+inputs.forEach((input) => (input.disabled = true));
         if (firstNameInput) firstNameInput.disabled = true;
         if (lastNameInput)  lastNameInput.disabled  = true;
+        if (usernameInput)  usernameInput.disabled  = true; // ✅ NEW
         if (emailInput)     emailInput.disabled     = true;
 
         editBtn.classList.remove('d-none');
@@ -711,7 +724,7 @@ if (bSel && user.barangay) {
         return;
       }
 
-      const user = data.user;
+const user = data.user;
 
       // --- basic profile fields
       const uiName = user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "New User";
@@ -720,6 +733,7 @@ if (bSel && user.barangay) {
 
       if (firstNameInput) firstNameInput.value = user.firstName || "";
       if (lastNameInput)  lastNameInput.value  = user.lastName  || "";
+      if (usernameInput)  usernameInput.value  = user.username  || ""; // ✅ NEW
 
       const emailEl = document.getElementById("emailInput");
       if (emailEl) emailEl.value = user.email || "";
@@ -1157,8 +1171,15 @@ if (document.readyState === 'loading') {
         notify({ title:'Save failed', message:data.message || 'Server error.', type:'error', duration:6000, position:'top' });
         return;
       }
-      notify({ title:'Address saved', type:'success', duration:2200, position:'br' });
+notify({ title:'Address saved', message:'Your shipping address has been updated.', type:'success', duration:2200, position:'br' }); // ✅ improved message
       [addrLine1,rSel,pSel,cSel,bSel,zInp].forEach(el=>el && (el.disabled=true));
+      
+      // ✅ NEW: Also disable the edit mode visually
+      const editAddressBtn = document.getElementById('editAddressBtn');
+      const saveAddressBtn = document.getElementById('saveAddressBtn');
+      if (editAddressBtn) editAddressBtn.classList.remove('d-none');
+      if (saveAddressBtn) saveAddressBtn.classList.add('d-none');
+      
     }catch(err){
       console.error(err);
       notify({ title:'Save failed', message:err.message, type:'error', duration:6000, position:'top' });
@@ -1174,8 +1195,15 @@ if (document.readyState === 'loading') {
     const pane = document.querySelector(targetSel);
     if (pane) pane.classList.add('show', 'active');
 
-    if (targetSel === '#pane-address') {
-      [addrLine1,rSel,pSel,cSel,bSel,zInp].forEach(el=>el && (el.disabled=false));
+if (targetSel === '#pane-address') {
+      // ✅ Don't auto-enable fields - let user click Edit button
+      // [addrLine1,rSel,pSel,cSel,bSel,zInp].forEach(el=>el && (el.disabled=false));
+      
+      // ✅ Show edit button, hide save button initially
+      const editAddressBtn = document.getElementById('editAddressBtn');
+      const saveAddressBtn = document.getElementById('saveAddressBtn');
+      if (editAddressBtn) editAddressBtn.classList.remove('d-none');
+      if (saveAddressBtn) saveAddressBtn.classList.add('d-none');
     }
 
     if (targetSel === '#pane-security') {
@@ -1260,7 +1288,7 @@ if (!token) {
       const fd = new FormData();
       fd.append('image', file);
 
-      try {
+try {
         const res = await fetch(`${BACKEND_URL}/api/profile-image`, {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` },
@@ -1271,7 +1299,32 @@ if (!token) {
           notify({ title:'Upload failed', message:data.message || 'Server error.', type:'error', duration:6000, position:'top' });
           return;
         }
-        notify({ title:'Profile image updated', type:'success', duration:2200, position:'br' });
+        
+        notify({ title:'Profile image updated', message:'Your new photo is now visible!', type:'success', duration:2200, position:'br' }); // ✅ improved message
+        
+        // ✅ Refresh navbar avatar to show new profile image
+        if (typeof window.refreshNavAvatar === 'function') {
+          // Update user object in storage with new image URL
+          try {
+            const updatedUser = data.user || {};
+            if (updatedUser && data.imageUrl) {
+              updatedUser.profileImage = data.imageUrl; // ✅ ensure we have the new image URL
+            }
+            
+            // Update both storage locations
+            const storedUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+            const merged = { ...storedUser, ...updatedUser };
+            
+            localStorage.setItem('user', JSON.stringify(merged));
+            sessionStorage.setItem('user', JSON.stringify(merged));
+          } catch (e) {
+            console.warn('Failed to update user in storage:', e);
+          }
+          
+          // Refresh the navbar avatar (this should now show the new image)
+          setTimeout(() => window.refreshNavAvatar(), 100);
+        }
+        
       } catch (err) {
         console.error(err);
         notify({ title:'Upload failed', message:err.message, type:'error', duration:6000, position:'top' });

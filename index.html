@@ -440,17 +440,20 @@
   <div class="modal__panel">
     <button class="modal__close" type="button" aria-label="Close" data-close>&times;</button>
 
-    <!-- Header -->
-    <header class="booking__header">
-      <h1 id="bookingTitle" class="booking__title">In Person Appointment</h1>
-      <div class="booking__meta">
-        <span class="booking__meta-item" aria-label="Duration">🕒 1 hr</span>
-        <span class="booking__meta-item" aria-label="Location">
-          📍 Paseo de Carmona, Unit 8 Lot E/F paseo square, Governor's Dr, Carmona, 4116 Cavite
-        </span>
-      </div>
-      <p class="booking__intro">Let’s create something beautiful together!</p>
-    </header>
+<!-- Header -->
+<header class="booking__header">
+  <button type="button" class="back-btn header-back-btn" id="headerBackBtn">
+  <i class="fa-solid fa-arrow-left"></i> Back
+</button>
+  <h1 id="bookingTitle" class="booking__title">In Person Appointment</h1>
+  <div class="booking__meta">
+    <span class="booking__meta-item" aria-label="Duration">🕒 1 hr</span>
+    <span class="booking__meta-item" aria-label="Location">
+      📍 Paseo de Carmona, Unit 8 Lot E/F paseo square, Governor's Dr, Carmona, 4116 Cavite
+    </span>
+  </div>
+  <p class="booking__intro">Let's create something beautiful together!</p>
+</header>
 
     <!-- Body -->
     <div class="booking">
@@ -496,9 +499,9 @@
   </div>
 
 
-        <!-- STEP 2: Details -->
-        <form class="step step--details" data-step="details" aria-labelledby="stepDetailsTitle" hidden>
-          <h2 id="stepDetailsTitle">Enter Details</h2>
+<!-- STEP 2: Details -->
+<form class="step step--details" data-step="details" aria-labelledby="stepDetailsTitle" hidden>
+  <h2 id="stepDetailsTitle">Enter Details</h2>
 
           <div class="form__row">
             <label for="guestName">Name *</label>

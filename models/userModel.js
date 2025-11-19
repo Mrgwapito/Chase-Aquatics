@@ -40,7 +40,8 @@ const userSchema = new mongoose.Schema({
 
   emailVerified: { type: Boolean, default: false },  // 🔹 add this
 
-  userId:       { type: String, default: "" },
+userId:       { type: String, default: "" },
+  username:     { type: String, default: "", sparse: true }, // ✅ NEW: username field
   profileImage: { type: String, default: "images/default-user.png" },
 
   // NEW: where we keep the uploaded Valid ID state

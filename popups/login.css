@@ -484,10 +484,121 @@ nav {
   }
 }
 
-@media (prefers-reduced-motion: reduce){
-  .aq-panel{ animation: none; }
+/* =================================================================
+   🎨 NAVBAR AVATAR STYLES - Profile Icon Identifier
+   ================================================================= */
+
+/* Style the login trigger button when it has an avatar */
+#loginTrigger.has-avatar,
+.user.has-avatar {
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  width: 40px;
+  height: 40px;
 }
 
+/* Remove default button styling when avatar is present */
+#loginTrigger.has-avatar i,
+.user.has-avatar i {
+  display: none;
+}
+
+/* Avatar wrapper */
+.nav-avatar-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 2.5px solid #335A02;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-avatar-wrap:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(51, 90, 2, 0.25);
+}
+
+/* Profile image avatar */
+.nav-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Initials avatar (when no profile image) */
+.nav-avatar-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  user-select: none;
+  font-family: "Montserrat", system-ui, sans-serif;
+}
+
+
+.nav-avatar-wrap {
+  position: relative; /* Add this to existing rule */
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .nav-avatar-wrap {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .nav-avatar-initials {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-avatar-wrap {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .nav-avatar-initials {
+    font-size: 11px;
+  }
+}
+
+/* Animation for avatar appearance */
+@keyframes avatarFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.nav-avatar-wrap {
+  animation: avatarFadeIn 0.3s ease-out;
+}
+
+/* Optional: Add a subtle pulse effect when hovering */
+.nav-avatar-wrap:active {
+  transform: scale(0.95);
+}
 
 
 /* your register/forgot markup is: .pw-meter > .bar > .fill */

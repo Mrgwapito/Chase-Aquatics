@@ -56,6 +56,8 @@ document.addEventListener("DOMContentLoaded", () => {
     decorateNavAsLoggedInAvatar({ user, token });
   }
 
+  
+
   // ✅ If not logged in
   else {
     console.log("⚠️ No active user session found.");
@@ -71,6 +73,149 @@ document.addEventListener("DOMContentLoaded", () => {
       };
     }
   }
+
+  /* =================================================================
+   [NAV-USER-AVATAR] — Replace profile icon with avatar or initials
+   ================================================================= */
+function decorateNavAsLoggedInAvatar({ user, token }) {
+  if (!user || !token) return;
+
+  const loginTrigger = document.getElementById('loginTrigger');
+  if (!loginTrigger) return;
+
+  // Check if avatar is already rendered to avoid duplicates
+  if (loginTrigger.querySelector('.nav-avatar-wrap')) {
+    console.log('✅ Avatar already rendered, skipping...');
+    return;
+  }
+
+  console.log('🎨 Rendering avatar for:', user.firstName, user.lastName);
+
+  // Remove the icon and replace with avatar container
+  loginTrigger.innerHTML = '';
+  loginTrigger.classList.add('has-avatar');
+  
+  // Remove any default icon classes
+  loginTrigger.classList.remove('fa-user', 'fa-solid');
+  
+  // Remove any inline styles that might conflict
+  loginTrigger.style.color = '';
+
+  const avatarWrap = document.createElement('div');
+  avatarWrap.className = 'nav-avatar-wrap';
+
+  // Check if user has a profile image
+  const profileImageUrl = user.profileImage || user.avatar || null;
+
+  if (profileImageUrl) {
+    // Show profile image
+    const img = document.createElement('img');
+    img.src = profileImageUrl;
+    img.alt = 'Profile';
+    img.className = 'nav-avatar-img';
+    img.onerror = () => {
+      // If image fails to load, fall back to initials
+      avatarWrap.innerHTML = '';
+      const initialsDiv = createInitialsAvatar(user);
+      avatarWrap.appendChild(initialsDiv);
+    };
+    avatarWrap.appendChild(img);
+  } else {
+    // Show initials badge
+    const initialsDiv = createInitialsAvatar(user);
+    avatarWrap.appendChild(initialsDiv);
+  }
+
+// Add online status indicator
+  const statusDot = document.createElement('span');
+  statusDot.className = 'nav-avatar-status';
+  avatarWrap.appendChild(statusDot);
+
+  loginTrigger.appendChild(avatarWrap);
+}
+
+function createInitialsAvatar(user) {
+  const div = document.createElement('div');
+  div.className = 'nav-avatar-initials';
+
+  // Get initials from first name and last name
+  const firstName = user.firstName || user.name || '';
+  const lastName = user.lastName || '';
+  
+  let initials = '';
+  if (firstName) initials += firstName.charAt(0).toUpperCase();
+  if (lastName) initials += lastName.charAt(0).toUpperCase();
+  
+  // Fallback to 'U' if no name available
+  if (!initials) initials = 'U';
+
+  div.textContent = initials;
+  
+  // Generate a consistent color based on the user's name
+  const colorIndex = (firstName + lastName).length % 6;
+  const colors = [
+    '#3A5A40', // green
+    '#6096B4', // blue  
+    '#8B5A3C', // brown
+    '#6B5B95', // purple
+    '#E07A5F', // coral
+    '#5A8F7B'  // teal
+  ];
+  div.style.backgroundColor = colors[colorIndex];
+
+  return div;
+}
+
+// Expose globally so profile.js can refresh the avatar after upload
+window.refreshNavAvatar = function() {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  let user = null;
+  try {
+    user = JSON.parse(
+      localStorage.getItem('user') || 
+      sessionStorage.getItem('user') || 
+      'null'
+    );
+  } catch {
+    user = null;
+  }
+  
+  if (token && user) {
+    decorateNavAsLoggedInAvatar({ user, token });
+  }
+};
+
+// Expose globally so profile.js can refresh the avatar after upload
+window.refreshNavAvatar = function() {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  let user = null;
+  try {
+    user = JSON.parse(
+      localStorage.getItem('user') || 
+      sessionStorage.getItem('user') || 
+      'null'
+    );
+  } catch {
+    user = null;
+  }
+  
+  if (token && user) {
+    decorateNavAsLoggedInAvatar({ user, token });
+  }
+};
+
+// ✅ Listen for login events and refresh avatar immediately
+window.addEventListener('auth:login', (event) => {
+  console.log('🔄 Auth login detected, refreshing avatar...');
+  const { token, user } = event.detail || {};
+  if (token && user) {
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      decorateNavAsLoggedInAvatar({ user, token });
+    }, 100);
+  }
+});
+
 });
 
 /* === Account Quick Menu (global, zero-HTML) — no logout, cart-sized === */

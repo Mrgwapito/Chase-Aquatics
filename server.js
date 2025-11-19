@@ -966,6 +966,7 @@ res.json({
     firstName: user.firstName || "",
     lastName: user.lastName || "",
     fullName: user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+    username: user.username || "", // ✅ NEW
 
     phone: user.phone || "",
 
@@ -1009,8 +1010,8 @@ app.put('/api/update-profile', async (req, res) => {
     if (!user)
       return res.status(404).json({ success: false, message: 'User not found' });
 
-    const {
-      firstName, lastName, phone,
+const {
+      firstName, lastName, username, phone, // ✅ added username
       addressLine1, region, province, city, barangay, postalCode,
       address, // legacy flat string (only used if structured not provided)
       gender, birthday
@@ -1020,6 +1021,22 @@ app.put('/api/update-profile', async (req, res) => {
     if (firstName !== undefined) user.firstName = firstName;
     if (lastName  !== undefined) user.lastName  = lastName;
     user.fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+
+    // username (✅ NEW)
+    if (username !== undefined) {
+      const trimmed = String(username || "").trim();
+      // Optional: check if username is already taken by another user
+      if (trimmed && trimmed !== user.username) {
+        const existing = await User.findOne({ username: trimmed, _id: { $ne: user._id } });
+        if (existing) {
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Username already taken. Please choose another.' 
+          });
+        }
+      }
+      user.username = trimmed;
+    }
 
     // phone
     if (phone !== undefined) user.phone = phone;
@@ -1057,7 +1074,7 @@ app.put('/api/update-profile', async (req, res) => {
 
     await user.save();
 
-    res.json({
+res.json({
       success: true,
       message: 'Profile updated successfully!',
       user: {
@@ -1065,6 +1082,7 @@ app.put('/api/update-profile', async (req, res) => {
         firstName: user.firstName,
         lastName:  user.lastName,
         fullName:  user.fullName,
+        username:  user.username || "", // ✅ NEW
         email:     user.email,
         phone:     user.phone,
 
