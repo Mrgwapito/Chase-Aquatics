@@ -272,8 +272,24 @@ if (!checkoutForm) {
     const payReceiptEl  = document.getElementById("payReceipt");
     const fulfill       = document.querySelector('input[name="fulfillment"]:checked')?.value || "Delivery";
 
+    // Make sure we have a stable userId (id / _id / userId)
+    const storedUser = currentUser();
+    const userId =
+      (userData && (userData.id || userData._id || userData.userId)) ||
+      (storedUser && (storedUser.id || storedUser._id || storedUser.userId)) ||
+      null;
+
+    if (!userId) {
+      console.error("❌ No userId found in userData or stored user:", { userData, storedUser });
+      alert("⚠️ Unable to determine your account ID. Please log in again.");
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
+      window.location.href = "../index.html";
+      return;
+    }
+
     const bodyFields = {
-      userId:  userData.id,
+      userId:  userId,
       name:    nameInput.value.trim(),
       email:   emailInput.value.trim(),
       phone:   phoneInput.value.trim(),
@@ -284,6 +300,7 @@ if (!checkoutForm) {
       fulfillment:   fulfill,
       cart:          cart
     };
+
 
     try {
       let res;
