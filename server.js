@@ -1400,7 +1400,7 @@ app.put('/api/change-password', async (req, res) => {
 
 // ================================================================
 // 🧾 CREATE ORDER — accepts JSON or multipart (with payReceipt)
-//    Now also triggers EmailJS order confirmation
+//    NOW with stock reservation on place order
 //    Search tag: /api/orders (create order)
 // ================================================================
 app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
@@ -1436,16 +1436,89 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
       return res.status(400).json({ success:false, message:"Invalid cart data" });
     }
 
-    // totals
+    // ------------------------------------------------------------
+    // 🔒 STEP 1: Reserve stock per cart item (deduct on place order)
+    // ------------------------------------------------------------
+    const successfulReservations = [];
+
+    try {
+      for (const item of cart) {
+        const qty = Math.max(1, Number(item.quantity) || 1);
+        const rawProdId = item.productId || item._id;
+
+        if (!rawProdId) {
+          throw new Error(`Missing productId for item "${item.title || "Item"}"`);
+        }
+
+        const idStr     = String(rawProdId);
+        const numericId = Number(idStr);
+        const idFilter  = !isNaN(numericId) ? { _id: numericId } : { _id: idStr };
+
+        // Only update if there is enough stock left
+        const filter = {
+          ...idFilter,
+          stock: { $gte: qty },
+        };
+
+        const updatedProduct = await Product.findOneAndUpdate(
+          filter,
+          { $inc: { stock: -qty } }, // deduct stock
+          { new: true }
+        );
+
+        if (!updatedProduct) {
+          // 🔁 Roll back previous reservations for this order
+          for (const r of successfulReservations) {
+            await Product.updateOne(
+              { _id: r.productId },
+              { $inc: { stock: r.qty } }
+            );
+          }
+
+          // Fetch current stock for nicer error messaging
+          const current   = await Product.findOne(idFilter).lean();
+          const available = current ? (current.stock || 0) : 0;
+
+          return res.status(400).json({
+            success: false,
+            message: `Not enough stock for "${item.title || "item"}". Requested ${qty}, available ${available}. Please update your cart.`,
+          });
+        }
+
+        successfulReservations.push({ productId: updatedProduct._id, qty });
+      }
+    } catch (stockErr) {
+      console.error("❌ Stock reservation failed:", stockErr);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to reserve stock for this order. Please try again.",
+      });
+    }
+
+    // ------------------------------------------------------------
+    // 💰 STEP 2: Compute totals (same as before)
+    // ------------------------------------------------------------
     const shipping   = 100;
-    const subtotal   = cart.reduce((sum, it) =>
-      sum + (Number(it.price) || 0) * (Number(it.quantity) || 1), 0);
+    const subtotal   = cart.reduce(
+      (sum, it) =>
+        sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+      0
+    );
     const totalAmount = subtotal + shipping;
 
-     const order = await Order.create({
-      userId, name, email, phone, address,
+    // ------------------------------------------------------------
+    // 🧾 STEP 3: Create the order (now that stock is locked)
+    // ------------------------------------------------------------
+    const order = await Order.create({
+      userId,
+      name,
+      email,
+      phone,
+      address,
       cart,
-      subtotal, shipping, totalAmount,
+      subtotal,
+      shipping,
+      totalAmount,
       paymentMethod,
       codLandmark,
       fulfillment,
@@ -1456,11 +1529,12 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
       },
     });
 
-    // Build EmailJS template params so the frontend can send the email
+    // ------------------------------------------------------------
+    // ✉️ STEP 4: Build EmailJS template + optional server email
+    // ------------------------------------------------------------
     const emailTemplate = buildOrderEmailTemplate(order);
 
-    // Optional: still call helper (it will be a no-op unless
-    // EMAILJS_ENABLE_SERVER is set)
+    // Optional: server-side EmailJS (controlled by EMAILJS_ENABLE_SERVER)
     sendOrderConfirmationEmail(order).catch((err) => {
       console.error(
         "❌ Failed to send order confirmation email (server-side):",
@@ -1472,12 +1546,15 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
       success: true,
       message: "Order placed successfully!",
       order,
-      emailTemplate, // 👈 this is used by checkout.js
+      emailTemplate, // 👈 used by checkout.js
     });
-
   } catch (err) {
     console.error("POST /api/orders error:", err);
-    res.status(500).json({ success:false, message:"Server error creating order", error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Server error creating order",
+      error: err.message,
+    });
   }
 });
 
