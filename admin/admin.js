@@ -86,6 +86,53 @@ window.fetchJSON = async function fetchJSON(url, options = {}) {
   return data;
 };
 
+
+// =======================================================
+// ✉️ EmailJS — ORDER STATUS UPDATES (Paid / Completed / Cancelled)
+// =======================================================
+const ORDER_EMAILJS_SERVICE_ID  = "service_jtt27q3";
+const ORDER_EMAILJS_TEMPLATE_ID = "template_1lp0g2w";
+const ORDER_EMAILJS_PUBLIC_KEY  = "mqDHnNid50ye9mej_";
+
+function sendOrderStatusEmail(order, newStatus) {
+  if (typeof emailjs === "undefined") {
+    console.warn("EmailJS not loaded on this page; skipping order email.");
+    return;
+  }
+  if (!order || !order.email) {
+    console.warn("No customer email on order; skipping order email.");
+    return;
+  }
+
+  try {
+    // safe even if called many times
+    emailjs.init(ORDER_EMAILJS_PUBLIC_KEY);
+  } catch (e) {
+    // ignore init warnings
+  }
+
+  const safeStatus = newStatus || order.status || "";
+
+  // ⚠️ Make sure your EmailJS template uses these variable names
+  const params = {
+    to_email: order.email,
+    to_name: order.name || "Customer",
+    order_id: order.orderId || "",
+    status: safeStatus,
+    payment_method: order.paymentMethod || "",
+    total_amount: Number(order.totalAmount || 0).toFixed(2),
+    brand: "Chase Aquatics",
+  };
+
+  emailjs
+    .send(ORDER_EMAILJS_SERVICE_ID, ORDER_EMAILJS_TEMPLATE_ID, params)
+    .then(
+      () => console.log("📨 Order email sent:", order.email, safeStatus),
+      (err) => console.error("❌ EmailJS order error:", err)
+    );
+}
+
+
 // ================================================================
 // 📦 ADMIN DASHBOARD — ORDERS, APPOINTMENTS, LOGOUT, NAV
 // ================================================================
@@ -108,9 +155,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const mPayment = document.getElementById("mPayment");
   const mTotal = document.getElementById("mTotal");
   const mStatus = document.getElementById("mStatus");
+  const mAddress = document.getElementById("mAddress"); // 🔹 NEW: shipping address
   const btnPaid = document.getElementById("modalPaid");
   const btnDone = document.getElementById("modalDone");
-  const btnCancel = document.getElementById("modalCancel"); 
+  const btnCancel = document.getElementById("modalCancel");
+
 
   // Remove the duplicate global helpers that were here
 
@@ -240,9 +289,54 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // =======================================================
-  // 🟩 Modal Functions (Orders) — unchanged logic
+  // 🟩 Modal Functions (Orders) — address + details
   // =======================================================
+
+   function formatOrderAddress(order) {
+    if (!order) return "—";
+
+    // 1) Prefer structured shippingAddress from the order (new orders)
+    if (order.shippingAddress && typeof order.shippingAddress === "object") {
+      const sa = order.shippingAddress;
+      const parts = [
+        sa.addressLine1 || sa.line1 || "",
+        sa.barangay || "",
+        sa.city || sa.municipality || "",
+        sa.province || "",
+        sa.region || "",
+        sa.postalCode || sa.zip || ""
+      ].filter(Boolean);
+
+      if (parts.length) {
+        return parts.join(", ");
+      }
+    }
+
+    // 2) Fallback: flat fields on the order document
+    const flatParts = [
+      order.addressLine1 || order.line1 || order.address || "",
+      order.barangay || "",
+      order.city || order.municipality || "",
+      order.province || "",
+      order.region || "",
+      order.postalCode || order.zip || ""
+    ].filter(Boolean);
+
+    if (flatParts.length) {
+      return flatParts.join(", ");
+    }
+
+    // 3) Last-resort string fields
+    if (order.address) return order.address;
+    if (order.shippingAddressString) return order.shippingAddressString;
+
+    // Nothing at all
+    return "—";
+  }
+
+
   function openModal(orderId) {
+
     const order = orders.find((o) => o._id === orderId);
     if (!order) return;
 
@@ -250,6 +344,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     mCustomer.textContent = order.name;
     mPayment.textContent = order.paymentMethod || "N/A";
     mTotal.textContent = `₱${Number(order.totalAmount || 0).toFixed(2)}`;
+
+    // 🔹 Shipping address (built from whatever fields exist on the order)
+    if (mAddress) {
+      mAddress.textContent = formatOrderAddress(order);
+    }
 
     // 👉 Show status as plain word only (no badge styling)
     mStatus.textContent = order.status || "";
@@ -259,6 +358,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const elCod         = document.getElementById("mCod");
     const elAmt         = document.getElementById("mAmt");
     const elReceipt     = document.getElementById("mReceipt");
+
 
     if (elFulfillment) elFulfillment.textContent = order.fulfillment || "—";
     if (elCod)         elCod.textContent         = order.codLandmark || "—";
@@ -310,14 +410,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   closeModal.onclick = hideOrderModal;
   window.addEventListener("click", (e) => { if (e.target === modal) hideOrderModal(); });
 
-  async function updateOrderStatus(orderId, newStatus, meta = {}) {
+async function updateOrderStatus(orderId, newStatus, meta = {}) {
+  // find the order object so we can email the right customer
+  const order = orders.find((o) => o._id === orderId) || null;
+
   try {
     const res = await fetch(`${API}/api/orders/${orderId}/status`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...window.authHeader(),   // 🔐 send Bearer token so requireAdmin works
+      },
       body: JSON.stringify({
         status: newStatus,
-        ...meta,                 // NEW: pass extra fields (cancelNote, cancelledBy, etc.)
+        ...meta,                  // cancelNote, cancelledBy, etc.
       }),
     });
 
@@ -325,8 +431,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0, 200)}`);
 
     let data;
-    try { data = JSON.parse(text); } catch { throw new Error("Server did not return JSON."); }
+    try { data = JSON.parse(text); }
+    catch { throw new Error("Server did not return JSON."); }
+
     if (!data.success) throw new Error(data.message || "Update failed");
+
+    // 🔔 Send EmailJS notification for this order status
+    try {
+      if (order) {
+        sendOrderStatusEmail(order, newStatus);
+      } else {
+        console.warn("Order not found in local list; skipping order email.");
+      }
+    } catch (e) {
+      console.warn("EmailJS (order status) failed:", e);
+    }
 
     tOK(`Order ${newStatus}`, `Order status updated successfully.`);
     modal.classList.remove("show");
@@ -543,6 +662,69 @@ document.addEventListener("DOMContentLoaded", () => {
   let appointments = [];
   let currentAppt = null;
 
+// =======================================================
+// ✉️ EmailJS helper for appointment updates (Confirm/Cancel/Resched)
+// =======================================================
+const EMAILJS_SERVICE_ID = "service_1c8lq6n";   // ✅ updated for admin status
+const EMAILJS_TEMPLATE_ID = "template_6e4mvs8";
+const EMAILJS_PUBLIC_KEY = "HCwUJE1S2hr3TtLfB";
+
+function sendAppointmentUpdateEmail(booking, changeType, overrides = {}) {
+  if (typeof emailjs === "undefined") {
+    console.warn("EmailJS not loaded on this page; skipping appointment email.");
+    return;
+  }
+  if (!booking || !booking.email) {
+    console.warn("No booking/email found for appointment email.");
+    return;
+  }
+
+  try {
+    // safe even if called multiple times; EmailJS will just log a warning
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  } catch (e) {
+    // ignore init errors (e.g., already initialised)
+  }
+
+  const safeEmail = booking.email || "";
+  const safeName =
+    booking.name ||
+    (safeEmail.includes("@") ? safeEmail.split("@")[0] : "Guest");
+
+  const params = {
+    to_name: safeName,
+    to_email: safeEmail,
+
+    brand: "Life in a Box",
+    submitted_at: new Date().toLocaleString(),
+
+    service: booking.service || "General Consultation",
+    date: overrides.date || booking.date,
+    time: overrides.time || booking.time,
+
+    status: overrides.status || booking.status || changeType || "Pending",
+    change_type: changeType || "",
+
+    notes: booking.notes || "",
+    guests: Array.isArray(booking.guests)
+      ? booking.guests.join(", ")
+      : (booking.guests || ""),
+    topics: Array.isArray(booking.topics)
+      ? booking.topics.join(", ")
+      : (booking.topics || ""),
+
+    appointment_url: "",
+  };
+
+  emailjs
+    .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+    .then(
+      () => console.log("📨 Appointment email sent:", safeEmail),
+      (err) => console.error("❌ EmailJS appointment error:", err)
+    );
+}
+
+
   // =======================================================
   // 🔁 Fetch All Appointments
   // =======================================================
@@ -652,70 +834,109 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // =======================================================
-  // ✅ Update Appointment Status
+  // ✅ Update Appointment Status (Confirm / Cancel)
+  //    Backend handles sending the email notification.
   // =======================================================
-  async function updateAppointmentStatus(status) {
-    if (!currentAppt) return;
+// =======================================================
+// ✅ Update Appointment Status (Confirm / Cancel)
+//    Frontend EmailJS sends the notification.
+// =======================================================
+async function updateAppointmentStatus(newStatus) {
+  if (!currentAppt) return;
+
+  try {
+    const res = await fetch(
+      `${API}/api/bookings/${currentAppt._id}/status`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...window.authHeader(),  // 🔐 admin token
+        },
+        body: JSON.stringify({ status: newStatus })
+      }
+    );
+
+    const text = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0, 200)}`);
+
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error("Server did not return JSON."); }
+
+    if (!data.success) throw new Error(data.message || "Update failed");
+
+    // Keep local copy in sync
+    currentAppt.status = newStatus;
+
+    // ✅ Send status email to customer
     try {
-      const res = await fetch(
-        `${API}/api/bookings/${currentAppt._id}/status`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status })
-        }
-      );
-
-      const text = await res.text();
-      if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0,200)}`);
-
-      let data;
-      try { data = JSON.parse(text); }
-      catch { throw new Error("Server did not return JSON."); }
-
-      if (!data.success) throw new Error(data.message || "Update failed");
-
-      tOK(`Appointment ${status}`, 'Status updated successfully.');
-      closeApptModal();
-      fetchAppointments();
-    } catch (err) {
-      console.error("❌ Failed to update appointment:", err);
-      tErr('Appointments', 'Could not update status.');
+      sendAppointmentUpdateEmail(currentAppt, newStatus, { status: newStatus });
+    } catch (e) {
+      console.warn("EmailJS (status update) failed:", e);
     }
-  }
 
-  // =======================================================
-  // 🔁 Reschedule Appointment
-  // =======================================================
-  async function rescheduleAppointment(newD, newT) {
-    if (!currentAppt) return;
+    tOK("Appointment updated", `Status set to ${newStatus}.`);
+    closeApptModal();
+    fetchAppointments(apptPage);
+  } catch (err) {
+    console.error("❌ Failed to update appointment:", err);
+    tErr("Appointments", brief(err.message));
+  }
+}
+
+
+
+
+ // =======================================================
+// 🔁 Reschedule Appointment
+// =======================================================
+async function rescheduleAppointment(newD, newT) {
+  if (!currentAppt) return;
+  try {
+    const res = await fetch(
+      `${API}/api/bookings/${currentAppt._id}/status`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...window.authHeader() },
+        body: JSON.stringify({ newDate: newD, newTime: newT })
+      }
+    );
+
+    const text = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0,200)}`);
+
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error("Server did not return JSON."); }
+
+    if (!data.success) throw new Error(data.message || "Reschedule failed");
+
+    // Update local copy for email + UI
+    currentAppt.date = newD;
+    currentAppt.time = newT;
+    currentAppt.status = "Rescheduled";
+
+    // ✅ Send reschedule email with new date/time
     try {
-      const res = await fetch(
-        `${API}/api/bookings/${currentAppt._id}/status`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ newDate: newD, newTime: newT })
-        }
-      );
-
-      const text = await res.text();
-      if (!res.ok) throw new Error(`HTTP ${res.status} – ${text.slice(0,200)}`);
-
-      let data;
-      try { data = JSON.parse(text); }
-      catch { throw new Error("Server did not return JSON."); }
-
-      if (!data.success) throw new Error(data.message || "Reschedule failed");
-
-      tOK('Appointment rescheduled', 'New date/time saved.');
-      closeApptModal();
-      fetchAppointments();
-    } catch (err) {
-      console.error("❌ Failed to reschedule:", err);
-      tErr('Appointments', 'Could not reschedule.');
+      sendAppointmentUpdateEmail(currentAppt, "Rescheduled", {
+        date: newD,
+        time: newT,
+        status: "Rescheduled"
+      });
+    } catch (e) {
+      console.warn("EmailJS (reschedule) failed:", e);
     }
+
+    tOK('Appointment rescheduled', 'New date/time saved.');
+    closeApptModal();
+    fetchAppointments(apptPage);
+  } catch (err) {
+    console.error("❌ Failed to reschedule:", err);
+    tErr('Appointments', brief(err.message));
   }
+}
+
 
   // =======================================================
   // 🎛️ Button Actions
@@ -1492,50 +1713,3 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ================================================================
-// 🛡️ ADMIN: VALID ID REVIEW
-// ================================================================
-app.put('/api/admin/valid-id/:userId', requireAdmin, async (req, res) => {
-  try {
-    const { status, note } = req.body;
-    const norm = String(status || '').toLowerCase();
-
-    const allowed = ['pending', 'approved', 'rejected', 'declined', 'none'];
-    if (!allowed.includes(norm)) {
-      return res.status(400).json({ success: false, message: 'Invalid status' });
-    }
-
-    const userDoc = await User.findById(req.params.userId);
-    if (!userDoc) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const prev = userDoc.validId || {};
-    userDoc.validId = {
-      ...prev,
-      status: norm,
-      note: note || prev.note || '',
-      reviewedAt: new Date(),
-      reviewedBy: req.user.id || req.user._id
-    };
-
-    await userDoc.save();
-
-    // optional log
-    try {
-      await logAdminAction(req, {
-        category: 'verification',
-        action: 'VALID_ID_REVIEWED',
-        target: { type: 'user', id: String(userDoc._id), name: userDoc.fullName || userDoc.email },
-        meta: { from: prev.status || 'none', to: norm }
-      });
-    } catch (e) {
-      console.warn('log fail (VALID_ID_REVIEWED):', e.message);
-    }
-
-    res.json({ success: true, validId: userDoc.validId });
-  } catch (err) {
-    console.error('PUT /api/admin/valid-id error:', err);
-    res.status(500).json({ success: false, message: 'Error updating Valid ID' });
-  }
-});

@@ -90,6 +90,14 @@ function notify({
   const saveAddressBtn = document.getElementById("saveAddressBtn");
   const editAddressBtn = document.getElementById("editAddressBtn");
 
+  // 🔴 Clear red border once user starts fixing the postal code
+  if (zInp) {
+    zInp.addEventListener('input', () => {
+      zInp.classList.remove('is-invalid');
+    });
+  }
+
+
 
   // Avatar
   let selectImageBtn = document.getElementById("selectImageBtn");
@@ -955,22 +963,46 @@ if (bSel && user.barangay) {
     return `REGION ${roman} (${nameUP})`;
   }
 
-  function regionsList() {
-    const list = (PH_FULL?.regions || []).map(r => ({
+// 🔒 Limit dropdown to Luzon regions only (front-end safety)
+const LUZON_REGION_CODES_FRONT = new Set([
+  '010000000', // Region I - Ilocos
+  '020000000', // Region II - Cagayan Valley
+  '030000000', // Region III - Central Luzon
+  '040000000', // Region IV-A - CALABARZON
+  '050000000', // Region V - Bicol
+  '130000000', // NCR
+  '140000000', // CAR
+  '170000000'  // Region IV-B - MIMAROPA
+]);
+
+function regionsList() {
+  const list = (PH_FULL?.regions || [])
+    .filter(r => {
+      const code = String(r.code || '').trim();
+
+      // If code is NOT a 9-digit PSGC code (like the fallback "IV-A"),
+      // don't filter it out (still allow it).
+      if (!code || code.length !== 9) return true;
+
+      // For PSGC-style codes, only keep Luzon regions
+      return LUZON_REGION_CODES_FRONT.has(code);
+    })
+    .map(r => ({
       value: r.name,                 // keep using the NAME as the <option> value
       label: regionLabel(r),
       _orderKey: psgcToRomanRegion(r.code)
     }));
 
-    const ORDER = ['I','II','III','IV-A','IV-B','V','VI','VII','VIII','IX','X','XI','XII','XIII','NCR','CAR','BARMM'];
-    const idx = k => {
-      const i = ORDER.indexOf(String(k).toUpperCase());
-      return i === -1 ? 999 : i;
-    };
+  const ORDER = ['I','II','III','IV-A','IV-B','V','VI','VII','VIII','IX','X','XI','XII','XIII','NCR','CAR','BARMM'];
+  const idx = k => {
+    const i = ORDER.indexOf(String(k).toUpperCase());
+    return i === -1 ? 999 : i;
+  };
 
-    list.sort((a,b) => idx(a._orderKey) - idx(b._orderKey));
-    return list.map(({ value, label }) => ({ value, label }));
-  }
+  list.sort((a, b) => idx(a._orderKey) - idx(b._orderKey));
+  return list.map(({ value, label }) => ({ value, label }));
+}
+
 
 
   function provincesFor(regionName){
@@ -1177,11 +1209,27 @@ editAddressBtn?.addEventListener('click', () => {
     if (!city) { notify({ title:'Missing city/municipality', message:'Please select a City/Municipality.', type:'error', duration:5000, position:'top' }); cSel?.focus(); return; }
     if (!barangay){ notify({ title:'Missing barangay', message:'Please select a Barangay.', type:'error', duration:5000, position:'top' }); bSel?.focus(); return; }
 
+    // Clear previous error state on every save attempt
+    if (zInp) {
+      zInp.classList.remove('is-invalid');
+    }
+
     // Postal code MUST be exactly 4 digits
     if (!/^\d{4}$/.test(zip)) {
-      notify({ title:'Invalid postal code', message:'PH postal codes must be exactly 4 digits (e.g., 1000).', type:'error', duration:6000, position:'top' });
-      zInp?.focus(); return;
+      if (zInp) {
+        zInp.classList.add('is-invalid');  // 🔴 red border (Bootstrap .is-invalid)
+      }
+      notify({
+        title: 'Check postal code',
+        message: 'Postal code must be exactly 4 digits (e.g., 1000).',
+        type: 'error',
+        duration: 6000,
+        position: 'top'
+      });
+      zInp?.focus();
+      return;
     }
+
 
     const payload = {
       addressLine1: line1,

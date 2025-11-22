@@ -88,7 +88,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ---------------------------------------------------------------
 
   // 🟩 Get cart (server if logged-in; LS if guest)
-  // 🟩 Get cart
   // 1) Start from localStorage
   // 2) If logged in, try server – but only override LS if server has items
   let cart = loadCartLS();
@@ -110,7 +109,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.log("👤 Guest user, using LOCAL cart:", cart);
   }
 
-  console.log("🛒 Final cart used in order_summary:", cart);
+  console.log("🛒 Final cart used in order_summary (before selection):", cart);
+
+  // 🆕 If there is a selection from cart popup, use only those items
+  try {
+    const selectedRaw = sessionStorage.getItem('checkoutItems');
+    if (selectedRaw) {
+      const selected = JSON.parse(selectedRaw);
+      if (Array.isArray(selected) && selected.length > 0) {
+        cart = selected;
+        console.log("🧺 Using SELECTED items from cart popup:", cart);
+      }
+    }
+  } catch (e) {
+    console.warn("⚠️ Failed to read checkoutItems from sessionStorage:", e);
+  }
+
+  console.log("🛒 Final cart used in order_summary (after selection):", cart);
+
 
 
   const orderItemsContainer = document.getElementById("order-items");

@@ -77,13 +77,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Shipping block
+  const ship = shipping || {};
+
+  // Prefer a more complete line1 if we ever store it differently
+  const line1 =
+    ship.line1 ||
+    ship.fullAddress ||
+    ship.addressLine1 ||
+    ship.full ||
+    "";
+
+  const postal =
+    ship.postal ||
+    ship.postalCode ||
+    "";
+
   if (shipNameEl)     shipNameEl.textContent     = customer.name  || "Customer";
-  if (shipLine1El)    shipLine1El.textContent    = shipping.line1 || "";
-  if (shipBarangayEl) shipBarangayEl.textContent = shipping.barangay ? shipping.barangay + ", " : "";
-  if (shipCityEl)     shipCityEl.textContent     = shipping.city ? shipping.city + ", " : "";
-  if (shipProvinceEl) shipProvinceEl.textContent = shipping.province ? shipping.province + " " : "";
-  if (shipPostalEl)   shipPostalEl.textContent   = shipping.postal || "";
-  if (shipRegionEl)   shipRegionEl.textContent   = shipping.region || "";
+  if (shipLine1El)    shipLine1El.textContent    = line1;
+  if (shipBarangayEl) shipBarangayEl.textContent = ship.barangay ? ship.barangay + ", " : "";
+  if (shipCityEl)     shipCityEl.textContent     = ship.city ? ship.city + ", " : "";
+  if (shipProvinceEl) shipProvinceEl.textContent = ship.province ? ship.province + " " : "";
+  if (shipPostalEl)   shipPostalEl.textContent   = postal;
+  if (shipRegionEl)   shipRegionEl.textContent   = ship.region || "";
+
 
   // Contact
   if (contactEmailEl) contactEmailEl.textContent = customer.email || "";

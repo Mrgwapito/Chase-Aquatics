@@ -257,6 +257,10 @@ document.body.addEventListener('click', function (e) {
       const cartItem = document.createElement('div');
       cartItem.classList.add('cart-item');
       cartItem.innerHTML = `
+        <input type="checkbox"
+               class="item-select"
+               data-index="${index}"
+               checked>
         <img src="${safeImage}" alt="${safeTitle}">
         <div class="item-info">
           <h4>${safeTitle}</h4>
@@ -274,6 +278,7 @@ document.body.addEventListener('click', function (e) {
 
     attachCartItemEvents();
   }
+
 
   // ===============================================================
   // 🔧 CART ITEM CONTROLS (Increase / Decrease / Remove)
@@ -372,10 +377,41 @@ function saveCartLS(c) {
 }
 
   // ===============================================================
-  // 🚪 REVIEW MY CART
+  // 🚪 REVIEW MY CART (only selected items)
   // ===============================================================
   if (reviewBtn) {
     reviewBtn.addEventListener('click', () => {
+      if (!cartItemsContainer) return;
+
+      const cartData = loadCartLS();
+      const selected = [];
+
+      cartItemsContainer.querySelectorAll('.item-select').forEach(cb => {
+        if (cb.checked) {
+          const idx = Number(cb.getAttribute('data-index'));
+          if (!Number.isNaN(idx) && cartData[idx]) {
+            selected.push(cartData[idx]);
+          }
+        }
+      });
+
+      if (!selected.length) {
+        showToast({
+          title: 'No items selected',
+          message: 'Please select at least one item to review.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      // 💾 Save selection for this checkout flow only
+      try {
+        sessionStorage.setItem('checkoutItems', JSON.stringify(selected));
+      } catch (e) {
+        console.warn('⚠️ Failed to store checkoutItems:', e);
+      }
+
+      // Close popup & go to order summary
       cartPopup.style.opacity = '0';
       setTimeout(() => {
         cartPopup.style.display = 'none';
@@ -383,6 +419,7 @@ function saveCartLS(c) {
       }, 200);
     });
   }
+
 
   // ===============================================================
   // ❌ CLEAR CART

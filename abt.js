@@ -56,3 +56,70 @@ if (toggleBtn && navlinks) {
     toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   });
 }
+
+
+// --- office photo ↔ map auto toggle (pauses when user interacts) ---
+document.addEventListener('DOMContentLoaded', () => {
+  const officeMedia = document.querySelector('.office-media');
+  const mapFrame   = officeMedia?.querySelector('.office-map iframe');
+  if (!officeMedia || !mapFrame) return;
+
+  // change this value if you want slower/faster swap
+  const ROTATION_DELAY = 6000;   // ms between swaps (3 seconds)
+  const IDLE_BEFORE_RESUME = 20000; // 20 seconds no interaction
+
+  let showingMap = false;
+  let rotationTimer = null;
+  let idleTimer = null;
+  let userInteracting = false;
+
+  function applyState() {
+    officeMedia.classList.toggle('show-map', showingMap);
+  }
+
+  function startRotation() {
+    if (rotationTimer) return; // already running
+    rotationTimer = setInterval(() => {
+      if (userInteracting) return; // don't change while user is active
+      showingMap = !showingMap;
+      applyState();
+    }, ROTATION_DELAY);
+  }
+
+  function stopRotation() {
+    if (rotationTimer) {
+      clearInterval(rotationTimer);
+      rotationTimer = null;
+    }
+  }
+
+  function scheduleResume() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      userInteracting = false;
+      startRotation();
+    }, IDLE_BEFORE_RESUME);
+  }
+
+  function handleUserInteract() {
+    // user touched / dragged / scrolled the map
+    userInteracting = true;
+    stopRotation();
+
+    // make sure the map stays visible while they interact
+    showingMap = true;
+    applyState();
+
+    // if they stop interacting for 20s, resume auto-rotation
+    scheduleResume();
+  }
+
+  // listen for various interactions on the iframe (drag, scroll, touch)
+  ['pointerdown', 'pointermove', 'wheel', 'touchstart'].forEach(evt => {
+    mapFrame.addEventListener(evt, handleUserInteract, { passive: true });
+  });
+
+  // start the auto-rotation on load
+  startRotation();
+});
+

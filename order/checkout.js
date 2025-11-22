@@ -96,9 +96,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const vatEl = document.getElementById("checkout-vat");
   const shippingEl = document.getElementById("checkout-shipping");
 
-  const shipping = 100;       // flat shipping for now
-  const VAT_RATE = 0.12;      // 12% VAT
+  const shipping = 100;       // flat shipping for now (BMBE / non-VAT)
   let latestTotals = null;    // used later for thankyou page
+  let checkoutSelection = null; // 🆕 holds selected items for this checkout
+
+
 
 
   // Form fields
@@ -183,15 +185,40 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ----------------------------------------------------
-  // STEP 3: load cart (server for logged-in, LS fallback)
+  // STEP 3: load cart (LS first, then server override, then selection)
   // ----------------------------------------------------
-  let cart = [];
+  // 1) Start from localStorage (same pattern as order_summary.js)
+  let cart = loadCartLS();
+
   if (token) {
     const serverItems = await fetchServerCart();
-    cart = normalizeServerItems(serverItems || []);
-    saveCartLS(cart); // keep LS in sync for UI
+    const serverCart = normalizeServerItems(serverItems || []);
+
+    if (serverCart.length > 0) {
+      // ✅ Server has items – trust server & sync LS
+      cart = serverCart;
+      saveCartLS(cart);
+      console.log("🛒 Checkout using SERVER cart:", cart);
+    } else {
+      console.log("ℹ️ Checkout using LOCAL cart (server empty):", cart);
+    }
   } else {
-    cart = loadCartLS();
+    console.log("👤 Guest checkout using LOCAL cart:", cart);
+  }
+
+  // 🆕 Use selection from cart popup if it exists
+  try {
+    const selectedRaw = sessionStorage.getItem('checkoutItems');
+    if (selectedRaw) {
+      const selected = JSON.parse(selectedRaw);
+      if (Array.isArray(selected) && selected.length > 0) {
+        checkoutSelection = selected;
+        cart = selected;
+        console.log("🧺 Checkout using SELECTED items from cart popup:", cart);
+      }
+    }
+  } catch (e) {
+    console.warn("⚠️ Failed to read checkoutItems from sessionStorage:", e);
   }
 
   if (!cart.length) {
@@ -200,6 +227,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btn) btn.disabled = true;
     return;
   }
+
 
   // Render items + totals
   let subtotal = 0;
@@ -231,24 +259,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     itemsContainer.insertAdjacentHTML("beforeend", itemHTML);
   });
 
-  // 💰 Prices in your DB already INCLUDE 12% VAT.
-  // So we back-calculate the net amount and VAT portion.
-  const grossSubtotal = subtotal;                     // with VAT
-  const netSubtotal   = grossSubtotal / (1 + VAT_RATE);
-  const vat           = grossSubtotal - netSubtotal;
+  // 💰 BMBE / non-VAT:
+  // Prices shown to the customer are already final.
+  // We don’t break out VAT, we just show subtotal + shipping.
+  const grossSubtotal = subtotal;   // final item subtotal (no VAT split)
+  const vat           = 0;
 
   // remember totals so we can show on thankyou page
   latestTotals = {
-    subtotal: netSubtotal,
+    subtotal: grossSubtotal,
     vat,
     shipping,
-    total: netSubtotal + vat + shipping,
+    total: grossSubtotal + shipping,
   };
 
-  if (subtotalEl) subtotalEl.textContent = `₱${netSubtotal.toFixed(2)}`;
+  if (subtotalEl) subtotalEl.textContent = `₱${grossSubtotal.toFixed(2)}`;
   if (vatEl)      vatEl.textContent      = `₱${vat.toFixed(2)}`;
   if (shippingEl) shippingEl.textContent = `₱${shipping.toFixed(2)}`;
   if (totalEl)    totalEl.textContent    = `₱${latestTotals.total.toFixed(2)}`;
+
 
 
 // ----------------------------------------------------
@@ -288,18 +317,40 @@ if (!checkoutForm) {
       return;
     }
 
+    // Build a structured shipping address based on profile + checkout input
+    const fullAddress = (addressInput.value || "").trim() ||
+                        (userData && userData.address) ||
+                        "";
+
+    const shippingAddress = {
+      line1:      fullAddress,
+      barangay:   userData?.barangay   || "",
+      city:       userData?.city       || "",
+      province:   userData?.province   || "",
+      region:     userData?.region     || "",
+      postalCode: userData?.postalCode || "",
+      country:    "Philippines",
+    };
+
     const bodyFields = {
       userId:  userId,
       name:    nameInput.value.trim(),
       email:   emailInput.value.trim(),
       phone:   phoneInput.value.trim(),
-      address: addressInput.value.trim(),
+
+      // keep the old flat address for backward compatibility
+      address: fullAddress,
+
+      // 🔹 NEW: send structured shipping address to backend
+      shippingAddress,
+
       paymentMethod: method,
       codLandmark:   (codLandmarkEl && codLandmarkEl.value ? codLandmarkEl.value.trim() : ""),
       payAmount:     (payAmountEl && payAmountEl.value ? payAmountEl.value : ""),
       fulfillment:   fulfill,
       cart:          cart
     };
+
 
 
     try {
@@ -425,26 +476,61 @@ if (!checkoutForm) {
           console.warn("⚠️ Unable to store lastOrderSummary:", err);
         }
 
-        // ✅ CLEAR CART EVERYWHERE
+        // ✅ CLEAR ONLY THE CHECKED-OUT ITEMS FROM CART
         try {
-          // clear current user's cart in LS
-          saveCartLS([]);
+          const fullCart = loadCartLS();
+          let remaining = fullCart;
 
-          // just in case there is a leftover guest cart
+          if (Array.isArray(checkoutSelection) && checkoutSelection.length > 0) {
+            // build keys for each selected item (id + optional size)
+            const selectedKeys = new Set(
+              checkoutSelection.map(it =>
+                `${it._id || it.productId || it.id}::${it.variant?.options?.Size || ''}`
+              )
+            );
+
+            // keep ONLY those NOT selected (so unselected items stay in cart)
+            remaining = fullCart.filter(it => {
+              const key = `${it._id || it.productId || it.id}::${it.variant?.options?.Size || ''}`;
+              return !selectedKeys.has(key);
+            });
+          } else {
+            // no selection info -> old behavior: clear all
+            remaining = [];
+          }
+
+          // update LS cart
+          saveCartLS(remaining);
           localStorage.removeItem("cart_guest");
 
-          // 🔥 force clear server cart immediately (no debounce)
+          // update server cart accordingly
           await fetch(`${API_BASE}/api/cart`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ items: [] }),
+            body: JSON.stringify({
+              items: (remaining || []).map(it => ({
+                productId: it._id || it.productId,
+                quantity: it.quantity,
+                title: it.title,
+                price: it.price,
+                image: it.image
+              }))
+            }),
           });
         } catch (err) {
           console.warn("⚠️ Failed to clear cart after order:", err);
         }
+
+        // 🧹 Clear selection used for this checkout session
+        try {
+          sessionStorage.removeItem("checkoutItems");
+        } catch (e) {
+          console.warn("⚠️ Failed to clear checkoutItems:", e);
+        }
+
 
         // 🔔 Tell cart.js (if loaded) to refresh popup + badge
         try {
@@ -634,3 +720,161 @@ if (!checkoutForm) {
 })();
 
   
+
+// ======================================================
+// 🌍 Estimated shipping map (Leaflet)
+// ======================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const mapContainer = document.getElementById('shipping-map');
+  if (!mapContainer) return; // safety
+
+  const subtotalEl   = document.getElementById('checkout-subtotal');
+  const shippingEl   = document.getElementById('checkout-shipping');
+  const totalEl      = document.getElementById('checkout-total');
+  const distanceText = document.getElementById('shipping-distance-text');
+
+  if (!subtotalEl || !shippingEl || !totalEl) return;
+
+  // 👉 Actual coordinates of your shop (Chase Aquatics)
+  const SHOP_COORDS = {
+    lat: 14.3139,
+    lng: 121.0576
+  };
+
+  // 🔲 NCR bounds (approx) – estimate only works inside this box
+  const NCR_BOUNDS = L.latLngBounds(
+    [14.27, 120.90], // southwest corner
+    [14.85, 121.15]  // northeast corner
+  );
+
+  // 🗺️ Initialize map (locked within NCR)
+  const map = L.map('shipping-map', {
+    maxBounds: NCR_BOUNDS,
+    maxBoundsViscosity: 1.0, // "rubber band" lock
+    minZoom: 10,
+    maxZoom: 18
+  }).setView([SHOP_COORDS.lat, SHOP_COORDS.lng], 13);
+
+
+  // Tile layer (OpenStreetMap)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  // Marker for shop
+  const shopMarker = L.marker([SHOP_COORDS.lat, SHOP_COORDS.lng])
+    .addTo(map)
+    .bindPopup('Chase Aquatics (Shop)')
+    .openPopup();
+
+  // Marker for customer (movable)
+  let customerMarker = null;
+
+  // Haversine distance (km)
+  function distanceKm(a, b) {
+    const toRad = deg => deg * Math.PI / 180;
+    const R = 6371; // Earth radius km
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+
+    const h =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLng / 2) * Math.sin(dLng / 2) * Math.cos(lat1) * Math.cos(lat2);
+    const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+    return R * c;
+  }
+
+  function parseAmount(text) {
+    return Number(text.replace(/[₱,]/g, '').trim()) || 0;
+  }
+
+  function formatAmount(num) {
+    return '₱' + num.toFixed(2);
+  }
+
+  // 💸 Rule: base 80 + 10 per km, min 100 (example lang, adjust mo)
+  function computeShipping(distanceKmValue) {
+    const base = 80;
+    const perKm = 10;
+    const est = base + distanceKmValue * perKm;
+    return Math.max(100, Math.round(est));
+  }
+
+  function updateTotalsWithShipping(newShipping) {
+    const subtotal = parseAmount(subtotalEl.textContent);
+    const total = subtotal + newShipping;
+    shippingEl.textContent = formatAmount(newShipping);
+    totalEl.textContent = formatAmount(total);
+  }
+
+  // 📍 When user clicks map → drop/move pin + recompute
+  map.on('click', (e) => {
+    const { lat, lng } = e.latlng;
+    const clickedLatLng = L.latLng(lat, lng);
+
+    // 🚫 Outside NCR → no estimate, just warning
+    if (!NCR_BOUNDS.contains(clickedLatLng)) {
+      if (window.Toast?.showToast) {
+        window.Toast.showToast({
+          title: 'Outside NCR',
+          message: 'Estimated shipping is only available within NCR. For other areas, final shipping fee will be coordinated via courier.',
+          type: 'warning',
+          position: 'top'
+        });
+      } else {
+        alert('Estimated shipping is only available within NCR.');
+      }
+
+      // Optional: reset text so klaro na walang estimate
+      if (distanceText) {
+        distanceText.textContent =
+          'Outside NCR – shipping fee will be confirmed by the courier.';
+      }
+
+      return; // ❌ wag mag-compute ng estimate
+    }
+
+    // ✅ Inside NCR – allow marker + estimate
+    if (!customerMarker) {
+      customerMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+      customerMarker.bindPopup('Your location (drag to adjust)').openPopup();
+
+      // Also listen to drag end for fine-tuning
+      customerMarker.on('dragend', (ev) => {
+        const pos = ev.target.getLatLng();
+        handleLocationChange(pos.lat, pos.lng);
+      });
+    } else {
+      customerMarker.setLatLng([lat, lng]);
+    }
+
+    handleLocationChange(lat, lng);
+  });
+
+  function handleLocationChange(lat, lng) {
+    const point = L.latLng(lat, lng);
+
+    // 🛡 Double-check inside NCR (safety)
+    if (!NCR_BOUNDS.contains(point)) {
+      // keep current shippingEl (e.g., default 100) – no change
+      if (distanceText) {
+        distanceText.textContent =
+          'Outside NCR – shipping fee will be confirmed by the courier.';
+      }
+      return;
+    }
+
+    const dist = distanceKm(SHOP_COORDS, { lat, lng }); // km
+    const shipping = computeShipping(dist);
+    updateTotalsWithShipping(shipping);
+
+    if (distanceText) {
+      distanceText.textContent =
+        `${dist.toFixed(1)} km from shop (within NCR). Shipping updated to ${formatAmount(shipping)}.`;
+    }
+  }
+});
+

@@ -131,6 +131,52 @@ a.active:hover {
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
   }
+  /* Office image + map hover swap */
+/* Office image + map hover swap */
+.office-media {
+  position: relative;
+  width: calc(100% + 60px);
+  margin: -25px 0 0 -30px;
+  height: 300px;          /* keep same height as old .fconti img */
+  max-height: 300px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  overflow: hidden;
+}
+
+.office-media .office-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.25s ease-in-out;
+}
+
+.office-media .office-map {
+  position: absolute;
+  inset: 0;
+}
+
+.office-media .office-map iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-in-out;
+}
+
+/* When .show-map is added: hide photo, show map */
+.office-media.show-map .office-photo {
+  opacity: 0;
+}
+
+.office-media.show-map .office-map iframe {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+
   .sconti {
     display: flex;
     flex-direction: column;
@@ -235,16 +281,20 @@ footer p {
   .fconti,.sconti{width:100%;max-width:640px;margin:0 auto;}
 
   /* Remove the image bleed that causes horizontal scroll */
-  .fconti img{
-    width:100%;
-    margin:0;
-    max-height:220px;
-    height:auto;
-    object-fit:cover;
-    border-top-left-radius:10px;
-    border-top-right-radius:10px;
-    display:block;
+  .office-media {
+    width: 100%;
+    margin: 0;
+    height: auto;
+    max-height: 220px;
   }
+
+  .office-media .office-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
 
   /* Tighter spacing/typography inside details */
   .deets{gap:12px;margin-bottom:16px;}

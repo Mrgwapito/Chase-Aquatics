@@ -56,15 +56,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     cartItemsContainer.innerHTML = "";
-    cart.forEach((item, index) => {
-      const safeTitle = item.title || "Untitled Product";
-      const safeImage = fixImg(item.image || "images/placeholder.jpg"); // 🔧 FIX: ensure absolute
-      const safePrice = Number(item.price) > 0 ? Number(item.price) : 0;
-      const safeQty = Number(item.quantity) > 0 ? item.quantity : 1;
+cart.forEach((item, index) => {
+  const safeTitle = item.title || "Untitled Product";
+  const safeImage = fixImg(item.image || "images/placeholder.jpg");
+  const safePrice = Number(item.price) > 0 ? Number(item.price) : 0;
+  const safeQty = Number(item.quantity) > 0 ? item.quantity : 1;
 
-      const div = document.createElement("div");
-      div.className = "cart-item";
-      div.innerHTML = `
+  const div = document.createElement("div");
+  div.className = "cart-item";
+  div.innerHTML = `
+        <input
+          type="checkbox"
+          class="item-select"
+          data-index="${index}"
+          checked
+        >
         <img src="${safeImage}" alt="${safeTitle}">
         <div class="item-info">
           <h4>${safeTitle}</h4>
@@ -74,11 +80,14 @@ document.addEventListener("DOMContentLoaded", async function () {
           <button class="qty-btn" data-index="${index}" data-action="decrease">-</button>
           <span class="qty">${safeQty}</span>
           <button class="qty-btn" data-index="${index}" data-action="increase">+</button>
-          <button class="remove-btn" data-index="${index}"><i class="fas fa-trash"></i></button>
+          <button class="remove-btn" data-index="${index}">
+            <i class="fas fa-trash"></i>
+          </button>
         </div>
       `;
-      cartItemsContainer.appendChild(div);
-    });
+  cartItemsContainer.appendChild(div);
+});
+
 
     attachCartItemEvents(); // 👈 bind +/–/remove after rendering
   }
@@ -406,7 +415,7 @@ if (!token) {
     });
   }
 
-  // 🆕 BUY NOW → require login + Valid ID, then add to cart and go to order summary
+   // 🆕 BUY NOW → require login + Valid ID, then create a SINGLE checkout item (hindi dumadaan sa cart)
   if (buyNowBtn) {
     buyNowBtn.addEventListener("click", async () => {
       const qtyInput = document.getElementById("quantity");
@@ -419,29 +428,79 @@ if (!token) {
       // ✅ First gate: login + Valid ID
       const gate = await ensureValidIdBeforeOrder();
       if (!gate.ok) {
-        // A toast was already shown (and maybe redirect to profile/login),
+        // A toast was already shown (and maybe redirect to profile/login/profile),
         // so just stop here. User can STILL use normal "Add to Cart" button.
         return;
       }
 
-      // ✅ Only if gate passed → add to cart (so cart stays clean for guests / blocked users)
-      const result = addToCart(product, quantity, { skipSuccessToast: true });
-      if (!result || !result.success) return;
+      // 🧩 Get currently selected variant (if any)
+      const chosenVariant = product.__selectedVariant ? product.__selectedVariant() : null;
+
+      // 🔢 Check stock (same logic as addToCart)
+      let availableStock = chosenVariant
+        ? Number(chosenVariant.stock)
+        : Number(product.stock ?? 0);
+
+      if (!Number.isFinite(availableStock) || availableStock <= 0) {
+        window.Toast?.showToast?.({
+          title: "Unavailable",
+          message: "This product is not available right now.",
+          type: "warning"
+        });
+        return;
+      }
+
+      if (quantity > availableStock) {
+        window.Toast?.showToast?.({
+          title: "Stock limit reached",
+          message: `This product only has ${availableStock} remaining in stock.`,
+          type: "warning"
+        });
+        return;
+      }
+
+      // 🖼 Normalize main image / variant image
+      const baseImage = fixImg(product.image);
+      const finalImage = chosenVariant?.image ? fixImg(chosenVariant.image) : baseImage;
+
+      // 🧺 Build a SINGLE checkout item (same shape as cart item)
+      const buyNowItem = {
+        _id: String(product._id),
+        title: chosenVariant
+          ? `${product.title} (${chosenVariant.options?.Size})`
+          : product.title,
+        price: chosenVariant ? chosenVariant.price : product.price,
+        image: finalImage,
+        quantity: quantity,
+        variant: chosenVariant
+          ? {
+              sku: chosenVariant.sku,
+              options: chosenVariant.options,
+              stock: chosenVariant.stock
+            }
+          : null
+      };
+
+      try {
+        // 💾 Store ONLY this item for this checkout flow
+        sessionStorage.setItem("checkoutItems", JSON.stringify([buyNowItem]));
+      } catch (err) {
+        console.warn("⚠️ Failed to store checkoutItems for Buy Now:", err);
+      }
 
       // Optional soft toast
-      if (window.Toast?.showToast) {
-        window.Toast.showToast({
-          title: "Proceeding to checkout",
-          message: "Review your order before placing it.",
-          type: "info",
-          position: "top"
-        });
-      }
+      window.Toast?.showToast?.({
+        title: "Proceeding to checkout",
+        message: "Review your order before placing it.",
+        type: "info",
+        position: "top"
+      });
 
       // 👉 Go to Order Summary page
       window.location.href = "/order/order_summary.html";
     });
   }
+
 
   // ======================================================
   // 🛒 ADD TO CART FUNCTION (with popup + badge animation)
@@ -596,7 +655,15 @@ if (!token) {
   // Initialize badge count (from namespaced key)
   renderPopupFromLocal(); // ✅ keep popup in sync if it opens immediately
   updateCartBadge();
+
+  // 🔗 Load related products (same category, exclude current product)
+  if (product.category && product._id) {
+    displayRelatedProducts(product.category, product._id);
+  } else {
+    console.warn("⚠️ Cannot load related products: missing category or _id on product.", product);
+  }
 });
+
 
 /* ======================================================
    🧠 Helper: Fetch product with retry for slow responses
@@ -624,7 +691,10 @@ async function fetchProductWithRetry(productId, retries = 1) {
 ====================================================== */
 async function displayRelatedProducts(category, excludeId) {
   const container = document.getElementById("related-products-container");
-  if (!container) return;
+  if (!container) {
+    console.warn("⚠️ No #related-products-container found in DOM.");
+    return;
+  }
 
   try {
     const API_BASE = window.__API_BASE__; // 🔧 FIX
@@ -639,13 +709,19 @@ async function displayRelatedProducts(category, excludeId) {
         ? payload.products
         : [];
 
-    const related = products.filter(
-      (p) => p.category === category && String(p._id) !== String(excludeId)
-    );
+    // 🧠 Case-insensitive match on category + exclude current product
+    const related = products.filter((p) => {
+      if (!p.category || !category) return false;
+      return (
+        p.category.toString().toLowerCase() === category.toString().toLowerCase() &&
+        String(p._id) !== String(excludeId)
+      );
+    });
 
     if (!related.length) {
       container.innerHTML =
         '<p class="text-center text-muted">No related products found.</p>';
+      console.log("ℹ️ No related products for category:", category);
       return;
     }
 
@@ -654,7 +730,11 @@ async function displayRelatedProducts(category, excludeId) {
         const normalizedImage = fixImg(p.image); // 🔧 FIX
         return `
           <div class="col-md-3 col-sm-6">
-            <div class="product-card shadow-sm p-3 border rounded text-center">
+            <div 
+              class="product-card shadow-sm p-3 border rounded text-center"
+              onclick="viewProductDetails('${p._id}')"
+              style="cursor: pointer;"
+            >
               <img src="${normalizedImage}" 
                    alt="${p.title}" 
                    class="img-fluid mb-2 rounded" 
@@ -662,7 +742,7 @@ async function displayRelatedProducts(category, excludeId) {
                    onerror="this.src='images/placeholder.jpg'">
               <h6 class="fw-semibold mt-2">${p.title}</h6>
               <p class="text-muted small mb-2">₱${p.price}${p.price_unit ? "/" + p.price_unit : ""}</p>
-              <button class="btn btn-sm btn-outline-primary" onclick="viewProductDetails('${p._id}')">
+              <button class="btn btn-sm btn-outline-primary">
                 View Details
               </button>
             </div>
@@ -670,13 +750,15 @@ async function displayRelatedProducts(category, excludeId) {
       })
       .join("");
 
-    console.log(`✅ ${related.length} related products displayed.`);
+
+    console.log(`✅ ${related.length} related products displayed for category:`, category);
   } catch (err) {
     console.error("❌ Failed to load related products:", err);
     container.innerHTML =
       '<p class="text-danger text-center">Error loading related products.</p>';
   }
 }
+
 // ======================================================
 // 🪟 Hard fallback: force open login popup programmatically
 // ======================================================

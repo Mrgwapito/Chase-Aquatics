@@ -471,7 +471,7 @@ app.post("/api/store-otp", async (req, res) => {
 // ================================================================
 
 // ✅ Add a new product (multipart/form-data; supports single file field named "image")
-app.post('/api/products', upload.single('image'), async (req, res) => {
+app.post('/api/products', requireAdmin, upload.single('image'), async (req, res) => {
   try {
     // Fields coming from FormData in admin.js
     let {
@@ -1416,11 +1416,23 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
       cart = Array.isArray(raw.cart) ? raw.cart : (raw.cart || []);
     }
 
-    const userId        = raw.userId;
-    const name          = raw.name;
-    const email         = raw.email;
-    const phone         = raw.phone;
-    const address       = raw.address;
+    // --- basic identity fields from the request body ---
+    const userId = raw.userId;
+
+    let name  = (raw.name  || "").trim();
+    let email = (raw.email || "").trim();
+    let phone = (raw.phone || "").trim();
+
+    // Structured address fields the checkout MAY send
+    const bodyAddressLine1 = (raw.addressLine1 || "").trim();
+    const bodyRegion       = (raw.region       || "").trim();
+    const bodyProvince     = (raw.province     || "").trim();
+    const bodyCity         = (raw.city         || "").trim();
+    const bodyBarangay     = (raw.barangay     || "").trim();
+    const bodyPostalCode   = (raw.postalCode   || "").trim();
+
+    // Legacy flat address string (sometimes just "Philippines")
+    let address = (raw.address || "").trim();   // text address from checkout (custAddress)
 
     const paymentMethod = (raw.paymentMethod || "COD").trim();         // "COD" | "GCash" | "Bank"
     const codLandmark   = (raw.codLandmark || "").trim();
@@ -1429,12 +1441,101 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
 
     const receiptUrl    = req.file ? `/uploads/${req.file.filename}` : null;
 
+
     if (!userId) {
       return res.status(400).json({ success:false, message:"Missing userId" });
     }
     if (!Array.isArray(cart) || cart.length === 0) {
       return res.status(400).json({ success:false, message:"Invalid cart data" });
     }
+
+    // ------------------------------------------------------------
+    // 📦 STEP 0: Build the BEST shippingAddress we can
+    //      1) Use structured fields from checkout if present
+    //      2) If still blank or just "Philippines", enrich from user profile
+    // ------------------------------------------------------------
+
+    // 1) Try to build a nice address from structured fields in the request
+    const partsFromBody = [
+      bodyAddressLine1,
+      bodyBarangay,
+      bodyCity,
+      bodyProvince,
+      bodyRegion,
+      bodyPostalCode ? `PH ${bodyPostalCode}` : ""
+    ].filter(Boolean);
+
+    if (partsFromBody.length > 0) {
+      address = partsFromBody.join(", ");
+    }
+
+    // Prepare shipping pieces (may be filled from profile)
+    let shippingLine1    = bodyAddressLine1;
+    let shippingRegion   = bodyRegion;
+    let shippingProvince = bodyProvince;
+    let shippingCity     = bodyCity;
+    let shippingBarangay = bodyBarangay;
+    let shippingPostal   = bodyPostalCode;
+
+    // 2) If address is empty or just "Philippines", try user profile
+    if (!address || address.toLowerCase() === "philippines") {
+      try {
+        const userDoc = await User.findById(userId).lean();
+
+        if (userDoc) {
+          // Fill missing name / contact from profile
+          if (!name) {
+            const full = userDoc.fullName ||
+              `${userDoc.firstName || ""} ${userDoc.lastName || ""}`.trim();
+            if (full) name = full;
+          }
+          if (!email) email = userDoc.email || email;
+          if (!phone) phone = userDoc.phone || phone;
+
+          // Fill missing structured address parts from profile
+          shippingLine1    = shippingLine1    || (userDoc.addressLine1 || "");
+          shippingRegion   = shippingRegion   || (userDoc.region || "");
+          shippingProvince = shippingProvince || (userDoc.province || "");
+          shippingCity     = shippingCity     || (userDoc.city || "");
+          shippingBarangay = shippingBarangay || (userDoc.barangay || "");
+          shippingPostal   = shippingPostal   || (userDoc.postalCode || "");
+
+          const profParts = [
+            userDoc.addressLine1,
+            userDoc.barangay,
+            userDoc.city,
+            userDoc.province,
+            userDoc.region,
+            userDoc.postalCode ? `PH ${userDoc.postalCode}` : ""
+          ].filter(Boolean);
+
+          const composedFromProfile = profParts.join(", ");
+
+          if (composedFromProfile) {
+            address = composedFromProfile;
+          } else if (userDoc.address) {
+            // legacy flat address string
+            address = userDoc.address;
+          }
+        }
+      } catch (addrErr) {
+        console.warn("⚠️ Failed to enrich address from user profile:", addrErr.message);
+      }
+    }
+
+    // Final fallbacks
+    if (!shippingLine1) shippingLine1 = address || "";
+    if (!shippingRegion) shippingRegion = "Philippines";
+
+    const shippingAddress = {
+      addressLine1: shippingLine1,
+      barangay: shippingBarangay || "",
+      city: shippingCity || "",
+      province: shippingProvince || "",
+      region: shippingRegion,
+      postalCode: shippingPostal || ""
+    };
+
 
     // ------------------------------------------------------------
     // 🔒 STEP 1: Reserve stock per cart item (deduct on place order)
@@ -1508,13 +1609,15 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
 
     // ------------------------------------------------------------
     // 🧾 STEP 3: Create the order (now that stock is locked)
+    //      ⬅️ shippingAddress is now saved on the order
     // ------------------------------------------------------------
     const order = await Order.create({
       userId,
       name,
       email,
       phone,
-      address,
+      address,           // keep legacy flat address string
+      shippingAddress,   // 👈 NEW: structured shipping subdocument
       cart,
       subtotal,
       shipping,
@@ -1535,12 +1638,32 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
     const emailTemplate = buildOrderEmailTemplate(order);
 
     // Optional: server-side EmailJS (controlled by EMAILJS_ENABLE_SERVER)
-    sendOrderConfirmationEmail(order).catch((err) => {
-      console.error(
-        "❌ Failed to send order confirmation email (server-side):",
-        err
-      );
-    });
+// ------------------------------------------------------------
+// ✉️ STEP 4: Try to send order confirmation email via EmailJS
+// ------------------------------------------------------------
+try {
+  const emailOk = await sendOrderConfirmationEmail(order);
+
+  if (!emailOk) {
+    console.warn(
+      "⚠️ Order created, but EmailJS did not send (orderId: %s, email: %s)",
+      order.orderId || String(order._id),
+      order.email
+    );
+  } else {
+    console.log(
+      "✅ Order confirmation email sent (orderId: %s, email: %s)",
+      order.orderId || String(order._id),
+      order.email
+    );
+  }
+} catch (err) {
+  console.error(
+    "❌ Failed to send order confirmation email (server-side):",
+    err
+  );
+}
+
 
     return res.json({
       success: true,
@@ -1557,6 +1680,8 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
     });
   }
 });
+
+
 
 
 
@@ -1593,7 +1718,10 @@ app.get("/api/orders", async (req, res) => {
 
     const total = await Order.countDocuments(filter);
     const orders = await Order.find(filter)
-      .select("orderId name paymentMethod totalAmount status fulfillment codLandmark paymentMeta cart createdAt")
+      .select(
+        "orderId name email phone address shippingAddress " +
+        "paymentMethod totalAmount status fulfillment codLandmark paymentMeta cart createdAt"
+      )
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -2689,7 +2817,7 @@ app.get("/api/bookings", async (req, res) => {
 // /////////////////////////////////////////////////////////////////
 // 🔎 Admin Logs (paginated list + single)
 // GET /api/admin-logs?limit=10&page=1&category=orders|inventory|appointments|...
-app.get('/api/admin-logs', async (req, res) => {
+app.get('/api/admin-logs', requireAdmin, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit || '10', 10), 200);
     const page  = Math.max(parseInt(req.query.page  || '1', 10), 1);
@@ -2716,7 +2844,7 @@ app.get('/api/admin-logs', async (req, res) => {
   }
 });
 
-app.get('/api/admin-logs/:id', async (req, res) => {
+app.get('/api/admin-logs/:id', requireAdmin, async (req, res) => {
   try {
     const log = await AdminLog.findById(req.params.id).lean();
     if (!log) return res.status(404).json({ success: false, message: 'Not found' });
@@ -2730,7 +2858,7 @@ app.get('/api/admin-logs/:id', async (req, res) => {
 
 
 // ✅ Update a product (price/stock/title/category/desc/image) + log changes
-app.put('/api/products/:id', upload.single('image'), async (req, res) => {
+app.put('/api/products/:id', requireAdmin, upload.single('image'), async (req, res) => {
   try {
     const idParam = req.params.id;
     const numericId = Number(idParam);
@@ -2916,3 +3044,52 @@ app.listen(port, () => {
 });
 
 
+// ================================================================
+// 🛡️ ADMIN: VALID ID REVIEW
+// PUT /api/admin/valid-id/:userId
+// body: { status: 'pending|approved|rejected|declined|none', note?: string }
+// ================================================================
+app.put('/api/admin/valid-id/:userId', requireAdmin, async (req, res) => {
+  try {
+    const { status, note } = req.body;
+    const norm = String(status || '').toLowerCase();
+
+    const allowed = ['pending', 'approved', 'rejected', 'declined', 'none'];
+    if (!allowed.includes(norm)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    const userDoc = await User.findById(req.params.userId);
+    if (!userDoc) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const prev = userDoc.validId || {};
+    userDoc.validId = {
+      ...prev,
+      status: norm,
+      note: note || prev.note || '',
+      reviewedAt: new Date(),
+      reviewedBy: req.user.id || req.user._id
+    };
+
+    await userDoc.save();
+
+    // optional log
+    try {
+      await logAdminAction(req, {
+        category: 'verification',
+        action: 'VALID_ID_REVIEWED',
+        target: { type: 'user', id: String(userDoc._id), name: userDoc.fullName || userDoc.email },
+        meta: { from: prev.status || 'none', to: norm }
+      });
+    } catch (e) {
+      console.warn('log fail (VALID_ID_REVIEWED):', e.message);
+    }
+
+    res.json({ success: true, validId: userDoc.validId });
+  } catch (err) {
+    console.error('PUT /api/admin/valid-id error:', err);
+    res.status(500).json({ success: false, message: 'Error updating Valid ID' });
+  }
+});

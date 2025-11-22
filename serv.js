@@ -255,3 +255,38 @@ if (!window.__hasSharedBookingHandlers) {
     })();
   })();
 }
+
+/* ================== Portfolio image lightbox ================== */
+document.addEventListener('DOMContentLoaded', () => {
+  const lightbox = document.getElementById('imageLightbox');
+  const lightboxImg = document.getElementById('lightboxImage');
+  const closeTargets = lightbox ? lightbox.querySelectorAll('[data-lightbox-close]') : [];
+
+  if (!lightbox || !lightboxImg) return;
+
+  // Open on portfolio image click
+  document.querySelectorAll('.gallery .photo img').forEach(img => {
+    img.style.cursor = 'pointer';
+    img.addEventListener('click', () => {
+      lightboxImg.src = img.src;
+      lightboxImg.alt = img.alt || 'Preview';
+      lightbox.removeAttribute('hidden');
+    });
+  });
+
+  // Close on backdrop / X click
+  closeTargets.forEach(el => {
+    el.addEventListener('click', () => {
+      lightbox.setAttribute('hidden', '');
+      lightboxImg.src = '';
+    });
+  });
+
+  // Close on Esc key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !lightbox.hasAttribute('hidden')) {
+      lightbox.setAttribute('hidden', '');
+      lightboxImg.src = '';
+    }
+  });
+});

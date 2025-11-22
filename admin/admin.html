@@ -128,12 +128,17 @@
 
           <p><b>Fulfillment:</b> <span id="mFulfillment"></span></p>
           <p><b>COD Landmark:</b> <span id="mCod"></span></p>
+
+          <!-- 🔹 NEW: Shipping address for delivery -->
+          <p><b>Shipping Address:</b> <span id="mAddress"></span></p>
+
           <p><b>Amount Sent:</b> <span id="mAmt"></span></p>
           <p><b>Receipt:</b> <span id="mReceipt"></span></p>
 
           <p><b>Total:</b> <span id="mTotal"></span></p>
           <p><b>Status:</b> <span id="mStatus"></span></p>
         </section>
+
 
         <!-- RIGHT: items list (scrollable) -->
         <aside class="order-modal__right">
@@ -525,6 +530,8 @@
 
     <!-- ================= SCRIPTS ================= -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 
     <!-- Load Toast first, AS A MODULE, so window.Toast exists before your code uses it -->
   <script type="module" src="/assets/toast.js"></script>

@@ -23,10 +23,8 @@
 
 /* 🧾 CART ITEM LIST */
 .cart-item {
-  max-height: 300px;
   display: flex;
   align-items: flex-start;
-  overflow-y: auto;
   margin-bottom: 15px;
   border-bottom: 1px solid #ccc;
   padding-bottom: 10px;
@@ -72,10 +70,17 @@
   cursor: pointer;
 }
 
-.qty-btn:hover,
-.remove-btn:hover {
+/* hover ng + / - */
+.qty-btn:hover {
   background-color: #d0d0d0;
 }
+
+/* hover ng delete – pulang shade */
+.remove-btn:hover {
+  background-color: #ffd6d6;
+  color: #c0392b;
+}
+
 
 .qty {
   min-width: 20px;
@@ -118,8 +123,29 @@
 .cart-items {
   max-height: 300px;
   overflow-y: auto;
-  padding-right: 10px;
+  padding-right: 6px;
+
+  /* subtle visible scrollbar */
+  scrollbar-width: thin;                         /* Firefox */
+  scrollbar-color: #2b4d23 transparent;          /* thumb = brand green */
 }
+
+
+/* Chrome / Edge / Safari scrollbar */
+.cart-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cart-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cart-items::-webkit-scrollbar-thumb {
+  background-color: #2b4d23;     /* same green as checkbox & cart icon */
+  border-radius: 4px;
+}
+
+
 
 /* 🛒 FIXED CART BADGE POSITION */
 .cart {
@@ -173,15 +199,51 @@
   }
 }
 
-/* 📱 HIDE SCROLLBAR IN LANDSCAPE */
-@media screen and (orientation: landscape) {
-  .cart-items {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .cart-items::-webkit-scrollbar {
-    display: none;
-  }
+.cart-item {
+  max-height: 300px;
+  display: flex;
+  align-items: flex-start;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
 }
 
+
+
+/* ✅ Custom checkbox sa cart */
+.cart-item .item-select {
+  margin-right: 8px;
+  margin-top: 4px;
+  flex-shrink: 0;
+
+  /* Reset default look */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 2px solid #2b4d23; /* brand green */
+  background-color: #fdf8ee;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* kapag checked – fill green + check mark */
+.cart-item .item-select:checked {
+  background-color: #2b4d23;       /* same palette as cart icon */
+  border-color: #2b4d23;
+  color: #ffffff;
+}
+
+/* maliit na check icon sa loob */
+.cart-item .item-select:checked::after {
+  content: "✓";
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}

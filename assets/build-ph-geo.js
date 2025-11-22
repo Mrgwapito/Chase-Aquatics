@@ -9,6 +9,19 @@ const https = require('https');
 
 const BASE = 'https://psgc.gitlab.io/api';
 
+// Only keep these regions in the final JSON (Luzon only)
+const LUZON_REGION_CODES = new Set([
+  '010000000', // Region I - Ilocos
+  '020000000', // Region II - Cagayan Valley
+  '030000000', // Region III - Central Luzon
+  '040000000', // Region IV-A - CALABARZON
+  '050000000', // Region V - Bicol
+  '130000000', // NCR
+  '140000000', // CAR
+  '170000000'  // Region IV-B - MIMAROPA
+]);
+
+
 function fetchJSON(url) {
   return new Promise((resolve, reject) => {
     https
@@ -80,60 +93,62 @@ function fetchJSON(url) {
       brgysByCityOrMuni.set(code, list);
     });
 
-    // Build final tree
-    const out = { regions: [] };
+// Build final tree
+const out = { regions: [] };
 
-    for (const r of regions) {
-      const regionNode = {
-        code: r.code,
-        name: r.name,
-        provinces: []
+for (const r of regions) {
+  // ❗ Skip non-Luzon regions completely
+  if (!LUZON_REGION_CODES.has(r.code)) continue;
+
+  const regionNode = {
+    code: r.code,
+    name: r.name,
+    provinces: []
+  };
+
+  const isNCR = r.code === '130000000';
+
+  if (isNCR) {
+    const mmCities = citiesByRegion.get(r.code) || [];
+    const provinceNode = {
+      name: 'Metro Manila',
+      cities: []
+    };
+
+    for (const city of mmCities) {
+      const brgys = brgysByCityOrMuni.get(city.code) || [];
+      provinceNode.cities.push({
+        name: city.name,
+        zip: '',
+        barangays: brgys.map((b) => b.name)
+      });
+    }
+
+    regionNode.provinces.push(provinceNode);
+  } else {
+    const theseProvs = provByRegion.get(r.code) || [];
+    for (const p of theseProvs) {
+      const cityList = citiesByProvince.get(p.code) || [];
+      const provNode = {
+        name: p.name,
+        cities: []
       };
 
-      // NCR (13…) has no provinces in PSGC. We synthesize one "Metro Manila".
-      const isNCR = r.code === '130000000';
-
-      if (isNCR) {
-        const mmCities = citiesByRegion.get(r.code) || [];
-        const provinceNode = {
-          name: 'Metro Manila',
-          cities: []
-        };
-
-        for (const city of mmCities) {
-          const brgys = brgysByCityOrMuni.get(city.code) || [];
-          provinceNode.cities.push({
-            name: city.name,
-            zip: '', // PSGC API has no ZIPs
-            barangays: brgys.map((b) => b.name)
-          });
-        }
-
-        regionNode.provinces.push(provinceNode);
-      } else {
-        const theseProvs = provByRegion.get(r.code) || [];
-        for (const p of theseProvs) {
-          const cityList = citiesByProvince.get(p.code) || [];
-          const provNode = {
-            name: p.name,
-            cities: []
-          };
-
-          for (const city of cityList) {
-            const brgys = brgysByCityOrMuni.get(city.code) || [];
-            provNode.cities.push({
-              name: city.name,
-              zip: '', // PSGC has no ZIP; you can enrich later from PhilPost
-              barangays: brgys.map((b) => b.name)
-            });
-          }
-
-          regionNode.provinces.push(provNode);
-        }
+      for (const city of cityList) {
+        const brgys = brgysByCityOrMuni.get(city.code) || [];
+        provNode.cities.push({
+          name: city.name,
+          zip: '',
+          barangays: brgys.map((b) => b.name)
+        });
       }
 
-      out.regions.push(regionNode);
+      regionNode.provinces.push(provNode);
     }
+  }
+
+  out.regions.push(regionNode);
+}
 
     const outPath = path.join(__dirname, 'ph-geo.json');
     fs.writeFileSync(outPath, JSON.stringify(out, null, 2), 'utf8');
