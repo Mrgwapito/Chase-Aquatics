@@ -3122,12 +3122,28 @@ app.put('/api/orders/:id/status', requireAdmin, async (req, res) => {
     const id = req.params.id;
     const { status } = req.body;
 
+    console.log('📝 PUT /api/orders/:id/status', { id, status, body: req.body });
+
     if (!status) {
       return res.status(400).json({ success: false, message: 'Missing status' });
     }
 
-    const order = await Order.findById(id);
+    // 🔍 Huwag basta-basta mag-findById kung hindi valid ObjectId
+    let order = null;
+
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id);
+    } else {
+      console.warn('⚠️ /api/orders/:id/status got non-ObjectId id, will try orderId lookup:', id);
+    }
+
+    // 🔁 Fallback: hanapin gamit orderId (e.g. "ORD-000123")
     if (!order) {
+      order = await Order.findOne({ orderId: id });
+    }
+
+    if (!order) {
+      console.warn('⚠️ Order not found for id/orderId:', id);
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
@@ -3140,11 +3156,11 @@ app.put('/api/orders/:id/status', requireAdmin, async (req, res) => {
     const isNewCancelled =
       newNorm === 'cancelled' || newNorm === 'canceled';
 
-    // 🧷 Gamit tayo ng flag sa order para hindi mag-add ng stock nang paulit-ulit
+    // 🧷 Flag para hindi double-restore ng stock
     const alreadyRestored = !!order.stockRestored;
     let stockRestored = alreadyRestored;
 
-    // 🔒 Restore stock ONE-TIME kapag naging Cancelled, kahit ano pa dati ang status
+    // 🔒 Restore stock ONE-TIME kapag naging Cancelled
     if (isNewCancelled && !alreadyRestored) {
       try {
         console.log(
@@ -3152,7 +3168,7 @@ app.put('/api/orders/:id/status', requireAdmin, async (req, res) => {
         );
         await restoreStockForOrder(order);
         stockRestored = true;
-        order.stockRestored = true; // <- mark na nabalik na ang stock
+        order.stockRestored = true; // mark na nabalik na ang stock
       } catch (stockErr) {
         console.error('❌ Failed to restore stock for cancelled order:', stockErr);
         return res.status(500).json({
@@ -3162,7 +3178,7 @@ app.put('/api/orders/:id/status', requireAdmin, async (req, res) => {
       }
     }
 
-    // Save final status
+    // 💾 Save final status
     order.status = status;
     await order.save();
 
@@ -3201,6 +3217,7 @@ app.put('/api/orders/:id/status', requireAdmin, async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error updating order status' });
   }
 });
+
 
 
 
