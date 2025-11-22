@@ -105,7 +105,6 @@ function sendOrderStatusEmail(order, newStatus) {
   }
 
   try {
-    // safe even if called many times
     emailjs.init(ORDER_EMAILJS_PUBLIC_KEY);
   } catch (e) {
     // ignore init warnings
@@ -113,21 +112,110 @@ function sendOrderStatusEmail(order, newStatus) {
 
   const safeStatus = newStatus || order.status || "";
 
-  // ⚠️ Make sure your EmailJS template uses these variable names
+  // --- dates ---
+  const createdAt = order.createdAt ? new Date(order.createdAt) : new Date();
+  const orderDate = createdAt.toLocaleString("en-PH", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  // --- shipping address pieces (from order.shippingAddress or legacy address) ---
+  const sa = order.shippingAddress || {};
+  const shippingName =
+    order.shippingName ||
+    order.name ||
+    "Customer";
+
+  const shippingLine1 =
+    sa.addressLine1 ||
+    order.address || // legacy flat address
+    "";
+
+  const shippingBarangay = sa.barangay || "";
+  const shippingCity     = sa.city || "";
+  const shippingProvince = sa.province || "";
+  const shippingRegion   = sa.region || "Philippines";
+  const shippingPostal   = sa.postalCode || "";
+
+  // --- items table HTML for {{{items_html}}} ---
+  let itemsHtml = "";
+  const cart = Array.isArray(order.cart) ? order.cart : [];
+
+  cart.forEach((it) => {
+    const title = it.title || it.name || "Item";
+    const qty   = Number(it.quantity || 1);
+    const price = Number(it.price || 0);
+    const lineTotal = qty * price;
+
+    itemsHtml += `
+      <tr>
+        <td style="padding:8px 12px;border-top:1px solid #e5e7eb;">${title}</td>
+        <td align="right" style="padding:8px 12px;border-top:1px solid #e5e7eb;">${qty}</td>
+        <td align="right" style="padding:8px 12px;border-top:1px solid #e5e7eb;">₱${price.toFixed(2)}</td>
+        <td align="right" style="padding:8px 12px;border-top:1px solid #e5e7eb;">₱${lineTotal.toFixed(2)}</td>
+      </tr>`;
+  });
+
+  const itemsCount = cart.length;
+
+  // --- amounts ---
+  const subtotal        = Number(order.subtotal || 0);
+  const shippingAmount  = Number(order.shipping || 0);
+  const totalAmount     = Number(order.totalAmount || subtotal + shippingAmount);
+  const vatAmount       = 0; // change if you want to compute real VAT
+
+  // --- order URL shown in "View order details" button ---
+  const orderUrl =
+    window.location.origin +
+    "/my-orders.html"; // adjust to your real order details page if needed
+
+  // 🔑 These keys MUST match the {{...}} in your EmailJS template
   const params = {
+    // core
     to_email: order.email,
-    to_name: order.name || "Customer",
-    order_id: order.orderId || "",
-    status: safeStatus,
-    payment_method: order.paymentMethod || "",
-    total_amount: Number(order.totalAmount || 0).toFixed(2),
+    to_name: shippingName,
     brand: "Chase Aquatics",
+
+    submitted_at: new Date().toLocaleString(),
+    order_status: safeStatus,
+    order_id: order.orderId || "",
+    order_date: orderDate,
+
+    payment_method: order.paymentMethod || "",
+    fulfillment_method: order.fulfillment || "Delivery",
+
+    // shipping block
+    shipping_name: shippingName,
+    shipping_address_line1: shippingLine1,
+    shipping_barangay: shippingBarangay,
+    shipping_city: shippingCity,
+    shipping_province: shippingProvince,
+    shipping_postal: shippingPostal,
+    shipping_region: shippingRegion,
+
+    // contact
+    email: order.email || "",
+    phone: order.phone || "",
+
+    // items & totals
+    items_count: itemsCount,
+    items_html: itemsHtml,
+    subtotal_amount: subtotal.toFixed(2),
+    vat_amount: vatAmount.toFixed(2),
+    shipping_amount: shippingAmount.toFixed(2),
+    total_amount: totalAmount.toFixed(2),
+
+    // CTA
+    order_url: orderUrl,
   };
 
   emailjs
     .send(ORDER_EMAILJS_SERVICE_ID, ORDER_EMAILJS_TEMPLATE_ID, params)
     .then(
-      () => console.log("📨 Order email sent:", order.email, safeStatus),
+      () => console.log("📨 Order status email sent:", order.email, safeStatus),
       (err) => console.error("❌ EmailJS order error:", err)
     );
 }
@@ -985,6 +1073,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const pDesc      = document.getElementById('pDesc');
   const btnDelete  = document.getElementById('deleteProduct');
 
+  // 🔽 NEW: variants UI
+  const variantRows  = document.getElementById('variantRows');
+  const btnAddVariant = document.getElementById('btnAddVariant');
+
+
   let mode = 'add';
   let editRow = null;
 
@@ -997,7 +1090,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnDelete.style.display = 'none';
     pId.value = '';
     addForm.reset();
+    clearVariantRows(); // 🔽 NEW – clear any old variant rows
   }
+
   function setEditMode(row) {
     mode = 'edit';
     if (titleEl) titleEl.textContent = 'Edit Product';
@@ -1009,14 +1104,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const category = row.children[2].textContent.trim();
     const stock = row.children[3].textContent.trim();
 
-    pId.value = row.dataset.id || '';
+    const id = row.dataset.id || '';
+
+    pId.value = id;
     pName.value = name;
     pPrice.value = priceText || 0;
     pCategory.value = category;
     pStock.value = parseInt(stock || '0', 10);
     pDesc.value = row.dataset.desc || '';
     pImage.value = ''; // leave empty unless re-uploading
+
+    // 🔽 NEW – load variants from server for this product (if any)
+    clearVariantRows();
+    if (id) {
+      (async () => {
+        try {
+          const full = await apiGetProductById(id);
+          if (Array.isArray(full.variants) && full.variants.length) {
+            full.variants.forEach(v => addVariantRowFromData(v));
+          }
+        } catch (e) {
+          console.warn('Failed to load variants for product', id, e);
+        }
+      })();
+    }
   }
+
 
   // ✅ DELEGATED CLICKS — WORKS EVEN IF BUTTONS ARE RE-RENDERED OR HIDDEN INITIALLY
   document.addEventListener('click', (e) => {
@@ -1044,25 +1157,34 @@ document.addEventListener('DOMContentLoaded', () => {
   addForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const name  = pName.value.trim();
-    const price = parseFloat(pPrice.value || '0');
-    const cat   = pCategory.value.trim();
-    const stock = parseInt(pStock.value || '0', 10);
-    const desc  = pDesc.value.trim();
+    const name     = pName.value.trim();
+    const price    = parseFloat(pPrice.value || '0');
+    const cat      = pCategory.value.trim();
+    const stock    = parseInt(pStock.value || '0', 10);
+    const desc     = pDesc.value.trim();
+    const variants = readVariantRows(); // 🔽 NEW
 
-    if (!name || isNaN(price)) {
-      alert('Please complete the required fields.');
+    // If walang variants, normal required price; kung may variants, pwede 0 yung base price
+    if (!name || (isNaN(price) && !variants.length)) {
+      alert('Please complete the required fields (name + price or variants).');
       return;
     }
 
     try {
       const fd = new FormData();
       fd.append('title', name);
-      fd.append('price', String(price));
+      fd.append('price', isNaN(price) ? '0' : String(price));
       fd.append('stock', String(stock));
       fd.append('category', cat);
       fd.append('description', desc);
-      if (pImage.files && pImage.files[0]) fd.append('image', pImage.files[0]);
+
+      if (variants.length) {
+        fd.append('variants', JSON.stringify(variants)); // 🔽 NEW
+      }
+
+      if (pImage.files && pImage.files[0]) {
+        fd.append('image', pImage.files[0]);
+      }
 
       if (mode === 'add') {
         await apiCreateProductFD(fd);
@@ -1073,10 +1195,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       await loadProductsIntoTable();
-      tOK(mode === 'add' ? 'Product added' : 'Product updated',
-          mode === 'add' ? 'Item was added to inventory.' : 'Changes saved.');
+      tOK(
+        mode === 'add' ? 'Product added' : 'Product updated',
+        mode === 'add'
+          ? 'Item was added to inventory.'
+          : 'Changes saved.'
+      );
       closeModal();
       addForm.reset();
+      clearVariantRows();
       return;
 
     } catch (apiErr) {
@@ -1084,14 +1211,14 @@ document.addEventListener('DOMContentLoaded', () => {
       tErr('Save failed', 'Using local fallback row (not persisted).');
     }
 
-    // Fallback only if API failed (keeps UX responsive)
+    // Fallback only if API failed (keeps UX responsive) – variants are ignored in local fallback
     if (mode === 'add') {
       const tr = document.createElement('tr');
       tr.dataset.status = stock === 0 ? 'OOS' : (stock <= 5 ? 'LOW' : 'OK');
       tr.dataset.desc = desc;
       tr.innerHTML = `
         <td>${name}</td>
-        <td>₱${price.toFixed(2)}</td>
+        <td>₱${(isNaN(price) ? 0 : price).toFixed(2)}</td>
         <td>${cat}</td>
         <td class="stock">${stock}</td>
         <td><button class="invEdit">Edit</button></td>
@@ -1101,7 +1228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } else if (editRow) {
       editRow.children[0].textContent = name;
-      editRow.children[1].textContent = `₱${price.toFixed(2)}`;
+      editRow.children[1].textContent = `₱${(isNaN(price) ? 0 : price).toFixed(2)}`;
       editRow.children[2].textContent = cat;
       editRow.querySelector('.stock').textContent = stock;
       editRow.dataset.desc = desc;
@@ -1110,7 +1237,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeModal();
     addForm.reset();
+    clearVariantRows();
   });
+
+
+    // =====================================================
+  // 🔽 NEW: variant row helpers
+  // =====================================================
+  function clearVariantRows() {
+    if (!variantRows) return;
+    variantRows.innerHTML = '';
+  }
+
+  function addVariantRowFromData(v = {}) {
+    if (!variantRows) return;
+    const row = document.createElement('div');
+    row.className = 'variant-row';
+    const sizeVal  = (v.options && v.options.Size) ? v.options.Size : '';
+    const skuVal   = v.sku || '';
+    const priceVal = (typeof v.price === 'number') ? v.price : '';
+    const stockVal = (typeof v.stock === 'number') ? v.stock : '';
+
+    row.innerHTML = `
+      <input type="text" class="v-size"  placeholder="Size (e.g. Small)" value="${sizeVal}">
+      <input type="text" class="v-sku"   placeholder="SKU" value="${skuVal}">
+      <input type="number" class="v-price" placeholder="Price" step="0.01" min="0" value="${priceVal}">
+      <input type="number" class="v-stock" placeholder="Stock" min="0" value="${stockVal}">
+      <button type="button" class="v-remove">✕</button>
+    `;
+
+    const btnRemove = row.querySelector('.v-remove');
+    btnRemove.addEventListener('click', () => {
+      row.remove();
+    });
+
+    variantRows.appendChild(row);
+  }
+
+  function addEmptyVariantRow() {
+    addVariantRowFromData({});
+  }
+
+  function readVariantRows() {
+    if (!variantRows) return [];
+    const out = [];
+    variantRows.querySelectorAll('.variant-row').forEach(row => {
+      const size  = row.querySelector('.v-size')?.value.trim()  || '';
+      const sku   = row.querySelector('.v-sku')?.value.trim()   || '';
+      const price = parseFloat(row.querySelector('.v-price')?.value || '0');
+      const stock = parseInt(row.querySelector('.v-stock')?.value || '0', 10);
+
+      // skip totally empty rows
+      if (!size && !sku && isNaN(price) && isNaN(stock)) return;
+
+      out.push({
+        sku: sku || undefined,
+        price: isNaN(price) ? 0 : price,
+        stock: isNaN(stock) ? 0 : stock,
+        options: size ? { Size: size } : {}
+      });
+    });
+    return out;
+  }
+
+  // hook up the "+ Add Variant" button
+  if (btnAddVariant && variantRows) {
+    btnAddVariant.addEventListener('click', () => {
+      addEmptyVariantRow();
+    });
+  }
 
   // Delete (with confirm)
   btnDelete.addEventListener('click', () => {
@@ -1147,6 +1342,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!res.ok || !json.success) throw new Error(json.message || 'Update failed');
     return json.product;
   }
+
+    async function apiGetProductById(id) {
+    const res = await fetch(`${API}/api/products/${id}`);
+    const json = await res.json();
+    if (!res.ok || json.success === false) {
+      throw new Error(json.message || 'Failed to load product');
+    }
+    return json.product || json; // backend might return {success, product} or full doc
+  }
+
 
   async function apiListProducts() {
     const res = await fetch(`${API}/api/products`);
@@ -1209,26 +1414,53 @@ document.addEventListener('DOMContentLoaded', () => {
   const LOGS_PAGE_SIZE = 10;
   let logsPage = 1;
 
-  async function fetchLogs(page = 1) {
+async function fetchLogs(page = 1) {
+  try {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-muted">Loading…</td></tr>`;
+
+    const params = new URLSearchParams({
+      limit: String(LOGS_PAGE_SIZE),
+      page: String(page),
+    });
+
+    const url = `${API}/api/admin-logs?${params.toString()}`;
+    console.log("🌐 Fetching admin logs →", url);
+
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        ...window.authHeader(),       // 🔐 send Bearer token
+      },
+    });
+
+    const raw = await res.text();
+    console.log("📥 Logs raw:", res.status, raw);
+
+    let data = {};
     try {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-muted">Loading…</td></tr>`;
-      const params = new URLSearchParams({ limit: String(LOGS_PAGE_SIZE), page: String(page) });
-      const res = await fetch(`${API}/api/admin-logs?${params.toString()}`);
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Failed');
-
-      render(data.logs || []);
-
-      const pager = document.getElementById('logsPagination');
-      logsPage = data.page || 1;
-      buildPager(pager, data.totalPages || 1, logsPage, (go) => fetchLogs(go));
-    } catch (e) {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Failed to load logs</td></tr>`;
-      console.error(e);
-      const pager = document.getElementById('logsPagination');
-      if (pager) pager.innerHTML = "";
+      data = raw ? JSON.parse(raw) : {};
+    } catch {
+      throw new Error(`Non-JSON response (HTTP ${res.status})`);
     }
+
+    if (!res.ok || data.success === false) {
+      throw new Error(data.message || `HTTP ${res.status}`);
+    }
+
+    render(data.logs || []);
+
+    const pager = document.getElementById("logsPagination");
+    logsPage = data.page || 1;
+    buildPager(pager, data.totalPages || 1, logsPage, (go) => fetchLogs(go));
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Failed to load logs</td></tr>`;
+    console.error("❌ admin-logs error:", e);
+    const pager = document.getElementById("logsPagination");
+    if (pager) pager.innerHTML = "";
   }
+}
+
 
   function render(list) {
     if (!list.length) {

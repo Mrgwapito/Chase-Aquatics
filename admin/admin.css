@@ -230,14 +230,16 @@ h2{
    Modal
    ========= */
 .modal{
-  position: fixed; inset: 0;
+  position: fixed;
+  inset: 0;
   background: rgba(15, 23, 42, .45);
   display: none;                 /* toggled inline by JS */
   align-items: center;
   justify-content: center;
   padding: 24px;
-  z-index: 50;
+  z-index: 2000;                 /* ✅ higher than navbar (1000) */
 }
+
 .modal .modal-content{
   background: var(--card);
   width: 100%;
@@ -753,7 +755,15 @@ h3 {
 #inventoryTable .invEdit:hover{ background:#f5f6ff; }
 
 /* Add Product modal small layout helpers */
-#addProductModal .modal-content{ max-width:520px; }
+/* === Add Product modal: clamp height + internal scroll === */
+#addProductModal .modal-content{
+  max-width: 520px;
+  width: min(520px, 92vw);   /* responsive sa maliit na screen */
+  max-height: 85vh;          /* HINDI na lalagpas sa screen */
+  display: flex;
+  flex-direction: column;
+}
+
 #addProductForm .field{ margin:10px 0; }
 #addProductForm .field.two{ display:flex; gap:10px; }
 #addProductForm label{ display:block; font-weight:600; margin-bottom:6px; }
@@ -1451,9 +1461,13 @@ h2{
 .table-responsive{ width:100%; overflow:auto; border-radius:var(--radius); box-shadow:var(--shadow); }
 
 #idVerifyTable{
-  width:100%; table-layout:fixed; border-collapse:collapse;
-  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-  overflow:hidden; box-shadow:var(--shadow);
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
 }
 #idVerifyTable thead th{
   text-align:left; font-size:12px; letter-spacing:.04em; text-transform:uppercase;
@@ -1511,11 +1525,16 @@ h2{
    ========================================= */
 #idPreviewModal.modal{ z-index:1120; }
 #idPreviewModal .modal-content{
-  width:min(96vw, 980px);
-  padding:0;
-  border-radius:18px; box-shadow:var(--shadow);
-  border:1px solid var(--line); background:var(--card);
-  position:relative; overflow:hidden;
+  width: min(96vw, 980px);
+  max-height: 90vh;                 /* hindi lalagpas sa screen */
+  padding: 16px 18px 12px;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  background: var(--card);
+  position: relative;
+  display: flex;
+  flex-direction: column;           /* header + body + footer */
 }
 
 /* Sticky header inside modal */
@@ -1622,3 +1641,134 @@ h2{
 .badge-pill--approved{ background:#ecfdf5; color:#065f46; border-color:#a7f3d0; }
 .badge-pill--declined{ background:#fff5f5; color:#991b1b; border-color:#fecaca; }
 #idPreviewModal .idv-tools { display: none !important; }
+
+/* Form inside Add Product modal scrolls if mahaba */
+#addProductForm{
+  flex: 1 1 auto;
+  overflow-y: auto;          /* dito lalabas yung scrollbar */
+  padding-right: 4px;        /* para di dikit sa scrollbar */
+}
+
+/* Keep spacing ng fields normal */
+#addProductForm .field{
+  margin: 10px 0;
+}
+
+/* Actions row sticky sa pinaka-ilalim ng scroll */
+#addProductForm .actions{
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+/* =========================================================
+   INVENTORY – PRODUCT VARIANTS UI (MATCH OTHER FIELDS)
+   ========================================================= */
+
+/* Wrapper for all variant rows (parang maliit na list sa loob ng field) */
+.variant-rows {
+  margin-top: 4px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* Single variant row – simple flex, same feel as .field.two */
+.variant-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Let inputs inherit your existing style (#addProductForm …),
+   just adjust flex sizes so they line up nicely. */
+.variant-row .v-size  { flex: 1.3; }   /* Size (e.g. Small / Medium) */
+.variant-row .v-sku   { flex: 1;   }   /* SKU / Code (optional)      */
+.variant-row .v-price { flex: 0.8; }   /* Price                      */
+.variant-row .v-stock { flex: 0.8; }   /* Stock                      */
+
+/* Keep same inputs look as other form fields */
+.variant-row input {
+  font-size: 0.85rem;
+  padding: 8px 10px;          /* slightly smaller but still consistent */
+}
+
+/* Remove button – match your danger button style but mini version */
+.variant-row .v-remove {
+  border: 1px solid #fecaca;
+  background: #fff5f5;
+  color: var(--danger);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color .15s ease, border-color .15s ease, transform .05s ease;
+}
+
+.variant-row .v-remove:hover {
+  background: #ffe4e6;
+  border-color: #fca5a5;
+}
+.variant-row .v-remove:active {
+  transform: translateY(1px);
+}
+
+/* Small helper text under "Variants (optional)" */
+#addProductModal .field label + p {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 2px 0 4px;
+}
+
+/* "+ Add Variant" button – same vibe as #btnAddProduct */
+#btnAddVariant {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px dashed var(--line);
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, transform .05s ease;
+}
+
+#btnAddVariant:hover {
+  background: #f5f6ff;
+  border-color: #cbd5e1;
+}
+
+@media (max-width: 640px) {
+  .variant-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .variant-row .v-size,
+  .variant-row .v-sku,
+  .variant-row .v-price,
+  .variant-row .v-stock {
+    flex: 1;
+  }
+
+  .variant-row .v-remove {
+    align-self: flex-end;
+    margin-top: 2px;
+  }
+}
+

@@ -482,12 +482,28 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
       description,
       alt,
       price_unit,
-      stock
+      stock,
+      variants: variantsRaw // 👈 comes as JSON string from FormData
     } = req.body;
 
     // Coerce numbers
     price = Number(price) || 0;
     stock = Number(stock) || 0;
+
+    // 🔽 Parse variants (if any) — from JSON string → array
+    let variants = [];
+    if (variantsRaw) {
+      try {
+        const parsed = JSON.parse(variantsRaw);
+        if (Array.isArray(parsed)) {
+          variants = parsed;
+        } else {
+          console.warn("⚠️ /api/products: variants is not an array:", parsed);
+        }
+      } catch (e) {
+        console.warn("⚠️ /api/products: failed to parse variants JSON:", e, variantsRaw);
+      }
+    }
 
     // Auto-increment numeric _id if not provided
     if (!_id) {
@@ -519,14 +535,13 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
       image: imagePath,
       additionalImages: [],
       alt: alt || '',
-      price_unit: price_unit || ''
+      price_unit: price_unit || '',
+      variants               // 👈 SAVE VARIANTS HERE
     });
 
     await doc.save();
 
-    /* 📝 LOG: product created (so it appears in Admin Logs)
-       Frontend now sends Authorization: Bearer <token>, so logAdminAction
-       can attribute which admin created the product. */
+    // 📝 LOG: product created (so it appears in Admin Logs)
     try {
       await logAdminAction(req, {
         category: 'inventory',
@@ -548,6 +563,7 @@ app.post('/api/products', requireAdmin, upload.single('image'), async (req, res)
     res.status(500).json({ success: false, message: 'Error saving product: ' + err.message });
   }
 });
+
 
 
 
@@ -1416,12 +1432,41 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
       cart = Array.isArray(raw.cart) ? raw.cart : (raw.cart || []);
     }
 
+    // 🔧 NORMALIZE CART: make sure every item has productId / quantity / price
+    cart = (Array.isArray(cart) ? cart : [])
+      .filter(Boolean)
+      .map((item) => {
+        const copy = { ...item };
+
+        // Fill productId from other fields if missing
+        if (!copy.productId) {
+          copy.productId =
+            copy.productId ||
+            copy._id ||                       // common from frontend
+            copy.id ||                        // some carts use `id`
+            (copy.product && (copy.product._id || copy.product.id));
+        }
+
+        // Keep useful denormalized fields (for email + UI)
+        copy.title = copy.title || copy.name || (copy.product && copy.product.title);
+        copy.price = Number(
+          copy.price ??
+          copy.unitPrice ??
+          (copy.product && copy.product.price) ??
+          0
+        );
+        copy.quantity = Number(copy.quantity ?? copy.qty ?? 1) || 1;
+
+        return copy;
+      });
+
     // --- basic identity fields from the request body ---
     const userId = raw.userId;
 
     let name  = (raw.name  || "").trim();
     let email = (raw.email || "").trim();
     let phone = (raw.phone || "").trim();
+
 
     // Structured address fields the checkout MAY send
     const bodyAddressLine1 = (raw.addressLine1 || "").trim();
@@ -1537,64 +1582,103 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
     };
 
 
-    // ------------------------------------------------------------
-    // 🔒 STEP 1: Reserve stock per cart item (deduct on place order)
-    // ------------------------------------------------------------
+     // 🔒 STEP 1: Reserve stock per cart item (deduct on place order)
+    //      – uses stable item.productId
     const successfulReservations = [];
 
     try {
       for (const item of cart) {
         const qty = Math.max(1, Number(item.quantity) || 1);
-        const rawProdId = item.productId || item._id;
 
+        const rawProdId = item.productId;
         if (!rawProdId) {
-          throw new Error(`Missing productId for item "${item.title || "Item"}"`);
+          console.error("❌ Cart item missing productId:", item);
+          throw new Error(
+            `Missing productId for item "${item.title || "Item"}"`
+          );
         }
 
         const idStr     = String(rawProdId);
         const numericId = Number(idStr);
         const idFilter  = !isNaN(numericId) ? { _id: numericId } : { _id: idStr };
 
-        // Only update if there is enough stock left
-        const filter = {
-          ...idFilter,
-          stock: { $gte: qty },
-        };
-
-        const updatedProduct = await Product.findOneAndUpdate(
-          filter,
-          { $inc: { stock: -qty } }, // deduct stock
-          { new: true }
-        );
-
-        if (!updatedProduct) {
-          // 🔁 Roll back previous reservations for this order
-          for (const r of successfulReservations) {
-            await Product.updateOne(
-              { _id: r.productId },
-              { $inc: { stock: r.qty } }
-            );
-          }
-
-          // Fetch current stock for nicer error messaging
-          const current   = await Product.findOne(idFilter).lean();
-          const available = current ? (current.stock || 0) : 0;
-
-          return res.status(400).json({
-            success: false,
-            message: `Not enough stock for "${item.title || "item"}". Requested ${qty}, available ${available}. Please update your cart.`,
-          });
+        const productDoc = await Product.findOne(idFilter);
+        if (!productDoc) {
+          throw new Error(`Product not found for id ${idStr}`);
         }
 
-        successfulReservations.push({ productId: updatedProduct._id, qty });
+        const variantSku =
+          item.variant?.sku ||
+          item.sku ||
+          item.variantSku || // just in case ibang field name gamit sa cart
+          null;
+        if (variantSku) {
+          // 🧩 per-variant stock
+          const v = (productDoc.variants || []).find(v => v.sku === variantSku);
+          if (!v) {
+            throw new Error(
+              `Variant ${variantSku} not found for product ${idStr}`
+            );
+          }
+          const currentStock = Number(v.stock ?? 0);
+          if (currentStock < qty) {
+            throw new Error(
+              `Not enough stock for variant "${variantSku}". Requested ${qty}, available ${currentStock}.`
+            );
+          }
+          v.stock = currentStock - qty;
+        } else {
+          // 🧩 base product stock
+          const currentStock = Number(productDoc.stock ?? 0);
+          if (currentStock < qty) {
+            throw new Error(
+              `Not enough stock for "${item.title || productDoc.title}". Requested ${qty}, available ${currentStock}.`
+            );
+          }
+          productDoc.stock = currentStock - qty;
+        }
+
+        await productDoc.save();
+
+        successfulReservations.push({
+          productId: productDoc._id,
+          variantSku,
+          qty
+        });
       }
     } catch (stockErr) {
       console.error("❌ Stock reservation failed:", stockErr);
-      return res.status(500).json({
+
+      // best-effort rollback
+      for (const r of successfulReservations) {
+        try {
+          const idStr     = String(r.productId);
+          const numericId = Number(idStr);
+          const filter    = !isNaN(numericId) ? { _id: numericId } : { _id: idStr };
+
+          const productDoc = await Product.findOne(filter);
+          if (!productDoc) continue;
+
+          if (r.variantSku) {
+            const v = (productDoc.variants || []).find(v => v.sku === r.variantSku);
+            if (!v) continue;
+            v.stock = Number(v.stock ?? 0) + r.qty;
+          } else {
+            productDoc.stock = Number(productDoc.stock ?? 0) + r.qty;
+          }
+
+          await productDoc.save();
+        } catch (rollbackErr) {
+          console.error("⚠️ Failed rollback for", r.productId, rollbackErr);
+        }
+      }
+
+      return res.status(400).json({
         success: false,
-        message: "Failed to reserve stock for this order. Please try again.",
+        message: stockErr.message || "Failed to reserve stock for this order. Please try again.",
       });
     }
+
 
     // ------------------------------------------------------------
     // 💰 STEP 2: Compute totals (same as before)
@@ -2857,7 +2941,7 @@ app.get('/api/admin-logs/:id', requireAdmin, async (req, res) => {
 
 
 
-// ✅ Update a product (price/stock/title/category/desc/image) + log changes
+// ✅ Update a product (supports variants) + log changes
 app.put('/api/products/:id', requireAdmin, upload.single('image'), async (req, res) => {
   try {
     const idParam = req.params.id;
@@ -2865,26 +2949,61 @@ app.put('/api/products/:id', requireAdmin, upload.single('image'), async (req, r
     const where = !isNaN(numericId) ? { _id: numericId } : { _id: idParam };
 
     const product = await Product.findOne(where);
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
 
-    const before = { price: product.price, stock: product.stock };
+    const before = {
+      price: product.price,
+      stock: product.stock,
+      variantsJson: JSON.stringify(product.variants || [])
+    };
 
-    // update allowed fields
-    const { title, category, price, description, alt, price_unit, stock } = req.body;
-    if (title !== undefined) product.title = title;
-    if (category !== undefined) product.category = category;
-    if (price !== undefined) product.price = Number(price) || 0;
-    if (stock !== undefined) product.stock = Number(stock) || 0;
-    if (description !== undefined) product.description = description;
-    if (alt !== undefined) product.alt = alt;
-    if (price_unit !== undefined) product.price_unit = price_unit;
+    // fields from FormData (admin.js)
+    const {
+      title,
+      category,
+      price,
+      description,
+      alt,
+      price_unit,
+      stock,
+      variants: variantsRaw // 👈 JSON string from FormData
+    } = req.body;
 
-    if (req.file) product.image = `/uploads/${req.file.filename}`;
+    // === basic fields ===
+    if (title      !== undefined) product.title       = title;
+    if (category   !== undefined) product.category    = category;
+    if (price      !== undefined) product.price       = Number(price) || 0;
+    if (stock      !== undefined) product.stock       = Number(stock) || 0;
+    if (description!== undefined) product.description = description;
+    if (alt        !== undefined) product.alt         = alt;
+    if (price_unit !== undefined) product.price_unit  = price_unit;
+
+    // === variants (JSON string → array) ===
+    if (variantsRaw !== undefined) {
+      try {
+        const parsed = JSON.parse(variantsRaw);
+        if (Array.isArray(parsed)) {
+          product.variants = parsed;
+        } else {
+          console.warn("⚠️ PUT /api/products/:id - variants is not array:", parsed);
+        }
+      } catch (e) {
+        console.warn("⚠️ PUT /api/products/:id - failed to parse variants JSON:", e, variantsRaw);
+      }
+    }
+
+    // image upload
+    if (req.file) {
+      product.image = `/uploads/${req.file.filename}`;
+    }
 
     await product.save();
 
     // 🔏 log
     try {
+      const afterVariantsJson = JSON.stringify(product.variants || []);
       await logAdminAction(req, {
         category: 'inventory',
         action: 'PRODUCT_UPDATED',
@@ -2893,10 +3012,13 @@ app.put('/api/products/:id', requireAdmin, upload.single('image'), async (req, r
           priceChanged: before.price !== product.price,
           oldPrice: before.price, newPrice: product.price,
           stockChanged: before.stock !== product.stock,
-          oldStock: before.stock, newStock: product.stock
+          oldStock: before.stock, newStock: product.stock,
+          variantsChanged: before.variantsJson !== afterVariantsJson
         }
       });
-    } catch (e) { console.warn('log fail (PRODUCT_UPDATED):', e.message); }
+    } catch (e) {
+      console.warn('log fail (PRODUCT_UPDATED):', e.message);
+    }
 
     res.json({ success: true, message: 'Product updated', product });
   } catch (err) {
@@ -2906,18 +3028,141 @@ app.put('/api/products/:id', requireAdmin, upload.single('image'), async (req, r
 });
 
 
-// ✅ Update order status (Admin) + log
-//    Call from frontend with: PUT /api/orders/:id/status  { status: "Paid" | "Completed" | "Confirmed" | "Cancelled" }
-app.put('/api/orders/:id/status', async (req, res) => {
+// helper: restore stock for all items in an order (used when cancelling)
+async function restoreStockForOrder(orderDoc) {
+  if (!orderDoc || !Array.isArray(orderDoc.cart)) {
+    console.warn("restoreStockForOrder: no cart on order", orderDoc && orderDoc._id);
+    return;
+  }
+
+  for (const item of orderDoc.cart) {
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    if (!qty) continue;
+
+    // ⚠️ HUWAG item._id / item.id (subdoc lang yun, hindi product id)
+    let rawProdId =
+      item.productId ||
+      (item.product && (item.product._id || item.product.id));
+
+    let productDoc = null;
+
+    if (rawProdId) {
+      const idStr     = String(rawProdId);
+      const numericId = Number(idStr);
+      const filter    = !isNaN(numericId) ? { _id: numericId } : { _id: idStr };
+      productDoc = await Product.findOne(filter);
+      if (!productDoc) {
+        console.warn("restoreStockForOrder: product not found for", filter);
+      }
+    }
+
+    // 🔁 Fallback: try by title kung walang productId sa cart
+    if (!productDoc && item.title) {
+      productDoc = await Product.findOne({ title: item.title });
+      if (productDoc) {
+        console.log(
+          "🔁 restoreStockForOrder: matched by title →",
+          item.title,
+          "→",
+          productDoc._id
+        );
+      }
+    }
+
+    if (!productDoc) {
+      console.warn("restoreStockForOrder: could not resolve product for item", {
+        order: orderDoc._id,
+        cartItem: item,
+      });
+      continue;
+    }
+
+    const variantSku =
+      item.variant?.sku ||
+      item.sku ||
+      item.variantSku ||
+      null;
+
+    if (variantSku) {
+      const v = (productDoc.variants || []).find((v) => v.sku === variantSku);
+      if (!v) {
+        console.warn(
+          "restoreStockForOrder: variant not found",
+          variantSku,
+          "for product",
+          productDoc._id
+        );
+        continue;
+      }
+      const before = Number(v.stock ?? 0);
+      v.stock = before + qty;
+      console.log(
+        `🔁 Restored variant stock: prod=${productDoc._id} sku=${variantSku} ${before}→${v.stock} (qty ${qty})`
+      );
+    } else {
+      const before = Number(productDoc.stock ?? 0);
+      productDoc.stock = before + qty;
+      console.log(
+        `🔁 Restored base stock: prod=${productDoc._id} ${before}→${productDoc.stock} (qty ${qty})`
+      );
+    }
+
+    await productDoc.save();
+  }
+}
+
+
+
+
+
+// ✅ Update order status (Admin) + log + restore stock on cancel
+// ✅ Update order status (Admin) + log + restore stock on cancel (with flag)
+app.put('/api/orders/:id/status', requireAdmin, async (req, res) => {
   try {
     const id = req.params.id;
     const { status } = req.body;
-    if (!status) return res.status(400).json({ success: false, message: 'Missing status' });
+
+    if (!status) {
+      return res.status(400).json({ success: false, message: 'Missing status' });
+    }
 
     const order = await Order.findById(id);
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
 
     const prevStatus = order.status || 'Pending';
+
+    // 🔹 Normalize strings (handle "Canceled"/"Cancelled", spaces, casing)
+    const prevNorm = String(prevStatus).trim().toLowerCase();
+    const newNorm  = String(status).trim().toLowerCase();
+
+    const isNewCancelled =
+      newNorm === 'cancelled' || newNorm === 'canceled';
+
+    // 🧷 Gamit tayo ng flag sa order para hindi mag-add ng stock nang paulit-ulit
+    const alreadyRestored = !!order.stockRestored;
+    let stockRestored = alreadyRestored;
+
+    // 🔒 Restore stock ONE-TIME kapag naging Cancelled, kahit ano pa dati ang status
+    if (isNewCancelled && !alreadyRestored) {
+      try {
+        console.log(
+          `🔁 Restoring stock for order ${order._id} (status ${prevStatus} → ${status})`
+        );
+        await restoreStockForOrder(order);
+        stockRestored = true;
+        order.stockRestored = true; // <- mark na nabalik na ang stock
+      } catch (stockErr) {
+        console.error('❌ Failed to restore stock for cancelled order:', stockErr);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to restore stock for this order. Status not changed.',
+        });
+      }
+    }
+
+    // Save final status
     order.status = status;
     await order.save();
 
@@ -2925,7 +3170,8 @@ app.put('/api/orders/:id/status', async (req, res) => {
       Confirmed: 'ORDER_CONFIRMED',
       Paid:      'ORDER_MARKED_PAID',
       Completed: 'ORDER_COMPLETED',
-      Cancelled: 'ORDER_CANCELLED'
+      Cancelled: 'ORDER_CANCELLED',
+      Canceled:  'ORDER_CANCELLED'
     };
     const action = actionMap[status] || 'ORDER_UPDATED';
 
@@ -2933,10 +3179,21 @@ app.put('/api/orders/:id/status', async (req, res) => {
       await logAdminAction(req, {
         category: 'orders',
         action,
-        target: { type: 'order', id: order.orderId || order._id.toString(), name: order.name },
-        meta: { previousStatus: prevStatus, newStatus: status, total: order.totalAmount }
+        target: {
+          type: 'order',
+          id: order.orderId || order._id.toString(),
+          name: order.name,
+        },
+        meta: {
+          previousStatus: prevStatus,
+          newStatus: status,
+          total: order.totalAmount,
+          stockRestored,
+        },
       });
-    } catch (e) { console.warn('log fail (order status):', e.message); }
+    } catch (e) {
+      console.warn('log fail (order status):', e.message);
+    }
 
     res.json({ success: true, message: 'Order status updated', order });
   } catch (err) {
@@ -2944,6 +3201,8 @@ app.put('/api/orders/:id/status', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error updating order status' });
   }
 });
+
+
 
 
 // ✅ Update appointment status or reschedule + log (conflict check + normalized time)

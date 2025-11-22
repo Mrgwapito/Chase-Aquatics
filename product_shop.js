@@ -667,20 +667,44 @@ if (!token) {
 
 /* ======================================================
    🧠 Helper: Fetch product with retry for slow responses
+   – also normalizes variants from string → array
 ====================================================== */
 async function fetchProductWithRetry(productId, retries = 1) {
-  const API_BASE = window.__API_BASE__; // 🔧 FIX
+  const API_BASE = window.__API_BASE__;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`🔄 Fetch attempt ${attempt} for product ID: ${productId}`);
-      const res = await fetch(`${API_BASE}/api/product/${productId}`); // 🔧 FIX: absolute URL
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data._id) return data;
+      const res = await fetch(`${API_BASE}/api/product/${productId}`);
+      if (!res.ok) {
+        console.warn("❌ Product fetch HTTP", res.status);
+        continue;
       }
+
+      const data = await res.json();
+      let prod = data;
+
+      // support both: { _id, ... } and { success, product: { ... } }
+      if (data && data.product && data.product._id) {
+        prod = data.product;
+      }
+
+      // 🔁 Normalize variants: if string, try to JSON.parse
+      if (prod && typeof prod.variants === "string") {
+        try {
+          const parsed = JSON.parse(prod.variants);
+          if (Array.isArray(parsed)) {
+            prod.variants = parsed;
+          }
+        } catch (e) {
+          console.warn("⚠️ Failed to parse variants JSON:", e, prod.variants);
+        }
+      }
+
+      if (prod && prod._id) return prod;
     } catch (err) {
       console.warn(`⚠️ Fetch attempt ${attempt} failed:`, err);
     }
+
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
   return null;

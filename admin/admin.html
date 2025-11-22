@@ -349,6 +349,22 @@
             </div>
           </div>
 
+          <!-- 🔽 NEW: Variants (optional) -->
+          <div class="field">
+            <label>Variants (optional)</label>
+            <p style="font-size:12px;color:#777;margin-bottom:6px;">
+              Use this if the product has different sizes with their own price / stock.
+            </p>
+
+            <div id="variantRows" class="variant-rows">
+              <!-- rows will be added by admin.js -->
+            </div>
+
+            <button type="button" id="btnAddVariant" style="margin-top:6px;">
+              + Add Variant
+            </button>
+          </div>
+
           <div class="field">
             <label>Category</label>
             <input type="text" id="pCategory" required>
@@ -358,6 +374,7 @@
             <label>Description</label>
             <textarea id="pDesc" rows="3"></textarea>
           </div>
+
 
     <div class="actions">
       <button type="submit" id="saveProduct">Save</button>
