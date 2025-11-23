@@ -141,13 +141,23 @@ if (ASSETS_DIR) {
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-// Only accept common image types (optional but recommended)
+// Only accept common image types (now includes HEIC/HEIF)
 const fileFilter = (req, file, cb) => {
-  const ok = /image\/(png|jpe?g|gif|webp|bmp|svg\+xml)/i.test(file.mimetype);
-  cb(null, ok);
+  const mime = (file.mimetype || '').toLowerCase();
+
+  const ok =
+    /image\/(png|jpe?g|gif|webp|bmp|svg\+xml)/i.test(mime) ||
+    mime === 'image/heic' ||
+    mime === 'image/heif';
+
+  if (!ok) {
+    console.warn('🚫 Rejected upload (unsupported type):', mime, file.originalname);
+  }
+
+  cb(null, ok); // false = silently no file; route code will see !req.file
 };
 
-// Disk storage for images (we keep the extension)
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -160,8 +170,9 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit (tweak if you like)
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
+
 
 // Serve uploaded files under http://localhost:3000/uploads/...
 app.use('/uploads', express.static(uploadsDir));
@@ -174,9 +185,21 @@ const validIdDir = path.join(uploadsDir, 'valid-id');
 if (!fs.existsSync(validIdDir)) fs.mkdirSync(validIdDir, { recursive: true });
 
 const validIdFilter = (req, file, cb) => {
-  const ok = /image\/(png|jpe?g|gif|webp|bmp|svg\+xml)|application\/pdf/i.test(file.mimetype);
+  const mime = (file.mimetype || '').toLowerCase();
+
+  const ok =
+    /image\/(png|jpe?g|gif|webp|bmp|svg\+xml)/i.test(mime) ||
+    mime === 'image/heic' ||
+    mime === 'image/heif' ||
+    mime === 'application/pdf';
+
+  if (!ok) {
+    console.warn('🚫 Rejected Valid ID upload (unsupported type):', mime, file.originalname);
+  }
+
   cb(null, ok);
 };
+
 
 const validIdStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, validIdDir),

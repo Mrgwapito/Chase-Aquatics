@@ -6,10 +6,24 @@ window.__API_BASE__ =
   window.__API_BASE__ ||
   ((window.location.hostname === "127.0.0.1" ||
     window.location.hostname === "localhost")
-    ? "http://127.0.0.1:3000"                 // local dev API
-    : "https://chase-aquatics.onrender.com"); // deployed API (Render)
+    ? "http://127.0.0.1:3000"
+    : "https://chase-aquatics.onrender.com");
 
 window.API = window.__API_BASE__;
+
+// ✅ Helper: ayusin backend file paths (old localhost + new uploads)
+window.resolveBackendPath = window.resolveBackendPath || function (raw) {
+  if (!raw) return "";
+  let s = String(raw).trim();
+
+  // tanggalin lumang http://localhost:3000 / 127.0.0.1:3000
+  s = s.replace(/^https?:\/\/(127\.0\.0\.1|localhost):\d+/i, "");
+
+  if (s.startsWith("http://") || s.startsWith("https://")) return s;
+
+  return `${window.API.replace(/\/+$/, "")}${s.startsWith("/") ? "" : "/"}${s}`;
+};
+
 
 
 /* ==== GLOBAL toast helpers ==== */
@@ -457,11 +471,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         : "—";
     }
     if (elReceipt) {
-      const url = order?.paymentMeta?.receiptUrl;
-      elReceipt.innerHTML = url
+      const raw = order?.paymentMeta?.receiptUrl || "";
+      const url = raw ? window.resolveBackendPath(raw) : "";
+      elReceipt.innerHTML = raw
         ? `<a href="${url}" target="_blank" rel="noopener">View receipt</a>`
         : "—";
     }
+
 
     const ul = document.getElementById("mItemsList");
     if (ul) {

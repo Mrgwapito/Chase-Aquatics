@@ -9,6 +9,22 @@ const BACKEND_URL =
     ? "http://127.0.0.1:3000"                 // local dev
     : "https://chase-aquatics.onrender.com";  // deployed backend
 
+// ✅ Helper: ayusin lahat ng path galing backend (old localhost + new uploads)
+function resolveBackendImage(raw) {
+  if (!raw) return "";
+  let s = String(raw).trim();
+
+  // Strip any old localhost base (http://localhost:3000 / 127.0.0.1:3000)
+  s = s.replace(/^https?:\/\/(127\.0\.0\.1|localhost):\d+/i, "");
+
+  // Kung CDN o full https URL na (ibang domain), hayaan na lang
+  if (s.startsWith("http://") || s.startsWith("https://")) return s;
+
+  // Normal /uploads/... path → lagyan ng tamang BACKEND_URL
+  return `${BACKEND_URL.replace(/\/+$/, "")}${s.startsWith("/") ? "" : "/"}${s}`;
+}
+
+
 /// --- Toast helper (toast-first, no alert UI)
 let __lastTopToast = 0;
 
@@ -207,8 +223,10 @@ function forceRightAlign() {
       }
       // link to last file if available
       if (fileUrl) {
-        msg += ` <a href="${fileUrl}" target="_blank" rel="noopener">View last upload</a>`;
+        const href = resolveBackendImage(fileUrl);
+        msg += ` <a href="${href}" target="_blank" rel="noopener">View last upload</a>`;
       }
+
       validIdNote.innerHTML = msg;
       validIdNote.hidden = false;
     }
@@ -760,10 +778,7 @@ if (bSel && user.barangay) {
         const raw = (user.profileImage || '').trim();
 
         if (raw) {
-          // support both absolute URLs and "/uploads/..." paths
-          const imgUrl = raw.startsWith('http')
-            ? raw
-            : `${BACKEND_URL.replace(/\/+$/,'')}${raw.startsWith('/') ? '' : '/'}${raw}`;
+          const imgUrl = resolveBackendImage(raw);
 
           bigAvatar.style.backgroundImage    = `url('${imgUrl}')`;
           bigAvatar.style.backgroundSize     = 'cover';
@@ -771,7 +786,6 @@ if (bSel && user.barangay) {
           bigAvatar.style.backgroundColor    = 'transparent';
           if (initialsEl) initialsEl.style.opacity = '0';
         } else {
-          // no saved image → show initials again
           bigAvatar.style.removeProperty('background-image');
           bigAvatar.style.removeProperty('background-size');
           bigAvatar.style.removeProperty('background-position');
