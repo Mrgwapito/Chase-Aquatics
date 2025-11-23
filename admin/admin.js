@@ -1324,17 +1324,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Delete (with confirm)
-  btnDelete.addEventListener('click', () => {
-    if (!editRow) return;
-    const name = editRow.children[0].textContent.trim();
-    tAsk('Delete product?', `Remove "${name}" permanently?`, 'Delete', 'Cancel').then((ok) => {
-      if (!ok) return;
-      // TODO: call backend DELETE here when wired; for now remove locally:
-      editRow.remove();
-      tOK('Product deleted', `"${name}" removed from table.`);
-      closeModal();
-    });
-  });
+ btnDelete.addEventListener('click', async () => {
+  if (!editRow) return;
+
+  const name = editRow.children[0].textContent.trim();
+  const id   = pId.value || editRow.dataset.id;
+
+  if (!id) {
+    tErr('Delete failed', 'Missing product id.');
+    return;
+  }
+
+  try {
+    const ok = await tAsk(
+      'Delete product?',
+      `Remove "${name}" permanently from inventory?`,
+      'Delete',
+      'Cancel'
+    );
+    if (!ok) return;
+
+    // 🔥 Call backend DELETE route
+    await apiDeleteProduct(id);
+
+    tOK('Product deleted', `"${name}" removed from inventory.`);
+    closeModal();
+
+    // 🔄 Reload table para siguradong wala na
+    if (typeof loadProductsIntoTable === 'function') {
+      loadProductsIntoTable(prodPage || 1);
+    }
+  } catch (err) {
+    console.error('❌ Delete product error:', err);
+    tErr('Delete failed', err.message || 'Something went wrong.');
+  }
+});
+
 
   // === Inventory API helpers (ADD + LIST) ===
   async function apiCreateProductFD(formData) {
@@ -1367,6 +1392,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return json.product || json; // backend might return {success, product} or full doc
   }
+
+async function apiDeleteProduct(id) {
+  const res = await fetch(`${API}/api/products/${id}`, {
+    method: 'DELETE',
+    headers: {
+      ...window.authHeader()
+    }
+  });
+
+  const json = await res.json();
+
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || 'Delete failed');
+  }
+
+  return json;
+}
 
 
   async function apiListProducts() {

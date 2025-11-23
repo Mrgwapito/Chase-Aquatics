@@ -3050,6 +3050,57 @@ app.put('/api/products/:id', requireAdmin, upload.single('image'), async (req, r
   }
 });
 
+// ✅ Delete a product (and clean up carts) + admin log
+app.delete('/api/products/:id', requireAdmin, async (req, res) => {
+  try {
+    const idParam   = req.params.id;
+    const numericId = Number(idParam);
+    const filter    = !isNaN(numericId) ? { _id: numericId } : { _id: idParam };
+
+    // Hanapin muna para makuha title / _id
+    const product = await Product.findOne(filter);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    // Totoong delete sa DB
+    await Product.deleteOne({ _id: product._id });
+
+    // Optional: alisin din sa cart items
+    try {
+      await Cart.updateMany(
+        { 'items.productId': product._id },
+        { $pull: { items: { productId: product._id } } }
+      );
+    } catch (e) {
+      console.warn('⚠️ Failed to clean up carts for deleted product:', e.message);
+    }
+
+    // 📝 Admin log
+    try {
+      await logAdminAction(req, {
+        category: 'inventory',
+        action: 'PRODUCT_DELETED',
+        target: { type: 'product', id: String(product._id), name: product.title },
+        meta: {}
+      });
+    } catch (e) {
+      console.warn('log fail (PRODUCT_DELETED):', e.message);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Product deleted successfully'
+    });
+  } catch (err) {
+    console.error('❌ Product delete error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error deleting product'
+    });
+  }
+});
+
 
 // helper: restore stock for all items in an order (used when cancelling)
 async function restoreStockForOrder(orderDoc) {
