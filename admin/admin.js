@@ -1038,8 +1038,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // =======================================================
 // ✉️ EmailJS helper for appointment updates (Confirm/Cancel/Resched)
 // =======================================================
-const EMAILJS_SERVICE_ID = "service_1c8lq6n";   // ✅ updated for admin status
-const EMAILJS_TEMPLATE_ID = "template_6e4mvs8";
+const EMAILJS_SERVICE_ID = "service_1c8lq6n";   // same service
+const EMAILJS_TEMPLATE_ID = "template_6e4mvs8"; // same template ID
 const EMAILJS_PUBLIC_KEY = "HCwUJE1S2hr3TtLfB";
 
 function sendAppointmentUpdateEmail(booking, changeType, overrides = {}) {
@@ -1053,10 +1053,9 @@ function sendAppointmentUpdateEmail(booking, changeType, overrides = {}) {
   }
 
   try {
-    // safe even if called multiple times; EmailJS will just log a warning
     emailjs.init(EMAILJS_PUBLIC_KEY);
   } catch (e) {
-    // ignore init errors (e.g., already initialised)
+    // ignore init errors (already initialised, etc.)
   }
 
   const safeEmail = booking.email || "";
@@ -1064,38 +1063,85 @@ function sendAppointmentUpdateEmail(booking, changeType, overrides = {}) {
     booking.name ||
     (safeEmail.includes("@") ? safeEmail.split("@")[0] : "Guest");
 
-  const params = {
+  // current / new status
+  const status =
+    overrides.status ||
+    booking.status ||
+    changeType ||
+    "Pending";
+
+  const statusLower = String(status).toLowerCase();
+
+  // dates/times for template
+  const newDate = overrides.date || booking.date || "";
+  const newTime = overrides.time || booking.time || "";
+
+  const oldDate = overrides.old_date || overrides.previousDate || booking.oldDate || "";
+  const oldTime = overrides.old_time || overrides.previousTime || booking.oldTime || "";
+
+  // location (fallback para di empty sa email)
+  const location =
+    overrides.location ||
+    booking.location ||
+    "Life in a Box";
+
+  // auto-note depende sa change
+  let updateNote = overrides.update_note || overrides.note || "";
+
+  if (!updateNote) {
+    if (statusLower === "confirmed") {
+      updateNote =
+        "Your appointment has been confirmed. Please arrive 10–15 minutes before your scheduled time.";
+    } else if (statusLower === "cancelled") {
+      updateNote =
+        "Your appointment has been cancelled. If this was not intended, you may book a new slot anytime through our website.";
+    } else if (statusLower === "rescheduled") {
+      updateNote =
+        "Your appointment has been rescheduled. Please review the new date and time below.";
+    } else {
+      updateNote = "Your appointment status has been updated. Please review the details below.";
+    }
+  }
+
+  const templateParams = {
+    // header / basics
     to_name: safeName,
     to_email: safeEmail,
+    updated_at: new Date().toLocaleString("en-PH"),
 
-    brand: "Life in a Box",
-    submitted_at: new Date().toLocaleString(),
+    // main status
+    status,
 
+    // previous schedule (for reschedule)
+    old_date: oldDate,
+    old_time: oldTime,
+
+    // current / latest details
     service: booking.service || "General Consultation",
-    date: overrides.date || booking.date,
-    time: overrides.time || booking.time,
+    date: newDate,
+    time: newTime,
+    location,
 
-    status: overrides.status || booking.status || changeType || "Pending",
-    change_type: changeType || "",
+    // note text in the email body
+    update_note: updateNote,
 
-    notes: booking.notes || "",
-    guests: Array.isArray(booking.guests)
-      ? booking.guests.join(", ")
-      : (booking.guests || ""),
-    topics: Array.isArray(booking.topics)
-      ? booking.topics.join(", ")
-      : (booking.topics || ""),
-
-    appointment_url: "",
+    // CTA button link (optional – pwede mong palitan ng real URL)
+    appointment_url: overrides.appointment_url || "",
   };
 
+  console.log("📧 sendAppointmentUpdateEmail →", {
+    changeType,
+    templateParams,
+  });
+
   emailjs
-    .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+    .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
     .then(
       () => console.log("📨 Appointment email sent:", safeEmail),
       (err) => console.error("❌ EmailJS appointment error:", err)
     );
 }
+
 
 
   // =======================================================
@@ -1210,12 +1256,12 @@ function sendAppointmentUpdateEmail(booking, changeType, overrides = {}) {
   // ✅ Update Appointment Status (Confirm / Cancel)
   //    Backend handles sending the email notification.
   // =======================================================
-// =======================================================
-// ✅ Update Appointment Status (Confirm / Cancel)
-//    Frontend EmailJS sends the notification.
-// =======================================================
 async function updateAppointmentStatus(newStatus) {
   if (!currentAppt) return;
+
+  // for email template (previous schedule = same as current)
+  const prevDate = currentAppt.date;
+  const prevTime = currentAppt.time;
 
   try {
     const res = await fetch(
@@ -1242,9 +1288,15 @@ async function updateAppointmentStatus(newStatus) {
     // Keep local copy in sync
     currentAppt.status = newStatus;
 
-    // ✅ Send status email to customer
+    // ✅ Send status email to customer (fills template: status + update_note)
     try {
-      sendAppointmentUpdateEmail(currentAppt, newStatus, { status: newStatus });
+      sendAppointmentUpdateEmail(currentAppt, newStatus, {
+        status: newStatus,
+        old_date: prevDate,
+        old_time: prevTime,
+        date: currentAppt.date,
+        time: currentAppt.time,
+      });
     } catch (e) {
       console.warn("EmailJS (status update) failed:", e);
     }
@@ -1261,11 +1313,17 @@ async function updateAppointmentStatus(newStatus) {
 
 
 
+
  // =======================================================
 // 🔁 Reschedule Appointment
 // =======================================================
 async function rescheduleAppointment(newD, newT) {
   if (!currentAppt) return;
+
+  // keep previous schedule for email template
+  const prevDate = currentAppt.date;
+  const prevTime = currentAppt.time;
+
   try {
     const res = await fetch(
       `${API}/api/bookings/${currentAppt._id}/status`,
@@ -1290,12 +1348,14 @@ async function rescheduleAppointment(newD, newT) {
     currentAppt.time = newT;
     currentAppt.status = "Rescheduled";
 
-    // ✅ Send reschedule email with new date/time
+    // ✅ Send reschedule email with OLD + NEW date/time
     try {
       sendAppointmentUpdateEmail(currentAppt, "Rescheduled", {
+        status: "Rescheduled",
         date: newD,
         time: newT,
-        status: "Rescheduled"
+        old_date: prevDate,
+        old_time: prevTime,
       });
     } catch (e) {
       console.warn("EmailJS (reschedule) failed:", e);
