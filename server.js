@@ -309,42 +309,6 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// ================================================================
-// 👤 PROFILE – return safe user data (including profileImage + validId)
-// ================================================================
-app.get('/api/profile', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id || req.user._id;
-    const userDoc = await User.findById(userId);
-
-    if (!userDoc) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    // ensure stable userId
-    if (!userDoc.userId) {
-      userDoc.userId = makeUserId(userDoc._id);
-      await userDoc.save();
-    }
-
-    const user = userDoc.toObject();
-
-    // never send password or OTP fields
-    delete user.password;
-    delete user.registerOtp;
-    delete user.otpExpires;
-
-    // normalize validId so frontend always gets something
-    if (!user.validId) {
-      user.validId = { status: 'none', path: '', note: '' };
-    }
-
-    return res.json({ success: true, user });
-  } catch (err) {
-    console.error('GET /api/profile error:', err);
-    res.status(500).json({ success: false, message: 'Server error loading profile' });
-  }
-});
 
 
 // ================================================================
@@ -439,6 +403,97 @@ app.post('/api/test-emailjs', async (req, res) => {
     });
   }
 });
+
+// ================================================================
+// 📧 VALID ID STATUS EMAIL (EmailJS - uses your HTML template)
+// ================================================================
+const VALID_ID_EMAILJS_SERVICE_ID = "service_74h8ww7";  // 🔁 REPLACE if you use another service
+const VALID_ID_EMAILJS_TEMPLATE_ID = "template_rkk9n4l"; // 🔁 PUT YOUR ID VERIFICATION TEMPLATE ID HERE
+const VALID_ID_EMAILJS_PUBLIC_KEY  = "ZJzoYrQoliQZhQLJH"; // usually same public key
+
+async function sendValidIdStatusEmail(userDoc) {
+  try {
+    if (!userDoc || !userDoc.email) {
+      console.warn("sendValidIdStatusEmail: missing user/email");
+      return false;
+    }
+
+    const vid = userDoc.validId || {};
+    const rawStatus = (vid.status || "pending").toLowerCase();
+
+    // Map status -> label + message
+    let statusLabel = "Pending review";
+    let statusMessage =
+      "We’ve received your ID and it’s still pending review. We’ll email you again once our team has finished checking it.";
+
+    if (rawStatus === "approved") {
+      statusLabel = "Approved";
+      statusMessage =
+        "Your submitted ID has been reviewed and approved. Your account is now verified and you can continue using the service without additional ID checks.";
+    } else if (rawStatus === "rejected" || rawStatus === "declined") {
+      statusLabel = "Declined";
+      statusMessage =
+        vid.note && vid.note.trim()
+          ? `Your ID was declined with this note from our team: "${vid.note.trim()}". Please review and submit a clearer or updated copy of your ID.`
+          : "Your ID was declined. Please review your submission (image clarity, completeness, and matching details) and upload a clearer or updated copy.";
+    }
+
+    const toEmail = userDoc.email;
+    const toName =
+      userDoc.fullName ||
+      `${userDoc.firstName || ""} ${userDoc.lastName || ""}`.trim() ||
+      (toEmail.includes("@") ? toEmail.split("@")[0] : "Customer");
+
+    const submittedAt = vid.submittedAt || vid.uploadedAt || userDoc.createdAt || new Date();
+    const reviewedAt  = vid.reviewedAt || new Date();
+
+    const templateParams = {
+      to_name: toName,
+      to_email: toEmail,
+      brand: "Life in a Box",
+
+      submitted_at: new Date(submittedAt).toLocaleString("en-PH"),
+      reviewed_at: new Date(reviewedAt).toLocaleString("en-PH"),
+
+      status_label: statusLabel,
+      status_message: statusMessage,
+
+      id_type: vid.idType || "Government ID",
+    };
+
+    console.log("📧 Sending Valid ID status email via EmailJS →", {
+      toEmail,
+      status: vid.status,
+      templateParams,
+    });
+
+    const payload = {
+      service_id: VALID_ID_EMAILJS_SERVICE_ID,
+      template_id: VALID_ID_EMAILJS_TEMPLATE_ID,
+      user_id: VALID_ID_EMAILJS_PUBLIC_KEY,
+      template_params: templateParams,
+    };
+
+    const resp = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await resp.text();
+    console.log("📡 Valid ID EmailJS response:", resp.status, text);
+
+    if (!resp.ok) {
+      console.error("❌ EmailJS Valid ID failed:", resp.status, text);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("💥 sendValidIdStatusEmail error:", err);
+    return false;
+  }
+}
 
 // ================================================================
 // 📝 STORE OTP ENDPOINT (For client-side EmailJS)
@@ -1004,73 +1059,73 @@ app.post('/login', async (req, res) => {
 });
 
 // ================================================================
-// 👤 FETCH PROFILE USING TOKEN (auto-fills first & last name)
+// 👤 PROFILE – unified route (with validId + structured address)
 // ================================================================
-app.get('/api/profile', async (req, res) => {
+app.get('/api/profile', requireAuth, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader)
-      return res.status(401).json({ success: false, message: 'No token provided' });
+    const userId = req.user.id || req.user._id;
+    let user = await User.findById(userId).select('-password -registerOtp -otpExpires -resetOtp');
 
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-    let user = await User.findById(decoded.id).select('-password');
-
-    if (!user)
+    if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
+    }
 
-    // ✅ Ensure firstName / lastName always exist
-// ✅ Ensure firstName / lastName always exist
-if ((!user.firstName || !user.lastName) && user.fullName) {
-  const parts = user.fullName.trim().split(" ");
-  user.firstName = user.firstName || parts[0] || "";
-  user.lastName = user.lastName || parts.slice(1).join(" ") || "";
-  await user.save();
-  console.log(`🧩 Auto-filled name fields for user: ${user.email}`);
-}
+    // ✅ Auto-fill firstName / lastName from fullName kung kulang
+    if ((!user.firstName || !user.lastName) && user.fullName) {
+      const parts = user.fullName.trim().split(' ');
+      user.firstName = user.firstName || parts[0] || '';
+      user.lastName  = user.lastName  || parts.slice(1).join(' ') || '';
+      await user.save();
+      console.log(`🧩 Auto-filled name fields for user: ${user.email}`);
+    }
 
-// ✅ Ensure stable public userId exists (migration for old accounts)
-if (!user.userId) {
-  user.userId = makeUserId(user._id);
-  await user.save();
-}
+    // ✅ Ensure stable public userId (USRxxxxxx)
+    if (!user.userId) {
+      user.userId = makeUserId(user._id);
+      await user.save();
+    }
 
-// ✅ Return updated user safely
-res.json({
-  success: true,
-  user: {
-    id: user._id,
-    email: user.email,
-    firstName: user.firstName || "",
-    lastName: user.lastName || "",
-    fullName: user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-    username: user.username || "", // ✅ NEW
+    // ✅ Normalize validId so frontend always gets something
+    const validId = user.validId || { status: 'none', path: '', note: '' };
 
-    phone: user.phone || "",
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName || '',
+        lastName:  user.lastName  || '',
+        fullName:  user.fullName  || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
 
-    // 👇 Structured address back to the client (so your UI remembers selections)
-    addressLine1: user.addressLine1 || "",
-    region:       user.region || "",
-    province:     user.province || "",
-    city:         user.city || "",
-    barangay:     user.barangay || "",
-    postalCode:   user.postalCode || "",
-    address:      user.address || "", // legacy string for display
+        username:  user.username || '',
 
-    gender: user.gender || "",
-    birthday: user.birthday || "",
-    role: user.role || "user",
-    userId: user.userId,
-    profileImage: user.profileImage || "images/default-user.png"
-  }
-});
+        phone: user.phone || '',
 
+        addressLine1: user.addressLine1 || '',
+        region:       user.region || '',
+        province:     user.province || '',
+        city:         user.city || '',
+        barangay:     user.barangay || '',
+        postalCode:   user.postalCode || '',
+        address:      user.address || '',
 
+        gender:   user.gender || '',
+        birthday: user.birthday || '',
+        role:     user.role || 'user',
+        userId:   user.userId,
+
+        profileImage: user.profileImage || 'images/default-user.png',
+
+        // 🔹 IMPORTANT: always send validId
+        validId,
+      },
+    });
   } catch (err) {
-    console.error('❌ Profile fetch error:', err.message);
+    console.error('❌ /api/profile error:', err);
     res.status(500).json({ success: false, message: 'Server error fetching profile' });
   }
 });
+
 
 // ================================================================
 // 🖼️ PROFILE IMAGE UPLOAD
@@ -1217,42 +1272,8 @@ res.json({
   }
 });
 
-
-// POST /api/profile/valid-id  (Auth: user) — field: validId (file)
-app.post('/api/profile/valid-id', requireAuth, uploadValidId.single('validId'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ success:false, message:'No file uploaded' });
-
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success:false, message:'User not found' });
-
-    user.validId = {
-      path: `/uploads/valid-id/${req.file.filename}`,
-      status: 'pending',
-      note: '',
-      submittedAt: new Date(),
-      reviewedAt: null
-    };
-    await user.save();
-
-    try {
-      await logAdminAction(req, {
-        category: 'users',
-        action: 'VALID_ID_SUBMITTED',
-        target: { type: 'user', id: String(user._id), name: user.fullName },
-        meta: { path: user.validId.path }
-      });
-    } catch {}
-
-    res.json({ success:true, message:'Valid ID submitted', file: user.validId.path });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success:false, message:e.message });
-  }
-});
-
 // ================================================================
-// 🪪 VALID ID UPLOAD (user side)
+// 🪪 VALID ID UPLOAD (user side, with idType + admin log)
 // ================================================================
 app.post('/api/profile/valid-id', requireAuth, uploadValidId.single('validId'), async (req, res) => {
   try {
@@ -1267,26 +1288,44 @@ app.post('/api/profile/valid-id', requireAuth, uploadValidId.single('validId'), 
     }
 
     const relPath = `/uploads/valid-id/${req.file.filename}`;
+    const idType  = (req.body.idType || '').trim(); // e.g. "PhilHealth ID", "School ID"
 
     userDoc.validId = {
       status: 'pending',
       path: relPath,
       note: '',
-      uploadedAt: new Date()
+      uploadedAt: new Date(),
+      submittedAt: new Date(),
+      reviewedAt: null,
+      idType: idType || undefined,
     };
 
     await userDoc.save();
 
+    // 📝 Optional admin log
+    try {
+      await logAdminAction(req, {
+        category: 'users',
+        action: 'VALID_ID_SUBMITTED',
+        target: { type: 'user', id: String(userDoc._id), name: userDoc.fullName || userDoc.email },
+        meta: { path: relPath, idType: idType || null },
+      });
+    } catch (e) {
+      console.warn('logAdminAction (VALID_ID_SUBMITTED) failed:', e.message);
+    }
+
     res.json({
       success: true,
       file: relPath,
-      status: 'pending'
+      status: 'pending',
     });
   } catch (err) {
     console.error('POST /api/profile/valid-id error:', err);
     res.status(500).json({ success: false, message: 'Error saving Valid ID' });
   }
 });
+
+
 
 // GET /id-verifications?status=pending|approved|declined|all&q=&page=1&limit=10
 app.get('/id-verifications', requireAdmin, async (req, res) => {
@@ -1341,6 +1380,7 @@ app.post('/id-verifications/:id/approve', requireAdmin, async (req, res) => {
     if (!user || !user.validId?.path) {
       return res.status(404).json({ success:false, message:'Submission not found' });
     }
+
     user.validId.status = 'approved';
     user.validId.reviewedAt = new Date();
     await user.save();
@@ -1352,7 +1392,11 @@ app.post('/id-verifications/:id/approve', requireAdmin, async (req, res) => {
         target: { type: 'user', id: String(user._id), name: user.fullName },
         meta: { path: user.validId.path }
       });
-    } catch {}
+    } catch (logErr) {
+      console.warn('logAdminAction (VALID_ID_APPROVED) failed:', logErr.message);
+    }
+
+    // ❌ WALA NANG EmailJS DITO – frontend na ang bahala mag-send
 
     res.json({ success:true, message:'Approved' });
   } catch (e) {
@@ -1361,6 +1405,7 @@ app.post('/id-verifications/:id/approve', requireAdmin, async (req, res) => {
   }
 });
 
+
 app.post('/id-verifications/:id/decline', requireAdmin, async (req, res) => {
   try {
     const note = (req.body?.note || '').slice(0, 300);
@@ -1368,6 +1413,7 @@ app.post('/id-verifications/:id/decline', requireAdmin, async (req, res) => {
     if (!user || !user.validId?.path) {
       return res.status(404).json({ success:false, message:'Submission not found' });
     }
+
     user.validId.status = 'rejected';
     user.validId.note = note;
     user.validId.reviewedAt = new Date();
@@ -1380,7 +1426,11 @@ app.post('/id-verifications/:id/decline', requireAdmin, async (req, res) => {
         target: { type: 'user', id: String(user._id), name: user.fullName },
         meta: { path: user.validId.path, note }
       });
-    } catch {}
+    } catch (logErr) {
+      console.warn('logAdminAction (VALID_ID_DECLINED) failed:', logErr.message);
+    }
+
+    // ❌ WALA NANG EmailJS DITO – frontend na ang bahala mag-send
 
     res.json({ success:true, message:'Declined' });
   } catch (e) {

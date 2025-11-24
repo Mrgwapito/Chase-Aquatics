@@ -37,18 +37,12 @@
 
 
 
-      <div class="nav-icons">
-        <!-- 👤 Admin dropdown -->
-        <div class="dropdown">
-          <button class="dropdown-toggle" id="adminMenuBtn">
-          <!--  <i class="fa-solid fa-user"></i>  -->
-          </button>
-          <div class="dropdown-menu" id="adminMenu">
-            <a href="./admin_profile.html"><i class="fa-solid fa-id-badge"></i> Profile</a>
-            <a href="#" id="adminLogoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-          </div>
-        </div>
-      </div>
+<div class="nav-icons">
+  <button id="adminLogoutBtn" class="nav-logout-btn" type="button">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span>Logout</span>
+  </button>
+</div>
     </nav>
 
     <!-- ================= MAIN SECTION ================= -->
@@ -147,11 +141,86 @@
         </aside>
       </div>
 
-      <footer class="order-modal__footer">
-        <button id="modalPaid">Mark Paid</button>
-        <button id="modalDone">Mark Done</button>
-        <button id="modalCancel" class="danger">Cancel Order</button>
-      </footer>
+<footer class="order-modal__footer modal-actions-row">
+  <button id="modalPaid" class="btn-modal btn-modal--primary">
+    Mark Paid
+  </button>
+  <button id="modalDone" class="btn-modal btn-modal--primary">
+    Mark Done
+  </button>
+  <button id="modalOutForDelivery" class="btn-modal btn-modal--primary">
+    Out for delivery
+  </button>
+  <button id="modalCancel" class="btn-modal btn-modal--danger">
+    Cancel Order
+  </button>
+</footer>
+
+    </div>
+  </div>
+
+
+    <!-- 🔹 New: Out for delivery popup -->
+  <div id="deliveryModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="close" type="button" id="deliveryClose" aria-label="Close">×</button>
+      <h3>Mark as out for delivery</h3>
+      <p style="font-size:13px;color:#555;margin-top:-4px;">
+        Fill in the courier details so we can update the order and notify the customer.
+      </p>
+
+      <div class="field">
+        <label for="deliveryCourier">Courier</label>
+        <select id="deliveryCourier">
+          <option value="">Select courier</option>
+          <option value="Lalamove">Lalamove</option>
+          <option value="Grab Express">Grab Express</option>
+          <option value="Flash Express">Flash Express</option>
+          <option value="J&T Express">J&amp;T Express</option>
+          <option value="JRS Express">JRS Express</option>
+          <option value="Ninja Van">Ninja Van</option>
+          <option value="Other">Other…</option>
+        </select>
+        <input
+          type="text"
+          id="deliveryCourierOther"
+          placeholder="Enter courier name"
+          style="display:none;margin-top:6px;"
+        >
+      </div>
+
+      <div class="field">
+        <label for="deliveryFee">Shipping / rider fee (optional)</label>
+        <input
+          type="number"
+          id="deliveryFee"
+          min="0"
+          step="0.01"
+          placeholder="e.g. 150"
+        >
+      </div>
+
+      <div class="field">
+        <label for="deliveryNote">Note for customer (optional)</label>
+        <textarea
+          id="deliveryNote"
+          rows="3"
+          placeholder="e.g. Rider: John (Lalamove), plate ABC-123 • ETA 3–5 PM"
+        ></textarea>
+      </div>
+
+<footer class="order-modal__footer modal-actions-row" style="margin-top:10px;">
+  <button id="deliveryCancel"
+          type="button"
+          class="btn-modal btn-modal--ghost">
+    Cancel
+  </button>
+  <button id="deliveryConfirm"
+          class="btn-modal btn-modal--primary">
+    Mark as out for delivery
+  </button>
+</footer>
+
     </div>
   </div>
 

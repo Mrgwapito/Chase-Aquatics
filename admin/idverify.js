@@ -260,13 +260,31 @@
   async function approveIdx(idx, fromModal=false) {
     const it = lastData[idx];
     if (!it) return;
+
     try {
       const res = await fetch(`${API}/id-verifications/${it.id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader() }
       });
-      const data = await res.json().catch(()=> ({}));
-      if (!res.ok || data.success === false) throw new Error(data.message || `HTTP ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) {
+        throw new Error(data.message || `HTTP ${res.status}`);
+      }
+
+      // ✉️ Send "APPROVED" email to user via EmailJS (defined in admin.js)
+      try {
+        if (typeof window.sendValidIdEmailFromAdmin === "function") {
+          window.sendValidIdEmailFromAdmin(it, "approved");
+        } else if (typeof sendValidIdEmailFromAdmin === "function") {
+          // fallback kung naka-global lang yung function
+          sendValidIdEmailFromAdmin(it, "approved");
+        } else {
+          console.warn("sendValidIdEmailFromAdmin not available on window.");
+        }
+      } catch (mailErr) {
+        console.warn("Valid ID approve email failed:", mailErr);
+      }
+
       if (fromModal) closePreview();
       if (window.tOK) tOK('ID Approved', `${it.userName || 'User'} is now verified.`);
       fetchIds(page);
@@ -282,7 +300,7 @@
 
     let note = "";
     if (window.Toast?.promptToast) {
-      note = await window.Toast.promptToast({ title: 'Decline reason (optional)' }).catch(()=> "");
+      note = await window.Toast.promptToast({ title: 'Decline reason (optional)' }).catch(() => "");
     } else {
       note = prompt("Decline reason (optional):", "") || "";
     }
@@ -293,8 +311,23 @@
         headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify({ note })
       });
-      const data = await res.json().catch(()=> ({}));
-      if (!res.ok || data.success === false) throw new Error(data.message || `HTTP ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) {
+        throw new Error(data.message || `HTTP ${res.status}`);
+      }
+
+      // ✉️ Send "DECLINED" email to user with optional note
+      try {
+        if (typeof window.sendValidIdEmailFromAdmin === "function") {
+          window.sendValidIdEmailFromAdmin(it, "declined", note);
+        } else if (typeof sendValidIdEmailFromAdmin === "function") {
+          sendValidIdEmailFromAdmin(it, "declined", note);
+        } else {
+          console.warn("sendValidIdEmailFromAdmin not available on window.");
+        }
+      } catch (mailErr) {
+        console.warn("Valid ID decline email failed:", mailErr);
+      }
 
       if (fromModal) closePreview();
       if (window.tOK) tOK('ID Declined', `${it.userName || 'User'} has been declined.`);
@@ -304,6 +337,7 @@
       if (window.tErr) tErr('Decline failed', e.message);
     }
   }
+
 
   // ---------- Events ----------
   btnPrev?.addEventListener('click', () => fetchIds(page - 1));

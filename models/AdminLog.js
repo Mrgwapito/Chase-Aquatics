@@ -3,7 +3,14 @@ const mongoose = require('mongoose');
 const AdminLogSchema = new mongoose.Schema({
   category: {
     type: String,
-    enum: ['orders', 'appointments', 'inventory', 'auth', 'system'],
+    enum: [
+      'orders',
+      'appointments',
+      'inventory',
+      'auth',
+      'system',
+      'users'      // 👈 para sa valid ID / user-related logs
+    ],
     required: true
   },
   action: {
@@ -22,9 +29,14 @@ const AdminLogSchema = new mongoose.Schema({
       'APPT_RESCHEDULED',
 
       // Inventory
-      'PRODUCT_CREATED',          // ← added
+      'PRODUCT_CREATED',
       'PRODUCT_UPDATED',
-      'PRODUCT_DELETED'           // ← added (future use)
+      'PRODUCT_DELETED',
+
+      // Users / Valid ID verification
+      'VALID_ID_SUBMITTED',
+      'VALID_ID_APPROVED',  // 👈 ginagamit mo sa logs
+      'VALID_ID_DECLINED'   // 👈 ginagamit mo sa logs
     ],
     required: true
   },

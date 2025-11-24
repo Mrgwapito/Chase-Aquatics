@@ -944,3 +944,16 @@ fieldset.form__row legend {
   color: #666 !important;
   cursor: not-allowed !important;
 }
+.testimonial-avatar {
+  width: 70px;        /* adjust size */
+  height: 70px;
+  border-radius: 50%; /* circle */
+  overflow: hidden;   /* para di lumabas ang image sa labas ng bilog */
+}
+
+.testimonial-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;  /* crop nicely */
+  display: block;
+}

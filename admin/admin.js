@@ -104,11 +104,93 @@ window.fetchJSON = async function fetchJSON(url, options = {}) {
 // =======================================================
 // ✉️ EmailJS — ORDER STATUS UPDATES (Paid / Completed / Cancelled)
 // =======================================================
-const ORDER_EMAILJS_SERVICE_ID  = "service_jtt27q3";
-const ORDER_EMAILJS_TEMPLATE_ID = "template_1lp0g2w";
-const ORDER_EMAILJS_PUBLIC_KEY  = "mqDHnNid50ye9mej_";
+const ORDER_EMAILJS_SERVICE_ID        = "service_jtt27q3";
+const ORDER_EMAILJS_TEMPLATE_ID       = "template_1lp0g2w";  // paid / completed / cancelled
+const ORDER_EMAILJS_OF_TEMPLATE_ID    = "template_5tse2tw";  // 🔹 OUT FOR DELIVERY template
+const ORDER_EMAILJS_PUBLIC_KEY        = "mqDHnNid50ye9mej_";
 
-function sendOrderStatusEmail(order, newStatus) {
+// =======================================================
+// ✉️ EmailJS — VALID ID STATUS (Approved / Declined)
+//    Frontend-side para iwas 403 sa backend
+// =======================================================
+const VALID_ID_EMAILJS_SERVICE_ID  = "service_74h8ww7";
+const VALID_ID_EMAILJS_TEMPLATE_ID = "template_rkk9n4l";
+const VALID_ID_EMAILJS_PUBLIC_KEY  = "ZJzoYrQoliQZhQLJH";
+
+function sendValidIdEmailFromAdmin(item, newStatus, note = "") {
+  if (typeof emailjs === "undefined") {
+    console.warn("EmailJS not loaded; skipping Valid ID email.");
+    return;
+  }
+  if (!item || !item.userEmail) {
+    console.warn("No user email for Valid ID email.");
+    return;
+  }
+
+  try {
+    emailjs.init(VALID_ID_EMAILJS_PUBLIC_KEY);
+  } catch (e) {
+    // ignore init warnings
+  }
+
+  const rawStatus = (newStatus || item.status || "pending").toLowerCase();
+
+  let statusLabel = "Pending review";
+  let statusMessage =
+    "We’ve received your ID and it’s still pending review. We’ll email you again once our team has finished checking it.";
+
+  if (rawStatus === "approved") {
+    statusLabel = "Approved";
+    statusMessage =
+      "Your submitted ID has been reviewed and approved. Your account is now verified and you can continue using the service without additional ID checks.";
+  } else if (rawStatus === "rejected" || rawStatus === "declined") {
+    statusLabel = "Declined";
+    statusMessage = note && note.trim()
+      ? `Your ID was declined with this note from our team: "${note.trim()}". Please review and submit a clearer or updated copy of your ID.`
+      : "Your ID was declined. Please review your submission (image clarity, completeness, and matching details) and upload a clearer or updated copy.";
+  }
+
+  const toEmail = item.userEmail;
+  const toName =
+    item.userName ||
+    (toEmail.includes("@") ? toEmail.split("@")[0] : "Customer");
+
+  const submittedAt = item.submittedAt || new Date().toISOString();
+
+  const templateParams = {
+    to_name: toName,
+    to_email: toEmail,
+    brand: "Life in a Box",
+
+    submitted_at: new Date(submittedAt).toLocaleString("en-PH"),
+    reviewed_at: new Date().toLocaleString("en-PH"),
+
+    status_label: statusLabel,
+    status_message: statusMessage,
+
+    id_type: item.idType || "Government ID",
+  };
+
+  console.log("📧 Sending Valid ID email via EmailJS:", {
+    toEmail,
+    status: newStatus,
+    templateParams,
+  });
+
+  emailjs
+    .send(
+      VALID_ID_EMAILJS_SERVICE_ID,
+      VALID_ID_EMAILJS_TEMPLATE_ID,
+      templateParams
+    )
+    .then(
+      () => console.log("✅ Valid ID status email sent:", toEmail, newStatus),
+      (err) => console.error("❌ EmailJS Valid ID error:", err)
+    );
+}
+
+
+function sendOrderStatusEmail(order, newStatus, meta = {}) {
   if (typeof emailjs === "undefined") {
     console.warn("EmailJS not loaded on this page; skipping order email.");
     return;
@@ -154,15 +236,19 @@ function sendOrderStatusEmail(order, newStatus) {
   const shippingRegion   = sa.region || "Philippines";
   const shippingPostal   = sa.postalCode || "";
 
-  // --- items table HTML for {{{items_html}}} ---
+  // --- items table HTML for {{{items_html}}} + compute subtotal from cart ---
   let itemsHtml = "";
   const cart = Array.isArray(order.cart) ? order.cart : [];
+
+  let subtotalFromCart = 0;
 
   cart.forEach((it) => {
     const title = it.title || it.name || "Item";
     const qty   = Number(it.quantity || 1);
     const price = Number(it.price || 0);
     const lineTotal = qty * price;
+
+    subtotalFromCart += lineTotal;
 
     itemsHtml += `
       <tr>
@@ -175,11 +261,46 @@ function sendOrderStatusEmail(order, newStatus) {
 
   const itemsCount = cart.length;
 
-  // --- amounts ---
-  const subtotal        = Number(order.subtotal || 0);
-  const shippingAmount  = Number(order.shipping || 0);
-  const totalAmount     = Number(order.totalAmount || subtotal + shippingAmount);
-  const vatAmount       = 0; // change if you want to compute real VAT
+  // --- amounts (prefer meta.courierFee for shipping) ---
+  // base subtotal: computed from cart
+  let subtotal = subtotalFromCart;
+
+  // kung meron talagang order.subtotal (from backend) at valid number, pwede natin i-override
+  if (order.subtotal != null && !isNaN(Number(order.subtotal))) {
+    subtotal = Number(order.subtotal);
+  }
+
+  const shippingAmount =
+    typeof meta.courierFee === "number" && !isNaN(meta.courierFee)
+      ? Number(meta.courierFee)
+      : Number(order.shipping || 0);
+
+  // total = subtotal + shipping (or use backend totalAmount if may value doon)
+  let totalAmount = subtotal + shippingAmount;
+  if (order.totalAmount != null && !isNaN(Number(order.totalAmount))) {
+    totalAmount = Number(order.totalAmount);
+  }
+
+  const vatAmount   = 0; // change if you want to compute real VAT
+
+
+  // --- COD flag for {{#is_cod}} block in template ---
+  const isCod = String(order.paymentMethod || "")
+    .toUpperCase()
+    .includes("COD");
+
+  // --- courier info (for {{courier_name}} {{courier_note}}) ---
+  const courierName =
+    meta.courierName ||
+    order.courierName ||
+    (order.courier && (order.courier.service || order.courier.name)) ||
+    "";
+
+  const courierNote =
+    meta.courierNote ||
+    order.courierNote ||
+    (order.courier && order.courier.note) ||
+    "";
 
   // --- order URL shown in "View order details" button ---
   const orderUrl =
@@ -222,17 +343,44 @@ function sendOrderStatusEmail(order, newStatus) {
     shipping_amount: shippingAmount.toFixed(2),
     total_amount: totalAmount.toFixed(2),
 
+    // COD + courier
+    is_cod: isCod,
+    courier_name: courierName,
+    courier_note: courierNote,
+
     // CTA
     order_url: orderUrl,
   };
 
+
+  // 🔄 Piliin kung anong EmailJS template gagamitin
+  // --- choose template (with trimming + debug log) ---
+  const statusLower = String(safeStatus || "").toLowerCase().trim();
+  const useOutForDeliveryTemplate =
+    statusLower === "out for delivery" ||
+    statusLower === "out-for-delivery" ||
+    statusLower.includes("out for delivery");
+
+  const templateId = useOutForDeliveryTemplate
+    ? ORDER_EMAILJS_OF_TEMPLATE_ID      // 🔹 special template for "Out for delivery"
+    : ORDER_EMAILJS_TEMPLATE_ID;        // default template (paid / completed / cancelled)
+
+  console.log(
+    "📧 sendOrderStatusEmail →",
+    "status:", safeStatus,
+    "| statusLower:", statusLower,
+    "| templateId:", templateId
+  );
+
   emailjs
-    .send(ORDER_EMAILJS_SERVICE_ID, ORDER_EMAILJS_TEMPLATE_ID, params)
+    .send(ORDER_EMAILJS_SERVICE_ID, templateId, params)
     .then(
       () => console.log("📨 Order status email sent:", order.email, safeStatus),
       (err) => console.error("❌ EmailJS order error:", err)
     );
 }
+
+
 
 
 // ================================================================
@@ -261,6 +409,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btnPaid = document.getElementById("modalPaid");
   const btnDone = document.getElementById("modalDone");
   const btnCancel = document.getElementById("modalCancel");
+  const btnOut = document.getElementById("modalOutForDelivery");
+
+  // 🔹 New delivery popup refs
+  const deliveryModal        = document.getElementById("deliveryModal");
+  const deliveryClose        = document.getElementById("deliveryClose");
+  const deliveryCourier      = document.getElementById("deliveryCourier");
+  const deliveryCourierOther = document.getElementById("deliveryCourierOther");
+  const deliveryFee          = document.getElementById("deliveryFee");
+  const deliveryNote         = document.getElementById("deliveryNote");
+  const deliveryConfirm      = document.getElementById("deliveryConfirm");
+  const deliveryCancel       = document.getElementById("deliveryCancel");
+
 
 
   // Remove the duplicate global helpers that were here
@@ -270,6 +430,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentPage = 1;
   let currentPaymentFilter = ""; // "", "COD", "wallet"
   let currentStatusFilter = "";  // optional future use
+  let activeOrder = null;        // 🔹 currently opened in modal
+
 
   // =======================================================
   // 🟩 Fetch Orders (paged)
@@ -442,6 +604,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const order = orders.find((o) => o._id === orderId);
     if (!order) return;
 
+    // 🔹 store currently opened order for delivery popup
+    activeOrder = order;
+
     mOrderId.textContent = order.orderId;
     mCustomer.textContent = order.name;
     mPayment.textContent = order.paymentMethod || "N/A";
@@ -498,6 +663,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     btnPaid.onclick = () => updateOrderStatus(order._id, "Paid");
     btnDone.onclick = () => updateOrderStatus(order._id, "Completed");
 
+    // 🔹 open delivery popup using the currently active order
+    if (btnOut) {
+      btnOut.onclick = () => openDeliveryModal();
+    }
+
     // NEW: admin cancel handler
     if (btnCancel) {
       btnCancel.onclick = () => handleAdminCancel(order._id, order.orderId);
@@ -505,16 +675,111 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
 
+
   // Close (never set inline display; just remove the class)
   const hideOrderModal = () => {
     modal.classList.remove("show");
     modal.style.removeProperty('display'); // ensure no leftover inline styles
+    activeOrder = null; // 🔹 clear current order when closing modal
   };
+
 
   closeModal.onclick = hideOrderModal;
   window.addEventListener("click", (e) => { if (e.target === modal) hideOrderModal(); });
 
+  // 🔹 Delivery modal helpers
+  function showDeliveryModal() {
+    if (!deliveryModal || !activeOrder) return;
+
+    if (deliveryCourier) {
+      deliveryCourier.value = "";
+    }
+    if (deliveryCourierOther) {
+      deliveryCourierOther.value = "";
+      deliveryCourierOther.style.display = "none";
+    }
+    if (deliveryFee) {
+      deliveryFee.value = activeOrder.shipping || "";
+    }
+    if (deliveryNote) {
+      deliveryNote.value = "";
+    }
+
+    deliveryModal.style.removeProperty("display");
+    deliveryModal.classList.add("show");
+  }
+
+  function hideDeliveryModal() {
+    if (!deliveryModal) return;
+    deliveryModal.classList.remove("show");
+    deliveryModal.style.removeProperty("display");
+  }
+
+  function openDeliveryModal() {
+    showDeliveryModal();
+  }
+
+  if (deliveryClose) {
+    deliveryClose.onclick = hideDeliveryModal;
+  }
+  if (deliveryCancel) {
+    deliveryCancel.onclick = hideDeliveryModal;
+  }
+  if (deliveryModal) {
+    window.addEventListener("click", (e) => {
+      if (e.target === deliveryModal) hideDeliveryModal();
+    });
+  }
+
+  // show/hide "Other" courier textbox
+  if (deliveryCourier && deliveryCourierOther) {
+    deliveryCourier.addEventListener("change", () => {
+      if (deliveryCourier.value === "Other") {
+        deliveryCourierOther.style.display = "block";
+      } else {
+        deliveryCourierOther.style.display = "none";
+        deliveryCourierOther.value = "";
+      }
+    });
+  }
+
+  // confirm "Out for delivery"
+  if (deliveryConfirm) {
+    deliveryConfirm.addEventListener("click", async () => {
+      if (!activeOrder) return;
+
+      let courier = deliveryCourier ? deliveryCourier.value : "";
+      const other = deliveryCourierOther ? deliveryCourierOther.value.trim() : "";
+      if (courier === "Other") courier = other;
+
+      if (!courier) {
+        alert("Please select or enter a courier.");
+        return;
+      }
+
+      const feeNum = deliveryFee && deliveryFee.value
+        ? Number(deliveryFee.value)
+        : 0;
+      const note = deliveryNote ? deliveryNote.value.trim() : "";
+
+      const meta = {
+        courierName: courier,
+        courierService: courier,
+        courierFee: isNaN(feeNum) ? 0 : feeNum,
+        courierNote: note,
+      };
+
+      // 🔹 Update status sa backend + send email sa loob ng updateOrderStatus
+      await updateOrderStatus(activeOrder._id, "Out for delivery", meta);
+
+      // 🔹 sarado na yung delivery popup
+      hideDeliveryModal();
+    });
+  }
+
+
 async function updateOrderStatus(orderId, newStatus, meta = {}) {
+
   // find the order object so we can email the right customer
   const order = orders.find((o) => o._id === orderId) || null;
 
@@ -543,7 +808,8 @@ async function updateOrderStatus(orderId, newStatus, meta = {}) {
     // 🔔 Send EmailJS notification for this order status
     try {
       if (order) {
-        sendOrderStatusEmail(order, newStatus);
+        // pass meta so courier + fee + note reach the template
+        sendOrderStatusEmail(order, newStatus, meta);
       } else {
         console.warn("Order not found in local list; skipping order email.");
       }
@@ -551,9 +817,12 @@ async function updateOrderStatus(orderId, newStatus, meta = {}) {
       console.warn("EmailJS (order status) failed:", e);
     }
 
+
     tOK(`Order ${newStatus}`, `Order status updated successfully.`);
-    modal.classList.remove("show");
+    activeOrder = null;          // 🔹 clear current order after update
+    hideOrderModal();            // use the same close helper
     fetchOrders(currentPage);
+
   } catch (err) {
     console.error("❌ Failed to update order:", err);
     tErr('Could not update order', brief(err.message));

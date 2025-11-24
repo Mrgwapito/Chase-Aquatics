@@ -269,19 +269,68 @@ h2{
 }
 .modal .close:hover{ background:#f3f4f6; }
 
-#modalPaid, #modalDone{
-  appearance: none;
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--text);
-  padding: 10px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  margin-right: 6px;
+/* ============================================
+   🔘 Shared Modal Buttons (orders / delivery)
+   ============================================ */
+
+.modal-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 14px;
 }
-#modalPaid{ color: var(--good); border-color:#d1fae5; background:#f0fff6; }
-#modalDone{ color: var(--done); border-color:#dbeafe; background:#eef6ff; }
+
+.btn-modal {
+  appearance: none;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  transition: filter .12s ease,
+              transform .04s ease,
+              background-color .15s ease,
+              border-color .15s ease;
+}
+
+/* main action: Mark Paid, Mark Done, Out for delivery, etc. */
+.btn-modal--primary {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+.btn-modal--primary:hover {
+  filter: brightness(0.97);
+}
+
+/* danger action: Cancel order */
+.btn-modal--danger {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
+}
+.btn-modal--danger:hover {
+  background: #dc2626;
+}
+
+/* neutral/ghost: Cancel sa delivery popup, close, etc. */
+.btn-modal--ghost {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827;
+}
+.btn-modal--ghost:hover {
+  background: #f3f4f6;
+}
+
+/* click feedback */
+.btn-modal:active {
+  transform: translateY(1px);
+}
+
 
 /* =========
    Responsive (your preferred breakpoints)
@@ -1206,6 +1255,171 @@ h2{
   background: #fff;
 }
 
+/* ============================================
+   🚚 Out for Delivery / Courier Details Modal
+   ============================================ */
+
+#deliveryModal .modal-content {
+  max-width: 520px;
+  width: min(92vw, 520px);
+  padding: 22px 24px 16px;
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(2, 6, 23, .18);
+  background: #fff;
+  border: 1px solid var(--line);
+  position: relative;
+}
+
+/* Title */
+.delivery-modal__title {
+  margin: 4px 0 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Small subtitle / note (optional) */
+.delivery-modal__subtitle {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+/* Body layout */
+.delivery-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* Each field group */
+.delivery-modal__row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delivery-modal__row label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.delivery-modal__row small {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Inputs / selects / textarea */
+#deliveryModal input[type="text"],
+#deliveryModal input[type="tel"],
+#deliveryModal input[type="number"],
+#deliveryModal select,
+#deliveryModal textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  background: #fff;
+  color: #111827;
+}
+
+#deliveryModal textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+/* Slight focus ring */
+#deliveryModal input:focus,
+#deliveryModal select:focus,
+#deliveryModal textarea:focus {
+  outline: 2px solid #bfdbfe;
+  outline-offset: 1px;
+  border-color: #60a5fa;
+}
+
+/* Footer buttons */
+.delivery-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 14px;
+}
+
+/* Save = green, Cancel = neutral gray */
+#btnSaveDelivery,
+#btnCancelDelivery {
+  appearance: none;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  transition: filter .12s ease, transform .04s ease, background-color .15s ease, border-color .15s ease;
+}
+
+#btnSaveDelivery {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+#btnSaveDelivery:hover {
+  filter: brightness(0.97);
+}
+
+#btnCancelDelivery {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+#btnCancelDelivery:hover {
+  background: #f3f4f6;
+}
+
+/* Click feedback */
+#btnSaveDelivery:active,
+#btnCancelDelivery:active {
+  transform: translateY(1px);
+}
+
+/* Close X sa taas (same look as orderModal) */
+#deliveryModal .close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: 0;
+  padding: 6px;
+  line-height: 1;
+  font-size: 22px;
+  color: #6b7280;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#deliveryModal .close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* Responsive tweaks: tighter spacing on small screens */
+@media (max-width: 480px) {
+  #deliveryModal .modal-content {
+    padding: 18px 16px 14px;
+  }
+  .delivery-modal__title {
+    font-size: 17px;
+  }
+}
+
+
 .order-modal__title {
   margin: 4px 0 14px;
   font-size: 20px;
@@ -1772,3 +1986,41 @@ h2{
   }
 }
 
+/* Override para sa Logout button lang */
+.nav-icons .nav-logout-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 4px 12px;          /* mas maliit na button */
+  font-size: 15px;            /* sakto lang na laki ng text */
+
+  border-radius: 999px;       /* pill style */
+  border: 1px solid transparent;
+  background: transparent;
+  color: #335A02;
+
+  cursor: pointer;
+  transition:
+    background-color .15s ease,
+    border-color .15s ease,
+    color .15s ease,
+    transform .04s ease;
+}
+
+/* icon size medyo liitan pa */
+.nav-icons .nav-logout-btn i{
+  font-size: 16px;
+}
+
+/* hover = red button style */
+.nav-icons .nav-logout-btn:hover{
+  background: #fee2e2;        /* light red bg */
+  border-color: #fecaca;      /* light red border */
+  color: #b91c1c;             /* dark red text/icon */
+  transform: translateY(1px);
+}
+
+.nav-icons .nav-logout-btn:hover i{
+  color: inherit;             /* sundan yung red color sa hover */
+}
