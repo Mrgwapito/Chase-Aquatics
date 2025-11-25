@@ -1863,7 +1863,7 @@ async function fetchLogs(page = 1) {
         <td>${time}</td>
         <td class="log-snippet" title="${esc(log.message)}">${esc(log.message)}</td>
         <td style="text-align:right">
-          <button class="viewLog invEdit" data-id="${log._id}">Edit</button>
+          <button class="viewLog invEdit" data-id="${log._id}">View</button>
         </td>
       `;
       tr.querySelector('.viewLog').addEventListener('click', () => openModal(log));
