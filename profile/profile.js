@@ -55,10 +55,23 @@ function notify({
 
 
 
-  // ======= Initialize EmailJS =======
-  if (typeof emailjs !== "undefined") {
-    emailjs.init("hhTpOoi07kd04LwsH");
+// ======= Initialize EmailJS (safe) =======
+(function initEmailJS() {
+  function doInit() {
+    if (window.emailjs && typeof emailjs.init === "function") {
+      emailjs.init("hhTpOoi07kd04LwsH"); // public key mo
+      console.log("✅ EmailJS initialized in profile.js");
+    } else {
+      console.warn("⚠️ EmailJS still not available in profile.js");
+    }
   }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", doInit);
+  } else {
+    doInit();
+  }
+})();
 
   // ======= DOM Elements =======
   const editBtn = document.getElementById("editProfileBtn");
@@ -398,44 +411,107 @@ inputs.forEach((input) => (input.disabled = true));
     });
   }
 
-  // ======= SEND EMAIL OTP (profile email change) =======
-  if (sendEmailOtpBtn) {
-    sendEmailOtpBtn.addEventListener("click", () => {
-      const userEmail = emailInput?.value?.trim?.() || "";
-      const userName  = document.querySelector(".user-name")?.textContent || "User";
+// ======= SEND EMAIL OTP (profile email change) =======
+if (sendEmailOtpBtn) {
+  sendEmailOtpBtn.addEventListener("click", () => {
+    const storedEmail =
+      (window.LIBX_CURRENT_USER_EMAIL || originalEmail || "").trim();
 
-      if (!userEmail) {
-        notify({ title: 'Missing email', message: 'Enter your email before sending an OTP.', type: 'error', duration: 5000, position: 'top' });
-        return;
-      }
+    const userEmail =
+      storedEmail ||
+      emailInput?.value?.trim?.() ||
+      "";
 
-      generatedEmailOtp = Math.floor(100000 + Math.random() * 900000);
-      otpSent = true;
-      emailVerified = false;
+    const userName  =
+      document.querySelector(".user-name")?.textContent || "User";
 
-      if (emailTargetPreview) emailTargetPreview.textContent = userEmail;
+    console.log('[PROFILE OTP send]', {
+      storedEmail,
+      originalEmail,
+      emailInputValue: emailInput?.value,
+      userEmail
+    });
 
-      emailjs.send("service_2bfbogr", "template_bcfsv7i", {
-        to_email: userEmail,
-        name: userName,
-        otp_code: generatedEmailOtp,
-        time: new Date().toLocaleString(),
+    if (!userEmail) {
+      notify({
+        title: 'Missing email',
+        message: 'Enter your email before sending an OTP.',
+        type: 'error',
+        duration: 5000,
+        position: 'top'
+      });
+      return;
+    }
+
+    generatedEmailOtp = Math.floor(100000 + Math.random() * 900000);
+    otpSent = true;
+    emailVerified = false;
+
+    if (emailTargetPreview) emailTargetPreview.textContent = userEmail;
+
+    // ✅ Guard: make sure EmailJS is loaded so frontend won't crash
+    if (!window.emailjs || typeof emailjs.send !== "function") {
+      console.error("EmailJS is not available on the page.");
+      notify({
+        title: 'Send failed',
+        message: 'Email service is not ready. Please refresh and try again.',
+        type: 'error',
+        duration: 6000,
+        position: 'top'
+      });
+      return;
+    }
+
+    emailjs.send(
+      "service_2bfbogr",
+      "template_bcfsv7i",
+      {
+        to_name: userName,
+        brand: "Life in a Box",
+        submitted_at: new Date().toLocaleString(),
+        otp: String(generatedEmailOtp),
+        otp_window_minutes: "10",
+        logo_url: "",
+        verify_url: "",
+
+        // 👇 send all common email params
+        email:      userEmail,
+        to_email:   userEmail,
+        reply_to:   userEmail,
+        user_email: userEmail,
+
+        subject: "Verify your Life in a Box email",
         message: `Your OTP for Life in a Box: ${generatedEmailOtp}`,
-      })
-      .then(() => {
-        notify({ title: 'OTP sent', message: `We sent a code to ${userEmail}.`, type: 'info', duration: 5000, position: 'top' });
-        console.log("Profile Email OTP:", generatedEmailOtp);
-        // show OTP section if hidden
-        if (emailOtpSection) emailOtpSection.hidden = false;
-        verifyEmailOtpBtn?.removeAttribute('disabled');
-        emailOtpInput?.focus();
-      })
-      .catch((err) => {
-        console.error("EmailJS Error:", err);
-        notify({ title: 'Send failed', message: 'Could not send OTP. Please try again.', type: 'error', duration: 6000, position: 'top' });
+      },
+      "hhTpOoi07kd04LwsH"
+    )
+    .then(() => {
+      notify({
+        title: 'OTP sent',
+        message: `We sent a code to ${userEmail}.`,
+        type: 'info',
+        duration: 5000,
+        position: 'top'
+      });
+      console.log("Profile Email OTP:", generatedEmailOtp);
+      if (emailOtpSection) emailOtpSection.hidden = false;
+      verifyEmailOtpBtn?.removeAttribute('disabled');
+      emailOtpInput?.focus();
+    })
+    .catch((err) => {
+      console.error("EmailJS Error:", err);
+      notify({
+        title: 'Send failed',
+        message: 'Could not send OTP. Please try again.',
+        type: 'error',
+        duration: 6000,
+        position: 'top'
       });
     });
-  }
+  });
+}
+
+
 
 
   if (verifyEmailOtpBtn) {
@@ -448,6 +524,10 @@ inputs.forEach((input) => (input.disabled = true));
       if (enteredOtp === String(generatedEmailOtp)) {
         emailVerified = true;
         otpSent = false;
+
+        // 👉 update stored account email (gagamitin sa Change Password OTP)
+        window.LIBX_CURRENT_USER_EMAIL = (emailInput?.value || "").trim();
+
         notify({ title: 'Email verified', type: 'success', duration: 2200, position: 'br' });
         emailInput && (emailInput.disabled = true);
         emailOtpInput && (emailOtpInput.value = "");
@@ -517,10 +597,22 @@ inputs.forEach((input) => (input.disabled = true));
 
   // ======= Change Password – OTP send/verify =======
   function gateSavePassword(){
-    const passOk = pwInput.value.length >= 8 && pwInput.value === cpInput.value;
+    // safety checks in case elements are missing
+    if (!pwInput || !cpInput || !savePasswordBtn) return;
+
+    const passOk =
+      pwInput.value.length >= 8 &&
+      pwInput.value === cpInput.value;
+
     const canSave = pwEmailVerified && passOk;
-    savePasswordBtn?.toggleAttribute('disabled', !canSave);
+
+    if (canSave) {
+      savePasswordBtn.removeAttribute('disabled');
+    } else {
+      savePasswordBtn.setAttribute('disabled', '');
+    }
   }
+
 
   // palette-consistent status badge
   function showPwStatus(text, style){ // 'sent' | 'ok' | 'bad'
@@ -534,38 +626,106 @@ inputs.forEach((input) => (input.disabled = true));
     if(style==='bad'){ el.style.background='#f8d7da'; el.style.color='#842029'; el.style.borderColor='#842029'; }
   }
 
-  pwSendOtpBtn?.addEventListener('click', () => {
-    const userEmail = document.getElementById('emailInput')?.value?.trim?.() || '';
-    const userName  = document.querySelector('.user-name')?.textContent || 'User';
-    if (!userEmail) {
-      notify({ title:'Missing email', message:'Your account email is empty.', type:'error', duration:5000, position:'top' });
-      return;
-    }
+pwSendOtpBtn?.addEventListener('click', () => {
+  // 👉 use stored email from profile (no need UI field sa Security tab)
+  const storedEmail =
+    (window.LIBX_CURRENT_USER_EMAIL || originalEmail || "").trim();
 
-    pwOtpGenerated = Math.floor(100000 + Math.random() * 900000);
-    pwOtpSent      = true;
-    pwEmailVerified = false;
+  // Fallback pa rin sa #emailInput kung meron man
+  const userEmail =
+    storedEmail ||
+    document.getElementById("emailInput")?.value?.trim?.() ||
+    "";
 
-    pwOtpInput.removeAttribute('disabled');
-    pwVerifyOtpBtn.removeAttribute('disabled');
-    showPwStatus('Code sent','sent');
+  const userName =
+    document.querySelector(".user-name")?.textContent || "User";
 
-    emailjs.send("service_2bfbogr", "template_bcfsv7i", {
-      to_email: userEmail,
-      name: userName,
-      otp_code: pwOtpGenerated,
-      time: new Date().toLocaleString(),
-      message: `Your Life in a Box password change code: ${pwOtpGenerated}`,
-    })
-    .then(() => {
-      notify({ title:'OTP sent', message:`We sent a code to ${userEmail}.`, type:'info', duration:5000, position:'top' });
-      console.log('PW OTP:', pwOtpGenerated);
-    })
-    .catch(err => {
-      console.error('EmailJS Error:', err);
-      notify({ title:'Send failed', message:'Could not send OTP. Try again.', type:'error', duration:6000, position:'top' });
-    });
+  console.log('[PW OTP send] using email', {
+    storedEmail,
+    originalEmail,
+    domEmail: document.getElementById("emailInput")?.value,
+    userEmail
   });
+
+  if (!userEmail) {
+    notify({
+      title: "Missing email",
+      message: "Your account email is empty. Please reload the page and try again.",
+      type: "error",
+      duration: 5000,
+      position: "top",
+    });
+    console.error("No account email detected for password OTP.");
+    return;
+  }
+
+  pwOtpGenerated  = Math.floor(100000 + Math.random() * 900000);
+  pwOtpSent       = true;
+  pwEmailVerified = false;
+
+  pwOtpInput.removeAttribute("disabled");
+  pwVerifyOtpBtn.removeAttribute("disabled");
+  showPwStatus("Code sent", "sent");
+
+  // ✅ Guard: make sure EmailJS is loaded so frontend won't crash
+  if (!window.emailjs || typeof emailjs.send !== "function") {
+    console.error("EmailJS is not available on the page.");
+    notify({
+      title: "Send failed",
+      message: "Email service is not ready. Please refresh and try again.",
+      type: "error",
+      duration: 6000,
+      position: "top",
+    });
+    return;
+  }
+
+  emailjs
+    .send(
+      "service_2bfbogr",
+      "template_bcfsv7i",
+      {
+        to_name: userName,
+        brand: "Life in a Box",
+        submitted_at: new Date().toLocaleString(),
+        otp: String(pwOtpGenerated),
+        otp_window_minutes: "10",
+        logo_url: "",
+        verify_url: "",
+
+        // 👇 send all common email params
+        email:      userEmail,
+        to_email:   userEmail,
+        reply_to:   userEmail,
+        user_email: userEmail,
+
+        subject: "Life in a Box password change code",
+        message: `Your Life in a Box password change code: ${pwOtpGenerated}`,
+      },
+      "hhTpOoi07kd04LwsH" // public key
+    )
+    .then(() => {
+      notify({
+        title: "OTP sent",
+        message: `We sent a code to ${userEmail}.`,
+        type: "info",
+        duration: 5000,
+        position: "top",
+      });
+      console.log("PW OTP:", pwOtpGenerated);
+    })
+    .catch((err) => {
+      console.error("EmailJS Error:", err);
+      notify({
+        title: "Send failed",
+        message: "Could not send OTP. Try again.",
+        type: "error",
+        duration: 6000,
+        position: "top"
+      });
+    });
+});
+
 
   pwVerifyOtpBtn?.addEventListener('click', () => {
     if (!pwOtpSent) {
@@ -591,28 +751,63 @@ inputs.forEach((input) => (input.disabled = true));
   // ======= CHANGE PASSWORD submit =======
   if (savePasswordBtn) {
     savePasswordBtn.addEventListener("click", async () => {
-      const newPassword = pwInput?.value?.trim?.() || "";
-      const confirmPassword = cpInput?.value?.trim?.() || "";
+      const newPassword      = pwInput?.value?.trim?.() || "";
+      const confirmPassword  = cpInput?.value?.trim?.() || "";
 
       if (!pwEmailVerified) {
-        notify({ title:'Verify email', message:'Please verify the email code first.', type:'error', duration:5000, position:'top' });
+        notify({
+          title: 'Verify email',
+          message: 'Please verify the email code first.',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
         return;
       }
       if (!newPassword || !confirmPassword) {
-        notify({ title: 'Missing info', message: 'Fill out both password fields.', type: 'error', duration: 5000, position: 'top' });
+        notify({
+          title: 'Missing info',
+          message: 'Fill out both password fields.',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
         return;
       }
       if (newPassword.length < 8) {
-        notify({ title: 'Weak password', message: 'Minimum 8 characters.', type: 'error', duration: 5000, position: 'top' });
+        notify({
+          title: 'Weak password',
+          message: 'Minimum 8 characters.',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
         return;
       }
       if (newPassword !== confirmPassword) {
-        notify({ title: 'Passwords do not match', type: 'error', duration: 5000, position: 'top' });
+        notify({
+          title: 'Passwords do not match',
+          type: 'error',
+          duration: 5000,
+          position: 'top'
+        });
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        notify({
+          title: 'Session expired',
+          message: 'Please log in again.',
+          type: 'error',
+          duration: 6000,
+          position: 'top'
+        });
+        window.location.href = "../index.html";
         return;
       }
 
       try {
-        const token = localStorage.getItem("token");
         const response = await fetch(`${BACKEND_URL}/api/change-password`, {
           method: "PUT",
           headers: {
@@ -623,42 +818,96 @@ inputs.forEach((input) => (input.disabled = true));
         });
 
         let data;
-        try { data = await response.json(); }
-        catch { throw new Error("Response is not JSON (check backend route)."); }
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Response is not JSON (check backend route).");
+        }
 
         if (data.success) {
-          notify({ title: 'Password updated', type: 'success', duration: 2200, position: 'br' });
-          pwInput.value = '';
-          cpInput.value = '';
+          notify({
+            title: 'Password updated',
+            type: 'success',
+            duration: 2200,
+            position: 'br'
+          });
+
+          if (pwInput) pwInput.value = '';
+          if (cpInput) cpInput.value = '';
           updatePwMeter();
-          // reset OTP gate
+
+          // reset OTP gate (reuse same logic as switchTab)
           pwEmailVerified = false;
-          pwOtpSent = false;
-          pwOtpGenerated = null;
-          pwOtpInput.value = '';
-          pwOtpInput.setAttribute('disabled','');
-          pwVerifyOtpBtn.setAttribute('disabled','');
-          pwOtpStatus.classList.add('d-none');
-          pwOtpStatus.textContent = '';
-          pwOtpStatus.removeAttribute('style');
-          savePasswordBtn.setAttribute('disabled','');
+          pwOtpSent       = false;
+          pwOtpGenerated  = null;
+
+          if (pwOtpInput) {
+            pwOtpInput.value = '';
+            pwOtpInput.setAttribute('disabled', '');
+          }
+          if (pwVerifyOtpBtn) {
+            pwVerifyOtpBtn.setAttribute('disabled', '');
+          }
+          if (pwOtpStatus) {
+            pwOtpStatus.classList.add('d-none');
+            pwOtpStatus.textContent = '';
+            pwOtpStatus.removeAttribute('style');
+          }
+          if (savePasswordBtn) {
+            savePasswordBtn.setAttribute('disabled', '');
+          }
         } else {
-          notify({ title: 'Update failed', message: data.message || 'Unable to update password.', type: 'error', duration: 6000, position: 'top' });
+          notify({
+            title: 'Update failed',
+            message: data.message || 'Unable to update password.',
+            type: 'error',
+            duration: 6000,
+            position: 'top'
+          });
         }
       } catch (err) {
         console.error("Error updating password:", err);
-        notify({ title: 'Update failed', message: err.message, type: 'error', duration: 6000, position: 'top' });
+        notify({
+          title: 'Update failed',
+          message: err.message,
+          type: 'error',
+          duration: 6000,
+          position: 'top'
+        });
       }
     });
   }
 
+
   if (cancelPasswordBtn) {
     cancelPasswordBtn.addEventListener("click", () => {
-      pwInput.value = '';
-      cpInput.value = '';
+      if (pwInput) pwInput.value = '';
+      if (cpInput) cpInput.value = '';
       updatePwMeter();
+
+      // also reset OTP + button state for security
+      pwEmailVerified = false;
+      pwOtpSent       = false;
+      pwOtpGenerated  = null;
+
+      if (pwOtpInput) {
+        pwOtpInput.value = '';
+        pwOtpInput.setAttribute('disabled', '');
+      }
+      if (pwVerifyOtpBtn) {
+        pwVerifyOtpBtn.setAttribute('disabled', '');
+      }
+      if (pwOtpStatus) {
+        pwOtpStatus.classList.add('d-none');
+        pwOtpStatus.textContent = '';
+        pwOtpStatus.removeAttribute('style');
+      }
+      if (savePasswordBtn) {
+        savePasswordBtn.setAttribute('disabled', '');
+      }
     });
   }
+
 
   function setSelectValueLoose(sel, desired) {
     if (!sel || !desired) return false;
@@ -721,18 +970,22 @@ if (bSel && user.barangay) {
   // ======= LOAD USER PROFILE =======
   (async function loadProfile() {
     const token = localStorage.getItem("token");
- if (!token) {
+if (!token) {
   notify({
     title: 'Not signed in',
     message: 'Please log in first.',
     type: 'error',
-    duration: 5000,
+    duration: 2000,
     position: 'top'
   });
 
-  window.location.href = "../index.html";
+  setTimeout(() => {
+    window.location.href = "../index.html";
+  }, 800);
+
   return;
 }
+
 
 
     try {
@@ -753,8 +1006,12 @@ if (bSel && user.barangay) {
 
       const user = data.user;
 
+      // 👉 store email globally para magamit sa Security / Change Password
+      window.LIBX_CURRENT_USER_EMAIL = (user.email || "").trim();
+
       // --- basic profile fields
       const uiName = user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "New User";
+
       const nameEl = document.querySelector(".user-name");
       if (nameEl) nameEl.textContent = uiName;
 
@@ -1306,18 +1563,34 @@ if (targetSel === '#pane-address') {
     }
 
     if (targetSel === '#pane-security') {
+      // reset OTP + meter state each time you open Security tab
       pwEmailVerified = false;
-      pwOtpSent = false;
-      pwOtpGenerated = null;
-      pwOtpInput.value = '';
-      pwOtpInput.setAttribute('disabled','');
-      pwVerifyOtpBtn.setAttribute('disabled','');
-      pwOtpStatus.classList.add('d-none');
-      pwOtpStatus.textContent = '';
-      pwOtpStatus.removeAttribute('style');
-      savePasswordBtn?.setAttribute('disabled','');
+      pwOtpSent       = false;
+      pwOtpGenerated  = null;
+
+      if (pwOtpInput) {
+        pwOtpInput.value = '';
+        pwOtpInput.setAttribute('disabled', '');
+      }
+      if (pwVerifyOtpBtn) {
+        pwVerifyOtpBtn.setAttribute('disabled', '');
+      }
+      if (pwOtpStatus) {
+        pwOtpStatus.classList.add('d-none');
+        pwOtpStatus.textContent = '';
+        pwOtpStatus.removeAttribute('style');
+      }
+
+      if (pwInput) pwInput.value = '';
+      if (cpInput) cpInput.value = '';
+
+      if (savePasswordBtn) {
+        savePasswordBtn.setAttribute('disabled', '');
+      }
+
       updatePwMeter();
     }
+
 
     updateRightPaneForTab(targetSel);
   }

@@ -1754,7 +1754,7 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
 
 
     // ------------------------------------------------------------
-    // 💰 STEP 2: Compute totals (same as before)
+    // 💰 STEP 2: Compute totals (includes 12% VAT, same as checkout.js)
     // ------------------------------------------------------------
     const shipping   = 100;
     const subtotal   = cart.reduce(
@@ -1762,7 +1762,10 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
         sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
       0
     );
-    const totalAmount = subtotal + shipping;
+    const VAT_RATE   = 0.12;
+    const vat        = Number((subtotal * VAT_RATE).toFixed(2));
+    const totalAmount = subtotal + vat + shipping;
+
 
     // ------------------------------------------------------------
     // 🧾 STEP 3: Create the order (now that stock is locked)
@@ -1777,6 +1780,7 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
       shippingAddress,   // 👈 NEW: structured shipping subdocument
       cart,
       subtotal,
+      vat,
       shipping,
       totalAmount,
       paymentMethod,
@@ -1789,45 +1793,23 @@ app.post("/api/orders", upload.single("payReceipt"), async (req, res) => {
       },
     });
 
-    // ------------------------------------------------------------
-    // ✉️ STEP 4: Build EmailJS template + optional server email
-    // ------------------------------------------------------------
-    const emailTemplate = buildOrderEmailTemplate(order);
 
-    // Optional: server-side EmailJS (controlled by EMAILJS_ENABLE_SERVER)
 // ------------------------------------------------------------
-// ✉️ STEP 4: Try to send order confirmation email via EmailJS
+// ✉️ STEP 4: Build EmailJS template (browser will send email)
 // ------------------------------------------------------------
-try {
-  const emailOk = await sendOrderConfirmationEmail(order);
+const emailTemplate = buildOrderEmailTemplate(order);
 
-  if (!emailOk) {
-    console.warn(
-      "⚠️ Order created, but EmailJS did not send (orderId: %s, email: %s)",
-      order.orderId || String(order._id),
-      order.email
-    );
-  } else {
-    console.log(
-      "✅ Order confirmation email sent (orderId: %s, email: %s)",
-      order.orderId || String(order._id),
-      order.email
-    );
-  }
-} catch (err) {
-  console.error(
-    "❌ Failed to send order confirmation email (server-side):",
-    err
-  );
-}
+// NOTE:
+// Email confirmation will now be sent from the BROWSER via EmailJS.
+// EmailJS blocks non-browser (server) calls with:
+//   "403 API calls are disabled for non-browser applications"
+return res.json({
+  success: true,
+  message: "Order placed successfully!",
+  order,
+  emailTemplate, // 👈 checkout.js will use this with emailjs.send(...)
+});
 
-
-    return res.json({
-      success: true,
-      message: "Order placed successfully!",
-      order,
-      emailTemplate, // 👈 used by checkout.js
-    });
   } catch (err) {
     console.error("POST /api/orders error:", err);
     res.status(500).json({
@@ -2824,10 +2806,20 @@ function buildOrderEmailTemplate(order) {
 
   const subtotal    = Number(order.subtotal || 0);
   const shipping    = Number(order.shipping || 0);
-  const totalAmount = Number(order.totalAmount || subtotal + shipping);
 
-  // For now, VAT is 0 so totals match your DB
-  const vatAmount = 0;
+  const VAT_RATE = 0.12;
+
+  // Prefer VAT saved on the order, otherwise compute 12% of subtotal
+  const vatAmount = order.vat != null
+    ? Number(order.vat)
+    : Number((subtotal * VAT_RATE).toFixed(2));
+
+  // Total should be subtotal + VAT + shipping
+  const totalAmount = Number(
+    order.totalAmount ||
+    subtotal + vatAmount + shipping
+  );
+
 
   return {
     // 👇 needed by your EmailJS template header

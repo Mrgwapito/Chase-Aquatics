@@ -129,11 +129,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 
-  const orderItemsContainer = document.getElementById("order-items");
-  const subtotalEl = document.getElementById("order-subtotal");
-  const shippingEl = document.getElementById("order-shipping");
-  const totalEl = document.querySelector(".order-total-value");
-  const orderIdEl = document.getElementById("order-id");
+const orderItemsContainer = document.getElementById("order-items");
+const subtotalEl = document.getElementById("order-subtotal");
+const totalEl = document.querySelector(".order-total-value");
+const orderIdEl = document.getElementById("order-id");
+
 
   // ================================================================
   // 🧾 Generate a unique order ID (every page load) — unchanged
@@ -167,21 +167,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 🧩 FUNCTIONS
   // ================================================================
 
-  function renderEmptyCart() {
-    if (orderItemsContainer) {
-      orderItemsContainer.innerHTML = `
-        <div class="text-center text-muted py-5">
-          <p>Your cart is empty.</p>
-          <a href="../product.html" class="btn btn-outline-secondary mt-3">
-            <i class="fa-solid fa-arrow-left"></i> Continue Shopping
-          </a>
-        </div>
-      `;
-    }
-    if (subtotalEl) subtotalEl.textContent = "₱0.00";
-    if (shippingEl) shippingEl.textContent = "₱0.00";
-    if (totalEl) totalEl.textContent = "₱0.00";
+function renderEmptyCart() {
+  if (orderItemsContainer) {
+    orderItemsContainer.innerHTML = `
+      <div class="text-center text-muted py-5">
+        <p>Your cart is empty.</p>
+        <a href="../product.html" class="btn btn-outline-secondary mt-3">
+          <i class="fa-solid fa-arrow-left"></i> Continue Shopping
+        </a>
+      </div>
+    `;
   }
+  if (subtotalEl) subtotalEl.textContent = "₱0.00";
+  if (totalEl) totalEl.textContent = "₱0.00";
+}
+
 
   async function renderCartItems() {
     let subtotal = 0;
@@ -257,13 +257,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // 🧮 Totals
-    const shipping = subtotal > 0 ? 100 : 0;
-    const total = subtotal + shipping;
-    if (subtotalEl) subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
-    if (shippingEl) shippingEl.textContent = `₱${shipping.toFixed(2)}`;
-    if (totalEl) totalEl.textContent = `₱${total.toFixed(2)}`;
+// 🧮 Totals (this page = items only; shipping shown at checkout)
+const total = subtotal;
+if (subtotalEl) subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
+if (totalEl) totalEl.textContent = `₱${total.toFixed(2)}`;
 
-     attachRemoveEvents();
+attachRemoveEvents();
+
 
     console.log("✅ Order summary rendered successfully.");
   }

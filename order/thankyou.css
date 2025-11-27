@@ -303,3 +303,15 @@ body {
   background: #6096B4;
   color: #fff;
 }
+
+/* === PDF/receipt safety tweaks === */
+#receiptWrapper,
+#receipt {
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* give extra space under the totals so html2pdf doesn't cut the last line */
+.ty-card-inner {
+  padding-bottom: 40px; /* was probably 24px or similar in your file */
+}

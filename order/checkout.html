@@ -178,26 +178,63 @@
           <h5 class="mb-3" style="color:#335A02;">Your Order</h5>
           <div id="checkout-items" class="order-items"></div>
 
-          <div class="order-costs">
-            <div class="cost-row"><span>Subtotal</span><span id="checkout-subtotal">₱0.00</span></div>
-            <div class="cost-row"><span>Shipping</span><span id="checkout-shipping">₱100.00</span></div>
-          </div>
+<!-- NEW: totals + VAT -->
+<div class="order-costs">
+  <div class="cost-row">
+    <span>Subtotal</span>
+    <span id="checkout-subtotal">₱0.00</span>
+  </div>
 
-          <div class="order-total text-end mt-3">
-            <h4><span>Total</span><span id="checkout-total" class="order-total-value">₱0.00</span></h4>
-          </div>
+  <div class="cost-row">
+    <span>VAT 12%</span>
+    <span id="checkout-vat">₱0.00</span>
+  </div>
+
+  <div class="cost-row">
+    <span>Shipping (base rate)</span>
+    <span id="checkout-shipping">₱100.00</span>
+  </div>
+
+  <p class="text-muted small mb-0">
+    Final shipping fee may still change depending on your location and courier.
+    We’ll email you the exact amount before confirming your order.
+  </p>
+</div>
+
+<div class="order-total text-end mt-3">
+  <h4>
+    <span>Total</span>
+    <span id="checkout-total" class="order-total-value">₱0.00</span>
+  </h4>
+</div>
+
+
 
           <!-- 🌍 Estimated Shipping by Location -->
-          <div id="shipping-estimator-card" class="mt-3">
-            <h6 class="mb-1" style="color:#335A02;">Estimated shipping based on your location</h6>
-            <p class="small text-muted mb-2">
-              Tap on the map to drop a pin near your address. Shipping fee will adjust based on distance from the shop.
-            </p>
-            <div id="shipping-map" style="width:100%;height:220px;border-radius:10px;overflow:hidden;border:1px solid #ddd;"></div>
-            <p id="shipping-distance-text" class="small mt-2 text-muted">
-              Default shipping applied. No location selected yet.
-            </p>
-          </div>
+<div id="shipping-estimator-card" class="mt-3">
+  <h6 class="mb-1" style="color:#335A02;">Shipping estimate (for your reference only)</h6>
+  <p class="small text-muted mb-2">
+    This map gives an estimated courier fee based on distance from the shop.
+    It will <strong>not</strong> change your checkout total. We’ll email you the
+    exact shipping amount once we confirm the best courier for your location.
+  </p>
+
+  <div id="shipping-map"
+       style="width:100%;height:220px;border-radius:10px;overflow:hidden;border:1px solid #ddd;"></div>
+
+  <div class="mt-2 small d-flex justify-content-between">
+    <span>Estimated shipping</span>
+    <span id="shipping-estimate-amount">₱0.00</span>
+  </div>
+  <div class="small d-flex justify-content-between">
+    <span>Estimated order total</span>
+    <span id="shipping-estimate-total">₱0.00</span>
+  </div>
+
+  <p id="shipping-distance-text" class="small mt-2 text-muted">
+    Tap on the map to drop a pin near your address.
+  </p>
+</div>
 
         </div>
       </div>
@@ -210,7 +247,7 @@
 
       <!-- Logo/About -->
       <div class="col-12 col-lg-3">
-        <img src="./logo.png" alt="Life In A Box Logo" style="max-width:140px;">
+        <img src="../logo.png" alt="Life In A Box Logo" style="max-width:140px;">
         <p class="mt-3 mb-0 small">Bringing the ocean's beauty to your space</p>
       </div>
 

@@ -608,3 +608,50 @@ footer i {
   /* Icon links: lighter by default, bright on hover */
   .site-footer .hover-white{ color: rgba(255,255,255,.5) !important; }
   .site-footer .hover-white:hover{ color:#fff !important; }
+
+  /* Totals area wrapper */
+.order-costs {
+  margin-top: 1.5rem;
+  border-top: 1px solid #eee;
+  padding-top: 1.25rem;
+}
+
+/* Each row: label left, value right */
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+}
+
+/* Lighter row for shipping info */
+.cost-row-muted {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Final total block */
+.order-total {
+  border-top: 1px solid #eee;
+  padding-top: 1.25rem;
+}
+
+/* “Order total” row */
+.order-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+/* Left label */
+.order-total-label {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* Right value – big green number like before */
+.order-total-value {
+  font-weight: 800;
+  font-size: 1.3rem;
+}

@@ -259,24 +259,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     itemsContainer.insertAdjacentHTML("beforeend", itemHTML);
   });
 
-  // 💰 BMBE / non-VAT:
-  // Prices shown to the customer are already final.
-  // We don’t break out VAT, we just show subtotal + shipping.
-  const grossSubtotal = subtotal;   // final item subtotal (no VAT split)
-  const vat           = 0;
+  // 💰 Subtotal + VAT + Shipping
+  // For computation: VAT is 12% of the subtotal.
+const grossSubtotal = subtotal;   // item subtotal
+const VAT_RATE = 0.12;           // 12% standard VAT
+const vatAmount = parseFloat((grossSubtotal * VAT_RATE).toFixed(2));
 
-  // remember totals so we can show on thankyou page
-  latestTotals = {
-    subtotal: grossSubtotal,
-    vat,
-    shipping,
-    total: grossSubtotal + shipping,
-  };
+// remember totals so we can show on thankyou page
+latestTotals = {
+  subtotal: grossSubtotal,
+  vat: vatAmount,
+  shipping,
+  total: grossSubtotal + vatAmount + shipping,
+};
 
-  if (subtotalEl) subtotalEl.textContent = `₱${grossSubtotal.toFixed(2)}`;
-  if (vatEl)      vatEl.textContent      = `₱${vat.toFixed(2)}`;
-  if (shippingEl) shippingEl.textContent = `₱${shipping.toFixed(2)}`;
-  if (totalEl)    totalEl.textContent    = `₱${latestTotals.total.toFixed(2)}`;
+if (subtotalEl) subtotalEl.textContent = `₱${grossSubtotal.toFixed(2)}`;
+if (vatEl)      vatEl.textContent      = `₱${vatAmount.toFixed(2)}`;
+if (shippingEl) shippingEl.textContent = `₱${shipping.toFixed(2)}`;
+if (totalEl)    totalEl.textContent    = `₱${latestTotals.total.toFixed(2)}`;
 
 
 
@@ -396,159 +396,189 @@ if (!checkoutForm) {
         throw new Error(`Unexpected server response: ${text.slice(0, 200)}`);
       }
 
+      // ✅ Treat any response with data.success === true as success
 // ✅ Treat any response with data.success === true as success
-      if (data && data.success) {
-        // 🔔 Try to send the order confirmation email from the BROWSER via EmailJS
-        try {
-          if (window.emailjs && data.emailTemplate) {
-            // Init with the PUBLIC key that belongs to service_1c8lq6n / template_3v3z8n7
-            emailjs.init("HCwUJE1S2hr3TtLfB");
+if (data && data.success) {
+  // 🔔 Send order confirmation email via EmailJS (browser)
+  try {
+    const serverOrder = data.order || data.savedOrder || null;
+    const orderId = serverOrder?.orderId || serverOrder?._id || data.orderId || "ORD-0000";
 
-            emailjs
-              .send("service_1c8lq6n", "template_3v3z8n7", data.emailTemplate)
-              .then(() => {
-                console.log("📨 Order confirmation email sent (browser)");
-              })
-              .catch((err) => {
-                console.warn("⚠️ EmailJS browser send failed:", err);
-              });
-          } else {
-            console.log(
-              "ℹ️ EmailJS not loaded on this page or emailTemplate missing from response."
-            );
-          }
-        } catch (e) {
-          console.warn("⚠️ Error triggering EmailJS in browser:", e);
-        }
+    console.log("🔄 Starting email sending process...");
+    console.log("📧 Recipient:", bodyFields.email);
+    console.log("🆔 Order ID:", orderId);
 
-        // 🧾 Build a compact order summary for the thankyou page
-        const serverOrder = data.order || data.savedOrder || null;
+    // Build email template that MATCHES your EmailJS template parameters
+    const emailTemplate = {
+      // Basic recipient info
+      to_email: bodyFields.email,
+      to_name: bodyFields.name || bodyFields.email.split('@')[0],
+      
+      // Brand and submission info
+      brand: "Life in a Box",
+      submitted_at: new Date().toLocaleString(),
+      
+      // Order details (MUST match template variables)
+      order_id: orderId,
+      order_date: new Date().toLocaleString(),
+      order_status: "Pending",
+      payment_method: bodyFields.paymentMethod || "COD",
+      fulfillment_method: bodyFields.fulfillment || "Delivery",
+      
+      // Customer info
+      customer_name: bodyFields.name,
+      email: bodyFields.email,
+      phone: bodyFields.phone || "",
+      
+      // Shipping address
+      shipping_name: bodyFields.name,
+      shipping_address_line1: bodyFields.address || "",
+      shipping_barangay: userData?.barangay || "",
+      shipping_city: userData?.city || "",
+      shipping_province: userData?.province || "",
+      shipping_postal: userData?.postalCode || "",
+      shipping_region: userData?.region || "Philippines",
+      
+      // Totals
+      subtotal_amount: latestTotals?.subtotal?.toFixed(2) || '0.00',
+      vat_amount: latestTotals?.vat?.toFixed(2) || '0.00',
+      shipping_amount: latestTotals?.shipping?.toFixed(2) || '100.00',
+      total_amount: latestTotals?.total?.toFixed(2) || '0.00',
+      
+      // Items count
+      items_count: cart.length,
+      
+      // Items HTML
+      items_html: buildItemsHTML(cart),
+    };
 
-        // 🔗 Prefer the CAQ-… order id generated in order_summary.js
-        const frontOrderId = localStorage.getItem("orderId");
+    console.log("📄 Email template parameters:", emailTemplate);
 
-        const orderId =
-          frontOrderId ||
-          (serverOrder &&
-            (serverOrder.orderCode ||
-             serverOrder.orderNumber ||
-             serverOrder.shortId ||
-             serverOrder._id)) ||
-          data.orderId ||
-          "ORD-0000";
-
-        const placedAt =
-          (serverOrder && serverOrder.createdAt) || new Date().toISOString();
-
-        const summary = {
-          orderId,
-          placedAt,
-          customer: {
-            name:  bodyFields.name,
-            email: bodyFields.email,
-            phone: bodyFields.phone,
-          },
-          shipping: {
-            line1: bodyFields.address || "",
-            barangay: "",
-            city: "",
-            province: "",
-            postal: "",
-            region: "",
-          },
-          paymentMethod: bodyFields.paymentMethod,
-          fulfillment:   bodyFields.fulfillment,
-          totals: latestTotals || {
-            subtotal: 0,
-            vat: 0,
-            shipping,
-            total: 0,
-          },
-          // prefer items from serverOrder if it has them, otherwise use the cart we just sent
-          items: (serverOrder && Array.isArray(serverOrder.items))
-            ? serverOrder.items
-            : cart,
-        };
-
-        try {
-          sessionStorage.setItem("lastOrderSummary", JSON.stringify(summary));
-        } catch (err) {
-          console.warn("⚠️ Unable to store lastOrderSummary:", err);
-        }
-
-        // ✅ CLEAR ONLY THE CHECKED-OUT ITEMS FROM CART
-        try {
-          const fullCart = loadCartLS();
-          let remaining = fullCart;
-
-          if (Array.isArray(checkoutSelection) && checkoutSelection.length > 0) {
-            // build keys for each selected item (id + optional size)
-            const selectedKeys = new Set(
-              checkoutSelection.map(it =>
-                `${it._id || it.productId || it.id}::${it.variant?.options?.Size || ''}`
-              )
-            );
-
-            // keep ONLY those NOT selected (so unselected items stay in cart)
-            remaining = fullCart.filter(it => {
-              const key = `${it._id || it.productId || it.id}::${it.variant?.options?.Size || ''}`;
-              return !selectedKeys.has(key);
-            });
-          } else {
-            // no selection info -> old behavior: clear all
-            remaining = [];
-          }
-
-          // update LS cart
-          saveCartLS(remaining);
-          localStorage.removeItem("cart_guest");
-
-          // update server cart accordingly
-          await fetch(`${API_BASE}/api/cart`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              items: (remaining || []).map(it => ({
-                productId: it._id || it.productId,
-                quantity: it.quantity,
-                title: it.title,
-                price: it.price,
-                image: it.image
-              }))
-            }),
+    // Check if EmailJS is available and initialized
+    if (window.emailjs) {
+      console.log("✅ EmailJS is loaded in window");
+      
+      try {
+        console.log("🔄 Initializing EmailJS...");
+        emailjs.init("HCwUJE1S2hr3TtLfB");
+        console.log("✅ EmailJS initialized successfully");
+        
+        console.log("🚀 Attempting to send email...");
+        const result = await emailjs.send("service_1c8lq6n", "template_3v3z8n7", emailTemplate);
+        
+        console.log("🎉 EMAIL SENT SUCCESSFULLY!");
+        console.log("📨 EmailJS Response:", result);
+        
+        if (window.Toast && typeof window.Toast.showToast === 'function') {
+          window.Toast.showToast({
+            title: 'Email Sent!',
+            message: 'Order confirmation email sent successfully!',
+            type: 'success',
+            duration: 5000
           });
-        } catch (err) {
-          console.warn("⚠️ Failed to clear cart after order:", err);
         }
-
-        // 🧹 Clear selection used for this checkout session
-        try {
-          sessionStorage.removeItem("checkoutItems");
-        } catch (e) {
-          console.warn("⚠️ Failed to clear checkoutItems:", e);
+        
+      } catch (emailError) {
+        console.error("💥 EMAIL SENDING FAILED!");
+        console.error("❌ Error details:", emailError);
+        
+        if (window.Toast && typeof window.Toast.showToast === 'function') {
+          window.Toast.showToast({
+            title: 'Email Failed',
+            message: 'Order placed but email failed: ' + (emailError.message || 'Unknown error'),
+            type: 'error',
+            duration: 10000
+          });
         }
-
-
-        // 🔔 Tell cart.js (if loaded) to refresh popup + badge
-        try {
-          window.dispatchEvent(new CustomEvent("cart:refresh"));
-        } catch (err) {
-          console.warn("⚠️ Failed to dispatch cart:refresh:", err);
-        }
-
-        // ✅ Redirect to receipt page which will read lastOrderSummary
-        window.location.href = "thankyou.html";
-        return;
       }
+      
+    } else {
+      console.error("❌ EmailJS NOT FOUND in window object!");
+      
+      if (window.Toast && typeof window.Toast.showToast === 'function') {
+        window.Toast.showToast({
+          title: 'EmailJS Missing',
+          message: 'Email service not loaded. Order placed but no confirmation email.',
+          type: 'warning',
+          duration: 8000
+        });
+      }
+    }
+
+  } catch (e) {
+    console.error("💥 UNEXPECTED ERROR IN EMAIL PROCESS:", e);
+  }
+
+  // 🧾 Build a compact order summary for the thankyou page
+  const serverOrder = data.order || data.savedOrder || null;
+  const frontOrderId = localStorage.getItem("orderId");
+  const orderId = frontOrderId || (serverOrder && (serverOrder.orderCode || serverOrder.orderNumber || serverOrder.shortId || serverOrder._id)) || data.orderId || "ORD-0000";
+  const placedAt = (serverOrder && serverOrder.createdAt) || new Date().toISOString();
+
+  // 🆕 Use structured shipping from server if available
+  const shipFromServer = serverOrder && serverOrder.shippingAddress ? serverOrder.shippingAddress : null;
+  const shippingSummary = {
+    line1: (shipFromServer && (shipFromServer.addressLine1 || shipFromServer.line1)) || bodyFields.address || "",
+    barangay: (shipFromServer && shipFromServer.barangay) || (userData && userData.barangay) || "",
+    city: (shipFromServer && shipFromServer.city) || (userData && userData.city) || "",
+    province: (shipFromServer && shipFromServer.province) || (userData && userData.province) || "",
+    postal: (shipFromServer && (shipFromServer.postalCode || shipFromServer.postal)) || (userData && userData.postalCode) || "",
+    region: (shipFromServer && shipFromServer.region) || (userData && userData.region) || "Philippines",
+  };
+
+  const summary = {
+    orderId,
+    placedAt,
+    customer: { name: bodyFields.name, email: bodyFields.email, phone: bodyFields.phone },
+    shipping: shippingSummary,
+    paymentMethod: bodyFields.paymentMethod,
+    fulfillment: bodyFields.fulfillment,
+    totals: latestTotals || { subtotal: 0, vat: 0, shipping, total: 0 },
+    items: serverOrder && Array.isArray(serverOrder.items) ? serverOrder.items : cart,
+  };
+
+  try {
+    sessionStorage.setItem("lastOrderSummary", JSON.stringify(summary));
+  } catch (err) {
+    console.warn("⚠️ Unable to store lastOrderSummary:", err);
+  }
+
+  // ✅ CLEAR ONLY THE CHECKED-OUT ITEMS FROM CART
+  try {
+    const fullCart = loadCartLS();
+    let remaining = fullCart;
+
+    if (Array.isArray(checkoutSelection) && checkoutSelection.length > 0) {
+      const selectedKeys = new Set(checkoutSelection.map(it => `${it._id || it.productId || it.id}::${it.variant?.options?.Size || ""}`));
+      remaining = fullCart.filter(it => {
+        const key = `${it._id || it.productId || it.id}::${it.variant?.options?.Size || ""}`;
+        return !selectedKeys.has(key);
+      });
+    } else {
+      remaining = [];
+    }
+
+    saveCartLS(remaining);
+    localStorage.removeItem("cart_guest");
+
+    await fetch(`${API_BASE}/api/cart`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ items: (remaining || []).map(it => ({ productId: it._id || it.productId, quantity: it.quantity, title: it.title, price: it.price, image: it.image })) }),
+    });
+
+    sessionStorage.removeItem("checkoutItems");
+    window.dispatchEvent(new CustomEvent("cart:refresh"));
+    
+    window.location.href = "thankyou.html";
+  } catch (err) {
+    console.warn("⚠️ Failed to clear cart after order:", err);
+    window.location.href = "thankyou.html";
+  }
+}
 
 
       // Not OK
-      const msg = (data && data.message) ? data.message : `HTTP ${res.status}`;
-      console.error("❌ Failed to place order:", data);
-      alert(`❌ Failed to place order: ${msg}`);
     } catch (err) {
       console.error("❌ Checkout Error:", err);
       alert("⚠️ Could not connect to backend. Please make sure your server is running (http://localhost:3000).");
@@ -559,7 +589,57 @@ if (!checkoutForm) {
 });
 
 
+// Helper function to build items HTML for email template
+function buildItemsHTML(cart) {
+  if (!Array.isArray(cart) || cart.length === 0) return '';
+  
+  return cart.map(item => {
+    const title = item.title || 'Item';
+    const qty = Number(item.quantity) || 1;
+    const price = Number(item.price) || 0;
+    const lineTotal = price * qty;
 
+    // Make image URL absolute for email
+    const imgUrl = item.image?.startsWith('http') 
+      ? item.image 
+      : item.image 
+        ? `https://chase-aquatics.onrender.com${item.image.startsWith('/') ? '' : '/'}${item.image}`
+        : 'https://via.placeholder.com/40x40?text=📦';
+
+    return `
+      <tr>
+        <td style="padding:8px 12px;border-top:1px solid #e5e7eb;">
+          <table role="presentation" cellspacing="0" cellpadding="0">
+            <tr>
+              <td width="44" valign="top" style="padding-right:8px;">
+                <img
+                  src="${imgUrl}"
+                  width="40"
+                  height="40"
+                  alt="${title}"
+                  style="display:block;border-radius:6px;object-fit:cover;"
+                />
+              </td>
+              <td valign="middle"
+                  style="font:400 13px/18px Montserrat,Arial,Helvetica,sans-serif;color:#111827;">
+                ${title}
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td align="right" style="padding:8px 12px;border-top:1px solid #e5e7eb;">
+          ${qty}
+        </td>
+        <td align="right" style="padding:8px 12px;border-top:1px solid #e5e7eb;">
+          ₱${price.toFixed(2)}
+        </td>
+        <td align="right" style="padding:8px 12px;border-top:1px solid #e5e7eb;">
+          ₱${lineTotal.toFixed(2)}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
 
 
 
@@ -722,18 +802,18 @@ if (!checkoutForm) {
   
 
 // ======================================================
-// 🌍 Estimated shipping map (Leaflet)
+// 🌍 Estimated shipping map (Leaflet) – estimate ONLY
 // ======================================================
 document.addEventListener('DOMContentLoaded', () => {
   const mapContainer = document.getElementById('shipping-map');
   if (!mapContainer) return; // safety
 
-  const subtotalEl   = document.getElementById('checkout-subtotal');
-  const shippingEl   = document.getElementById('checkout-shipping');
-  const totalEl      = document.getElementById('checkout-total');
-  const distanceText = document.getElementById('shipping-distance-text');
+  const subtotalDisplayEl = document.getElementById('checkout-subtotal');
+  const estShippingEl     = document.getElementById('shipping-estimate-amount');
+  const estTotalEl        = document.getElementById('shipping-estimate-total');
+  const distanceText      = document.getElementById('shipping-distance-text');
 
-  if (!subtotalEl || !shippingEl || !totalEl) return;
+  if (!subtotalDisplayEl || !estShippingEl || !estTotalEl) return;
 
   // 👉 Actual coordinates of your shop (Chase Aquatics)
   const SHOP_COORDS = {
@@ -755,7 +835,6 @@ document.addEventListener('DOMContentLoaded', () => {
     maxZoom: 18
   }).setView([SHOP_COORDS.lat, SHOP_COORDS.lng], 13);
 
-
   // Tile layer (OpenStreetMap)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -763,7 +842,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }).addTo(map);
 
   // Marker for shop
-  const shopMarker = L.marker([SHOP_COORDS.lat, SHOP_COORDS.lng])
+  L.marker([SHOP_COORDS.lat, SHOP_COORDS.lng])
     .addTo(map)
     .bindPopup('Chase Aquatics (Shop)')
     .openPopup();
@@ -803,11 +882,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return Math.max(100, Math.round(est));
   }
 
-  function updateTotalsWithShipping(newShipping) {
-    const subtotal = parseAmount(subtotalEl.textContent);
-    const total = subtotal + newShipping;
-    shippingEl.textContent = formatAmount(newShipping);
-    totalEl.textContent = formatAmount(total);
+  // 👉 Only updates the ESTIMATE labels, not the real checkout total
+  function updateEstimateTotals(newShipping) {
+    const subtotal = parseAmount(subtotalDisplayEl.textContent);
+    const estTotal = subtotal + newShipping;
+    estShippingEl.textContent = formatAmount(newShipping);
+    estTotalEl.textContent = formatAmount(estTotal);
   }
 
   // 📍 When user clicks map → drop/move pin + recompute
@@ -828,10 +908,9 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Estimated shipping is only available within NCR.');
       }
 
-      // Optional: reset text so klaro na walang estimate
       if (distanceText) {
         distanceText.textContent =
-          'Outside NCR – shipping fee will be confirmed by the courier.';
+          'Outside NCR – we’ll contact you via email with the exact shipping fee after checking couriers in your area.';
       }
 
       return; // ❌ wag mag-compute ng estimate
@@ -842,7 +921,6 @@ document.addEventListener('DOMContentLoaded', () => {
       customerMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
       customerMarker.bindPopup('Your location (drag to adjust)').openPopup();
 
-      // Also listen to drag end for fine-tuning
       customerMarker.on('dragend', (ev) => {
         const pos = ev.target.getLatLng();
         handleLocationChange(pos.lat, pos.lng);
@@ -859,7 +937,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 🛡 Double-check inside NCR (safety)
     if (!NCR_BOUNDS.contains(point)) {
-      // keep current shippingEl (e.g., default 100) – no change
       if (distanceText) {
         distanceText.textContent =
           'Outside NCR – shipping fee will be confirmed by the courier.';
@@ -868,13 +945,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const dist = distanceKm(SHOP_COORDS, { lat, lng }); // km
-    const shipping = computeShipping(dist);
-    updateTotalsWithShipping(shipping);
+    const shippingEstimate = computeShipping(dist);
+    updateEstimateTotals(shippingEstimate);
 
     if (distanceText) {
       distanceText.textContent =
-        `${dist.toFixed(1)} km from shop (within NCR). Shipping updated to ${formatAmount(shipping)}.`;
+        `${dist.toFixed(1)} km from shop (within NCR). This amount is an estimate only; final shipping will be emailed to you.`;
     }
   }
 });
-

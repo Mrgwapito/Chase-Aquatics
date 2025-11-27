@@ -270,18 +270,39 @@ function sendOrderStatusEmail(order, newStatus, meta = {}) {
     subtotal = Number(order.subtotal);
   }
 
-  const shippingAmount =
-    typeof meta.courierFee === "number" && !isNaN(meta.courierFee)
-      ? Number(meta.courierFee)
-      : Number(order.shipping || 0);
+  // 🔹 VAT: use backend value if meron, else compute 12% from subtotal
+  let vatAmount = 0;
+  if (order.vatAmount != null && !isNaN(Number(order.vatAmount))) {
+    vatAmount = Number(order.vatAmount);
+  } else if (order.taxAmount != null && !isNaN(Number(order.taxAmount))) {
+    // kung backend mo taxAmount ang pangalan
+    vatAmount = Number(order.taxAmount);
+  } else {
+    // fallback: 12% ng subtotal
+    vatAmount = subtotal * 0.12;
+  }
 
-  // total = subtotal + shipping (or use backend totalAmount if may value doon)
-  let totalAmount = subtotal + shippingAmount;
+  // 🔹 Shipping: courierFee (meta) → order.shipping / shippingFee / shippingAmount → fallback base 100
+  let shippingAmount = 0;
+  if (typeof meta.courierFee === "number" && !isNaN(meta.courierFee)) {
+    shippingAmount = Number(meta.courierFee);
+  } else if (order.shipping != null && !isNaN(Number(order.shipping))) {
+    shippingAmount = Number(order.shipping);
+  } else if (order.shippingFee != null && !isNaN(Number(order.shippingFee))) {
+    shippingAmount = Number(order.shippingFee);
+  } else if (order.shippingAmount != null && !isNaN(Number(order.shippingAmount))) {
+    shippingAmount = Number(order.shippingAmount);
+  } else {
+    // base rate kung wala talaga sa order (pareho sa note sa email: usually ₱100)
+    shippingAmount = 100;
+  }
+
+  // total = subtotal + VAT + shipping (or use backend totalAmount if may value doon)
+  let totalAmount = subtotal + vatAmount + shippingAmount;
   if (order.totalAmount != null && !isNaN(Number(order.totalAmount))) {
     totalAmount = Number(order.totalAmount);
   }
 
-  const vatAmount   = 0; // change if you want to compute real VAT
 
 
   // --- COD flag for {{#is_cod}} block in template ---

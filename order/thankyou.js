@@ -158,26 +158,36 @@ document.addEventListener("DOMContentLoaded", () => {
   if (shippingEl) shippingEl.textContent = fmt(totals.shipping);
   if (totalEl)    totalEl.textContent    = fmt(totals.total);
 
-  // ------------------------------
-  // 6. PDF + print actions
-  // ------------------------------
-  if (pdfBtn && receiptSection && window.html2pdf) {
-    pdfBtn.addEventListener("click", () => {
-      const fileId = summary.orderId || "receipt";
-      const opt = {
-        margin:       10,
-        filename:     `chaseaquatics-order-${fileId}.pdf`,
-        image:        { type: "jpeg", quality: 0.95 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" },
-      };
-      window.html2pdf().from(receiptSection).set(opt).save();
-    });
-  }
+// ------------------------------
+// 6. PDF + print actions
+// ------------------------------
+if (pdfBtn && window.html2pdf) {
+  pdfBtn.addEventListener("click", () => {
+    const fileId = summary.orderId || "receipt";
 
-  if (printBtn) {
-    printBtn.addEventListener("click", () => window.print());
-  }
+    // capture the full shell (heading + meta + card)
+    const wrapper = document.getElementById("receiptWrapper") || receiptSection;
+
+    const opt = {
+      margin:       [15, 10, 15, 10], // top, right, bottom, left (mm)
+      filename:     `chaseaquatics-order-${fileId}.pdf`,
+      image:        { type: "jpeg", quality: 0.95 },
+      html2canvas:  {
+        scale: 2,
+        // make sure the capture width is wide enough so it doesn't crop the side
+        windowWidth: document.documentElement.scrollWidth
+      },
+      jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak:    { mode: ["css", "legacy"] }
+    };
+
+    window.html2pdf().from(wrapper).set(opt).save();
+  });
+}
+
+if (printBtn) {
+  printBtn.addEventListener("click", () => window.print());
+}
 
   // ------------------------------
   // 7. Toast: confirmation email

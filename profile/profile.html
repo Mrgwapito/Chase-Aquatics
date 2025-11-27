@@ -382,14 +382,16 @@
     <input type="hidden" name="message" id="hiddenMessage">
   </form>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- ✅ Toast FIRST, normal script, single source -->
-  <script src="../assets/toast.js" defer></script>
-  <!-- Then your profile + auth scripts -->
-  <script src="./profile.js"></script>
-  <script src="../profile/userauth.js"></script>
-  <script src="../popups/login.js"></script>
+<!-- ✅ Toast as ES module (may export) -->
+<script type="module" src="../assets/toast.js"></script>
+
+<!-- Then your profile + auth scripts, classic + defer -->
+<script src="./profile.js" defer></script>
+<script src="../profile/userauth.js" defer></script>
+<script src="../popups/" defer></script>
+
   <!-- Keep this helper if you want -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
