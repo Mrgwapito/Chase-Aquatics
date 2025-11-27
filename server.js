@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const https = require('https'); // for EmailJS requests
 const fs = require('fs');
-
+const axios = require('axios');
 
 
 // Ensure fetch is available in Node (for EmailJS REST calls)
@@ -216,6 +216,54 @@ const uploadValidId = multer({
   limits: { fileSize: 8 * 1024 * 1024 } // 8MB
 });
 
+// ================================================================
+// 🔐 reCAPTCHA VERIFICATION
+// ================================================================
+const verifyRecaptcha = async (recaptchaResponse) => {
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY; // Add this to your .env file
+
+  if (!secretKey) {
+    console.warn('⚠️ RECAPTCHA_SECRET_KEY is not set. Skipping verification in non-production.');
+
+    // In production, require proper secret.
+    if ((process.env.NODE_ENV || '').toLowerCase() === 'production') {
+      return false;
+    }
+
+    // In local/dev, allow through so hindi ka ma-block habang wala pang secret.
+    return true;
+  }
+
+  if (!recaptchaResponse) {
+    console.warn('⚠️ No reCAPTCHA response provided');
+    return false;
+  }
+
+  try {
+    const response = await axios.post(
+      'https://www.google.com/recaptcha/api/siteverify',
+      null,
+      {
+        params: {
+          secret: secretKey,
+          response: recaptchaResponse,
+        },
+      }
+    );
+
+    console.log('🔐 reCAPTCHA verification result:', {
+      success: response.data.success,
+      score: response.data.score,
+      action: response.data.action,
+      hostname: response.data.hostname,
+    });
+
+    return !!response.data.success;
+  } catch (error) {
+    console.error('❌ reCAPTCHA verification error:', error.message);
+    return false;
+  }
+};
 
 
 // =============================== MIDDLEWARE (Express 5 safe) ===============================
@@ -1013,21 +1061,41 @@ res.status(201).json({
 // ================================================================
 // 🔑 LOGIN (NOW RETURNS firstName & lastName TOO)
 // ================================================================
+// ================================================================
+// 🔑 LOGIN (UPDATED to accept both email AND username)
+// ================================================================
 app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.status(400).json({ success: false, message: 'User not found' });
+    
+    // Check if input could be email or username
+    let user = await User.findOne({ 
+      $or: [
+        { email: email },                    // Try as email
+        { username: email }                  // Try as username
+      ]
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User not found. Please check your email/username and password.' 
+      });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ success: false, message: 'Incorrect password' });
+    if (!isMatch) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Incorrect password' 
+      });
+    }
 
     const token = jwt.sign(
       {
         id: user._id,
         email: user.email,
+        username: user.username,           // ✅ Include username in token
         firstName: user.firstName,
         lastName: user.lastName,
         fullName: user.fullName,
@@ -1044,6 +1112,7 @@ app.post('/login', async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        username: user.username || '',     // ✅ Return username
         firstName: user.firstName,
         lastName: user.lastName,
         fullName: user.fullName,
@@ -1051,10 +1120,13 @@ app.post('/login', async (req, res) => {
       },
     });
 
-    console.log(`✅ ${user.role === "admin" ? "Admin" : "User"} logged in: ${user.email}`);
+    console.log(`✅ ${user.role === "admin" ? "Admin" : "User"} logged in: ${user.email} (username: ${user.username})`);
   } catch (err) {
     console.error('❌ Server error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during login' 
+    });
   }
 });
 
@@ -2597,13 +2669,34 @@ app.get("/api/bookings/availability", async (req, res) => {
 // ✅ Create a new booking (stores service, ignores cancelled in conflict check)
 app.post("/api/bookings", async (req, res) => {
   try {
-    const { name, email, guests, date, time, notes, topics, service } = req.body; // +service
+    const {
+      name,
+      email,
+      guests,
+      date,
+      time,
+      notes,
+      topics,
+      service,
+      recaptchaToken, // 🔐 token from frontend (bookingData.recaptchaToken)
+    } = req.body;
 
+    // Basic required fields
     if (!name || !email || !date || !time || !topics?.length) {
       return res.status(400).json({
         success: false,
         message:
           "Missing required fields: name, email, date, time, and topics are required.",
+      });
+    }
+
+    // 🔐 reCAPTCHA verification (backend)
+    const isHuman = await verifyRecaptcha(recaptchaToken);
+    if (!isHuman) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "reCAPTCHA verification failed. Please refresh the page and try again.",
       });
     }
 
@@ -2628,7 +2721,10 @@ app.post("/api/bookings", async (req, res) => {
       guests: Array.isArray(guests)
         ? guests
         : typeof guests === "string"
-        ? guests.split(",").map((g) => g.trim()).filter(Boolean)
+        ? guests
+            .split(",")
+            .map((g) => g.trim())
+            .filter(Boolean)
         : [],
       date,
       time: time24,
@@ -2639,7 +2735,9 @@ app.post("/api/bookings", async (req, res) => {
     });
 
     await newBooking.save();
-    console.log(`✅ Booking saved: ${name} @ ${date} ${time24} (${newBooking.service})`);
+    console.log(
+      `✅ Booking saved: ${name} @ ${date} ${time24} (${newBooking.service})`
+    );
 
     // ✅ No EmailJS here anymore — emails are sent from booking.js in the browser
 
@@ -2657,6 +2755,7 @@ app.post("/api/bookings", async (req, res) => {
     });
   }
 });
+
 
 // ================================================================
 // 📧 EMAILJS — APPOINTMENT CONFIRMATION TEMPLATE (SERVER-SIDE)

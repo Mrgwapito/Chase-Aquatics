@@ -28,6 +28,7 @@ const stepDetailsForm = document.querySelector(".step--details");
 const otherCheckbox = document.querySelector("[data-other-toggle]");
 const otherTextInput = document.querySelector(".other__input");
 
+
 // ========== MODAL CONTROL ==========
 function openBookingModal() {
   bookingModal.hidden = false;
@@ -244,17 +245,43 @@ function proceedToDetails() {
   stepDetails.hidden = false;
 }
 
+
 // ========== FORM SUBMISSION ==========
+// ========== FORM SUBMISSION (WITH RECAPTCHA) ==========
 if (stepDetailsForm) {
   stepDetailsForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    // 🔐 reCAPTCHA validation
+    if (typeof grecaptcha === "undefined") {
+      notify({
+        title: "Error",
+        message: "reCAPTCHA failed to load. Please refresh the page.",
+        type: "error",
+        duration: 5000,
+        position: "top",
+      });
+      return;
+    }
+
+    const recaptchaResponse = grecaptcha.getResponse();
+    if (!recaptchaResponse) {
+      notify({
+        title: "Verification Required",
+        message: "Please complete the reCAPTCHA verification.",
+        type: "warning",
+        duration: 5000,
+        position: "top",
+      });
+      return;
+    }
+
     const selectedTimeBtn = document.querySelector(".times__btn.selected");
     const selectedTime = selectedTimeBtn ? selectedTimeBtn.dataset.time : "";
 
-    let topics = Array.from(document.querySelectorAll("input[name='topic']:checked")).map(
-      (i) => i.value
-    );
+    let topics = Array.from(
+      document.querySelectorAll("input[name='topic']:checked")
+    ).map((i) => i.value);
 
     if (otherCheckbox?.checked && otherTextInput?.value.trim()) {
       topics.push(otherTextInput.value.trim());
@@ -265,11 +292,13 @@ if (stepDetailsForm) {
       document.getElementById("serviceField")?.value || "General Consultation";
 
     // guests array (email list)
-    const guestsRaw = document.querySelector("[name='guests']")?.value.trim() || "";
+    const guestsRaw =
+      document.querySelector("[name='guests']")?.value.trim() || "";
     const guests = guestsRaw
       ? guestsRaw.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
 
+    // ✅ INCLUDE reCAPTCHA TOKEN SA DATA PAPUNTANG BACKEND
     const bookingData = {
       name: document.getElementById("guestName").value.trim(),
       email: document.getElementById("guestEmail").value.trim(),
@@ -278,7 +307,8 @@ if (stepDetailsForm) {
       time: selectedTime,
       notes: document.getElementById("notes").value.trim(),
       topics,
-      service
+      service,
+      recaptchaToken: recaptchaResponse, // <-- IMPORTANT
     };
 
     if (
@@ -289,11 +319,11 @@ if (stepDetailsForm) {
       bookingData.topics.length === 0
     ) {
       notify({
-        title: 'Incomplete form',
-        message: 'Please complete all required fields before submitting.',
-        type: 'warning',
+        title: "Incomplete form",
+        message: "Please complete all required fields before submitting.",
+        type: "warning",
         duration: 5000,
-        position: 'top'
+        position: "top",
       });
       return;
     }
@@ -309,6 +339,13 @@ if (stepDetailsForm) {
       console.log("📩 Booking response:", data);
 
       if (data.success) {
+        // ✅ reset reCAPTCHA after successful booking
+        try {
+          grecaptcha.reset();
+        } catch (err) {
+          console.warn("Could not reset reCAPTCHA:", err);
+        }
+
         // === send confirmation email to customer via EmailJS (frontend) ===
         try {
           if (typeof emailjs !== "undefined") {
@@ -316,7 +353,7 @@ if (stepDetailsForm) {
               to_name: bookingData.name,
               to_email: bookingData.email,
 
-              brand: "Life in a Box", // or "Chase Aquatics"
+              brand: "Life in a Box",
               submitted_at: new Date().toLocaleString(),
 
               service: bookingData.service || "General Consultation",
@@ -329,7 +366,7 @@ if (stepDetailsForm) {
               topics: bookingData.topics.join(", "),
               notes: bookingData.notes || "",
               guests: bookingData.guests.join(", "),
-              appointment_url: "" // later you can put a real URL here
+              appointment_url: "",
             });
             console.log("✅ Appointment confirmation email sent to customer");
           } else {
@@ -359,7 +396,7 @@ if (stepDetailsForm) {
               topics: bookingData.topics.join(", "),
               notes: bookingData.notes || "",
               guests: bookingData.guests.join(", "),
-              appointment_url: ""
+              appointment_url: "",
             });
             console.log("✅ Appointment notification email sent to admin");
           }
@@ -367,13 +404,12 @@ if (stepDetailsForm) {
           console.error("❌ Error sending admin appointment email:", err);
         }
 
-        // === your existing success UI ===
         notify({
-          title: 'Success',
-          message: 'Appointment booked successfully!',
-          type: 'success',
+          title: "Success",
+          message: "Appointment booked successfully!",
+          type: "success",
           duration: 2200,
-          position: 'br'
+          position: "br",
         });
 
         // refresh availability immediately
@@ -381,43 +417,45 @@ if (stepDetailsForm) {
 
         // reset fields & UI
         stepDetailsForm.reset();
-        document.querySelector("[data-times-date]").textContent = bookingData.date;
+        document.querySelector("[data-times-date]").textContent =
+          bookingData.date;
         timesBtns.forEach((b) => b.classList.remove("selected"));
-        topics = [];
 
         // go back to calendar
         stepCalendar.hidden = false;
         stepDetails.hidden = true;
 
         // reset service to default
-        const selectedServiceEl = document.getElementById("selectedService");
+        const selectedServiceEl =
+          document.getElementById("selectedService");
         const serviceField = document.getElementById("serviceField");
-        if (selectedServiceEl) selectedServiceEl.textContent = "General Consultation";
+        if (selectedServiceEl)
+          selectedServiceEl.textContent = "General Consultation";
         if (serviceField) serviceField.value = "General Consultation";
 
         closeBookingModal();
       } else {
         notify({
-          title: 'Booking failed',
-          message: data.message || 'Something went wrong.',
-          type: 'error',
+          title: "Booking failed",
+          message: data.message || "Something went wrong.",
+          type: "error",
           duration: 6000,
-          position: 'top'
+          position: "top",
         });
       }
-
     } catch (err) {
       console.error("❌ Network error:", err);
       notify({
-        title: 'Network error',
-        message: 'Failed to connect to backend. Please try again.',
-        type: 'error',
+        title: "Network error",
+        message: "Failed to connect to backend. Please try again.",
+        type: "error",
         duration: 6000,
-        position: 'top'
+        position: "top",
       });
     }
   });
 }
+
 
 // ========== ESC closes ==========
 document.addEventListener("keydown", (e) => {
