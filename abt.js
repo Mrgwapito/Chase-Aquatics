@@ -35,17 +35,36 @@ if (contactForm) {
     e.preventDefault();
     const data = new FormData(contactForm);
     fetch(contactForm.action, { method: 'POST', body: data, headers: { Accept: 'application/json' } })
-      .then(r => r.ok ? (showPopup(), contactForm.reset()) : alert('There was a problem sending the message.'))
+      .then(r => {
+        if (r.ok) {
+          // Show success toast instead of popup
+          if (typeof showToast !== 'undefined') {
+            showToast({
+              title: 'Success',
+              message: 'Message sent successfully!',
+              type: 'success',
+              duration: 3000,
+              position: 'top'
+            });
+          } else if (typeof Toast !== 'undefined' && Toast.showToast) {
+            // Fallback if using global Toast object
+            Toast.showToast({
+              title: 'Success',
+              message: 'Message sent successfully!',
+              type: 'success',
+              duration: 3000,
+              position: 'top'
+            });
+          }
+          contactForm.reset();
+        } else {
+          alert('There was a problem sending the message.');
+        }
+      })
       .catch(() => alert('An error occurred.'));
   });
 }
 
-function showPopup() {
-  const popup = document.getElementById('popup');
-  if (!popup) return;
-  popup.style.display = 'block';
-  setTimeout(() => (popup.style.display = 'none'), 3000);
-}
 
 // --- hamburger toggle (works now) ---
 const toggleBtn = document.querySelector('.nav-toggle');

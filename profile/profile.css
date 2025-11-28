@@ -28,7 +28,7 @@ body {
 
 /* ===== Navbar ===== */
 .navbar {
-  position: relative;
+  position: sticky;
   width: 100%;
   background-color: var(--nav-bg);
   display: flex;
@@ -1111,4 +1111,3 @@ a.active:hover {
   outline: 0;
   box-shadow: 0 0 0 0.2rem rgba(51, 90, 2, 0.18);
 }
-

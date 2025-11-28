@@ -231,13 +231,16 @@ h2{
    ========= */
 .modal{
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(15, 23, 42, .45);
-  display: none;                 /* toggled inline by JS */
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  z-index: 2000;                 /* ✅ higher than navbar (1000) */
+  z-index: 2000;
 }
 
 .modal .modal-content{
@@ -247,27 +250,71 @@ h2{
   border-radius: 16px;
   box-shadow: var(--shadow);
   border: 1px solid var(--line);
-  padding: 18px 18px 14px;
+  padding: 24px;
+  position: relative;
+  margin: 80px auto 0 auto; /* ✅ Push down below navbar */
+  max-height: calc(100vh - 160px); /* ✅ Limit height with some padding */
+  overflow-y: auto; /* ✅ Scroll if content overflows */
 }
+
+/* Rest of the styles remain the same */
+
 .modal .modal-content h3{
-  margin: 4px 0 8px;
-  font-size: 18px;
-  font-weight: 700;
-}
-.modal .modal-content p{
-  margin: 6px 0;
-  color: #374151;
-}
-.modal .close{
-  float: right;
+  margin: 0 0 16px 0;
   font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  color: #0f172a;
+}
+
+.modal .modal-content p{
+  margin: 8px 0;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.modal .close{
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 22px;
   line-height: 1;
   color: var(--muted);
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px;
   border-radius: 8px;
+  background: transparent;
+  border: none;
+  transition: background-color .15s ease;
+  z-index: 1;
 }
-.modal .close:hover{ background:#f3f4f6; }
+
+.modal .close:hover{ 
+  background:#f3f4f6; 
+}
+
+/* ✅ Ensure modal shows properly when toggled */
+.modal.show {
+  display: flex !important;
+}
+
+/* ✅ Responsive adjustments for smaller screens */
+@media (max-width: 640px) {
+  .modal {
+    top: 70px; /* ✅ Adjust for mobile navbar if needed */
+    padding: 16px;
+  }
+  
+  .modal .modal-content {
+    padding: 20px;
+    max-width: 95vw;
+  }
+  
+  .modal .modal-content h3 {
+    font-size: 18px;
+    margin: 0 0 12px 0;
+  }
+}
 
 /* ============================================
    🔘 Shared Modal Buttons (orders / delivery)
